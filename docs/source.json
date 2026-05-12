@@ -13,7 +13,15 @@
       "tintColor": "FF6B6B",
       "category": "lifestyle",
       "screenshotURLs": [],
-      "versions": [],
+      "versions": [
+        {
+          "version": "1.0.4",
+          "date": "2026-05-12T21:50:46+00:00",
+          "localizedDescription": "Latest build from main.\n\nCommit 32a0500.",
+          "downloadURL": "https://github.com/edrickchang13/food/releases/download/v1.0.4/BulkAI.ipa",
+          "size": 10738049
+        }
+      ],
       "appPermissions": {
         "entitlements": [
           {
