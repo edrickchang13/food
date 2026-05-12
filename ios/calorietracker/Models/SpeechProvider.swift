@@ -162,13 +162,21 @@ struct SpeechSettings {
     private static let languageKeyPrefix = "selectedSpeechLanguage_"
     private static let apiKeyKeychainPrefix = "speechApiKey_"
 
+    /// Bulk AI dropped Fud AI's paid STT providers (OpenAI Whisper, Groq, Deepgram,
+    /// AssemblyAI) in the P5 strip. The only options now are Native iOS (free,
+    /// on-device) and Gemini Audio (free via the user's own Gemini API key).
+    /// Stored values for any of the dropped providers fall back to Native iOS.
     static var selectedProvider: SpeechProvider {
         get {
             guard let raw = UserDefaults.standard.string(forKey: providerKey),
-                  let provider = SpeechProvider(rawValue: raw) else { return .nativeIOS }
+                  let provider = SpeechProvider(rawValue: raw),
+                  provider == .nativeIOS || provider == .gemini else {
+                return .nativeIOS
+            }
             return provider
         }
         set {
+            guard newValue == .nativeIOS || newValue == .gemini else { return }
             UserDefaults.standard.set(newValue.rawValue, forKey: providerKey)
         }
     }

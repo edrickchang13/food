@@ -65,35 +65,27 @@ struct AIAccessSettings {
     private static let installIDKey = "fudAIInstallID"
     private static let proxyEndpointKey = "fudAIProxyEndpoint"
 
+    /// Bulk AI dropped Fud AI's "Plus" paid-proxy mode during the P5 strip; the
+    /// access mode is fixed to BYOK. Setter is a no-op so legacy call sites can
+    /// still assign without conditional compilation.
     static var mode: AIAccessMode {
-        get {
-            guard let raw = UserDefaults.standard.string(forKey: modeKey),
-                  let mode = AIAccessMode(rawValue: raw) else {
-                // Existing users keep the old BYOK behavior after updating.
-                return .bringYourOwnKey
-            }
-            return mode
-        }
-        set {
-            UserDefaults.standard.set(newValue.rawValue, forKey: modeKey)
-        }
+        get { .bringYourOwnKey }
+        set { /* no-op: BYOK is the only mode */ }
     }
 
-    static var isUsingFudAIPlus: Bool {
-        mode == .fudAIPlus
-    }
+    static var isUsingFudAIPlus: Bool { false }
 
-    static var hasActivePlusEntitlement: Bool {
-        UserDefaults.standard.bool(forKey: plusEntitlementCacheKey)
-    }
+    static var hasActivePlusEntitlement: Bool { false }
 
     static func setActivePlusEntitlement(_ active: Bool) {
         UserDefaults.standard.set(active, forKey: plusEntitlementCacheKey)
     }
 
+    /// Plus was stripped in P5; the intro screen never needs to appear, so this
+    /// reports "seen" unconditionally and the setter is a no-op.
     static var hasSeenPlusIntro: Bool {
-        get { UserDefaults.standard.bool(forKey: plusIntroSeenKey) }
-        set { UserDefaults.standard.set(newValue, forKey: plusIntroSeenKey) }
+        get { true }
+        set { /* no-op */ }
     }
 
     static var installID: String {
@@ -340,15 +332,12 @@ struct AIProviderSettings {
     private static let fallbackProviderKey = "selectedFallbackAIProvider"
     private static let fallbackModelKey = "selectedFallbackAIModel"
 
+    /// Bulk AI is Gemini-only after the P5 provider strip. Setter is a no-op so
+    /// legacy call sites that wrote a stored value still compile, but reads are
+    /// always Gemini and the picker UI is gone.
     static var selectedProvider: AIProvider {
-        get {
-            guard let raw = UserDefaults.standard.string(forKey: providerKey),
-                  let provider = AIProvider(rawValue: raw) else { return .gemini }
-            return provider
-        }
-        set {
-            UserDefaults.standard.set(newValue.rawValue, forKey: providerKey)
-        }
+        get { .gemini }
+        set { /* no-op: Gemini is the only provider */ }
     }
 
     static var selectedModel: String {
@@ -425,11 +414,11 @@ struct AIProviderSettings {
 
     // MARK: - Fallback Provider
 
-    /// Master toggle for fallback. When true and primary call fails, the app retries
-    /// once on the configured fallback provider before surfacing the error.
+    /// Bulk AI removed the fallback-provider feature during the P5 strip; this
+    /// always returns false so existing call sites short-circuit cleanly.
     static var fallbackEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: fallbackEnabledKey) }
-        set { UserDefaults.standard.set(newValue, forKey: fallbackEnabledKey) }
+        get { false }
+        set { /* no-op */ }
     }
 
     static var selectedFallbackProvider: AIProvider {

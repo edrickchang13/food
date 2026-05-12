@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 			BA8E0E2D2F33F198007DD537 /* FudAIWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BA8E0E272F33F198007DD537 /* FudAIWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-			F00DCA700000000000000001 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = F00DCA700000000000000003 /* RevenueCat */; };
 			F00DCA700000000000000012 /* BulkAIEngine in Frameworks */ = {isa = PBXBuildFile; productRef = F00DCA700000000000000011 /* BulkAIEngine */; };
 /* End PBXBuildFile section */
 
@@ -108,8 +107,7 @@
 				isa = PBXFrameworksBuildPhase;
 				buildActionMask = 2147483647;
 				files = (
-					F00DCA700000000000000001 /* RevenueCat in Frameworks */,
-					F00DCA700000000000000012 /* BulkAIEngine in Frameworks */,
+						F00DCA700000000000000012 /* BulkAIEngine in Frameworks */,
 				);
 				runOnlyForDeploymentPostprocessing = 0;
 			};
@@ -181,8 +179,7 @@
 			);
 				name = calorietracker;
 				packageProductDependencies = (
-					F00DCA700000000000000003 /* RevenueCat */,
-					F00DCA700000000000000011 /* BulkAIEngine */,
+						F00DCA700000000000000011 /* BulkAIEngine */,
 				);
 				productName = calorietracker;
 				productReference = BA8E0DF32F33F197007DD537 /* calorietracker.app */;
@@ -306,8 +303,7 @@
 			mainGroup = BA8E0DEA2F33F197007DD537;
 				minimizedProjectReferenceProxies = 1;
 				packageReferences = (
-					F00DCA700000000000000002 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
-					F00DCA700000000000000010 /* XCLocalSwiftPackageReference "Packages/BulkAIEngine" */,
+						F00DCA700000000000000010 /* XCLocalSwiftPackageReference "Packages/BulkAIEngine" */,
 				);
 				preferredProjectObjectVersion = 77;
 				productRefGroup = BA8E0DF42F33F197007DD537 /* Products */;
@@ -842,16 +838,6 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-			F00DCA700000000000000002 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
-				isa = XCRemoteSwiftPackageReference;
-				repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm";
-				requirement = {
-					kind = upToNextMajorVersion;
-					minimumVersion = 5.70.0;
-				};
-			};
-/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCLocalSwiftPackageReference section */
 		F00DCA700000000000000010 /* XCLocalSwiftPackageReference "Packages/BulkAIEngine" */ = {
@@ -861,11 +847,6 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-			F00DCA700000000000000003 /* RevenueCat */ = {
-				isa = XCSwiftPackageProductDependency;
-				package = F00DCA700000000000000002 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
-				productName = RevenueCat;
-			};
 		F00DCA700000000000000011 /* BulkAIEngine */ = {
 				isa = XCSwiftPackageProductDependency;
 				package = F00DCA700000000000000010 /* XCLocalSwiftPackageReference "Packages/BulkAIEngine" */;
