@@ -2168,6 +2168,28 @@ struct ProfileView: View {
                                 .foregroundStyle(AppColors.calorie)
                         }
                     }
+
+                    NavigationLink {
+                        ProgressPhotosView()
+                    } label: {
+                        Label {
+                            Text("Progress photos")
+                        } icon: {
+                            Image(systemName: "photo.stack")
+                                .foregroundStyle(AppColors.calorie)
+                        }
+                    }
+
+                    NavigationLink {
+                        RecipesView()
+                    } label: {
+                        Label {
+                            Text("Recipes")
+                        } icon: {
+                            Image(systemName: "book.closed")
+                                .foregroundStyle(AppColors.calorie)
+                        }
+                    }
                 }
                 .listRowBackground(AppColors.appCard)
 
