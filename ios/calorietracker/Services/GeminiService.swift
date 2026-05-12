@@ -201,7 +201,63 @@ struct GeminiService {
 
     // MARK: - Public API (unchanged interface)
 
-    static func analyzeTextInput(description: String) async throws -> FoodAnalysis {
+    /// Analyzes a free-text food description and returns a FoodAnalysis.
+    ///
+    /// When `foodDatabase` is supplied, we first try a local lookup against the
+    /// bundled verified seed plus the AI cache. A clean match like "150g
+    /// chicken breast" short-circuits without paying for a Gemini call. Misses
+    /// fall through to Gemini; once Gemini answers we cache the result so the
+    /// next equivalent query lands locally.
+    static func analyzeTextInput(
+        description: String,
+        foodDatabase: FoodDatabaseService? = nil
+    ) async throws -> FoodAnalysis {
+        if let foodDatabase, let hit = foodDatabase.quickLookup(description) {
+            return makeAnalysis(from: hit.item, grams: hit.grams)
+        }
+        let analysis = try await analyzeTextInputViaAI(description: description)
+        if let foodDatabase {
+            foodDatabase.recordFromAnalysis(
+                name: analysis.name,
+                kcal: analysis.calories,
+                protein: analysis.protein,
+                carbs: analysis.carbs,
+                fat: analysis.fat,
+                servingGrams: analysis.servingSizeGrams,
+                fiber: analysis.fiber
+            )
+        }
+        return analysis
+    }
+
+    /// Builds a FoodAnalysis from a verified database row at the requested
+    /// portion in grams. Keeps the caller off the LLM entirely when there's a
+    /// clean local match.
+    private static func makeAnalysis(from item: FoodDatabaseItem, grams: Double) -> FoodAnalysis {
+        let multiplier = grams / 100
+        let prep = item.preparation.displayName.isEmpty ? "" : " (\(item.preparation.displayName.lowercased()))"
+        var analysis = FoodAnalysis(
+            name: "\(Int(grams))g \(item.name.lowercased())\(prep)",
+            calories: Int((item.caloriesPer100g * multiplier).rounded()),
+            protein: Int((item.proteinPer100g * multiplier).rounded()),
+            carbs: Int((item.carbsPer100g * multiplier).rounded()),
+            fat: Int((item.fatPer100g * multiplier).rounded()),
+            servingSizeGrams: grams,
+            emoji: nil,
+            sugar: nil,
+            addedSugar: nil,
+            fiber: item.fiberPer100g.map { $0 * multiplier },
+            saturatedFat: nil,
+            monounsaturatedFat: nil,
+            polyunsaturatedFat: nil,
+            cholesterol: nil,
+            sodium: nil,
+            potassium: nil
+        )
+        return analysis
+    }
+
+    private static func analyzeTextInputViaAI(description: String) async throws -> FoodAnalysis {
         let prompt = """
         Estimate the nutritional content for: \(description)
         Parse any quantities, brands, and multiple items from the text. If a brand is mentioned, use that brand's known nutritional data. If multiple items are described, sum up the total nutrition.

@@ -503,6 +503,7 @@ struct ActivityShareSheet: UIViewControllerRepresentable {
 // MARK: - Home View (Main Dashboard)
 struct HomeView: View {
     @Environment(FoodStore.self) private var foodStore
+    @Environment(FoodDatabaseService.self) private var foodDatabase
     @State private var showCamera = false
     @State private var capturedImage: UIImage?
     @State private var cameraMode: CameraMode = .snapFood
@@ -817,7 +818,7 @@ struct HomeView: View {
                                         try? await Task.sleep(for: .milliseconds(300))
                                         activeSheet = .analyzingText
                                         do {
-                                            let result = try await GeminiService.analyzeTextInput(description: description)
+                                            let result = try await GeminiService.analyzeTextInput(description: description, foodDatabase: foodDatabase)
 
                                             currentFoodResult = result
                                             currentEmoji = result.emoji
@@ -846,7 +847,7 @@ struct HomeView: View {
                                         try? await Task.sleep(for: .milliseconds(300))
                                         activeSheet = .analyzingText
                                         do {
-                                            let result = try await GeminiService.analyzeTextInput(description: description)
+                                            let result = try await GeminiService.analyzeTextInput(description: description, foodDatabase: foodDatabase)
 
                                             currentFoodResult = result
                                             currentEmoji = result.emoji

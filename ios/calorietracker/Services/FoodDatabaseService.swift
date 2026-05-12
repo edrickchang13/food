@@ -46,6 +46,74 @@ final class FoodDatabaseService {
         saveCache()
     }
 
+    /// Caches a Gemini-derived analysis as an AI-estimated database entry. Only
+    /// caches when the analysis names a single recognizable item with a known
+    /// serving size, so we don't pollute the cache with complex multi-item
+    /// meals that don't generalize.
+    func recordFromAnalysis(name: String, kcal: Int, protein: Int, carbs: Int, fat: Int, servingGrams: Double?, fiber: Double?) {
+        guard let grams = servingGrams, grams > 0 else { return }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed.count < 40 else { return }
+        // Skip clearly-composed names: anything with quantities, "with", commas, or
+        // " and " in them isn't a single ingredient we can usefully cache per-100g.
+        let lower = trimmed.lowercased()
+        let banned = [" with ", " and ", ",", "+", "&"]
+        for marker in banned where lower.contains(marker) { return }
+        if lower.contains(where: \.isNumber) { return }
+        let perGram = 100.0 / grams
+        let item = FoodDatabaseItem(
+            id: "ai_" + trimmed.lowercased().replacingOccurrences(of: " ", with: "_"),
+            name: trimmed,
+            category: .prepared,
+            preparation: .other,
+            caloriesPer100g: Double(kcal) * perGram,
+            proteinPer100g: Double(protein) * perGram,
+            carbsPer100g: Double(carbs) * perGram,
+            fatPer100g: Double(fat) * perGram,
+            fiberPer100g: fiber.map { $0 * perGram },
+            source: .aiEstimated
+        )
+        record(item)
+    }
+
+    /// Try to short-circuit a free-text input by parsing a "<grams>g <name>"
+    /// pattern and matching the name against the local database. Returns nil
+    /// when the input is too complex (multiple items, no explicit grams, no
+    /// unambiguous match) and the caller should fall back to the LLM.
+    func quickLookup(_ input: String) -> (item: FoodDatabaseItem, grams: Double)? {
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !trimmed.contains(" and "), !trimmed.contains(",") else { return nil }
+
+        // Match leading "<number>g <name>" or "<number> g <name>".
+        guard let regex = try? NSRegularExpression(
+            pattern: #"^\s*(\d+(?:\.\d+)?)\s*g(?:rams?)?\s+(.+)$"#,
+            options: [.caseInsensitive]
+        ) else { return nil }
+        let range = NSRange(trimmed.startIndex..<trimmed.endIndex, in: trimmed)
+        guard let match = regex.firstMatch(in: trimmed, options: [], range: range),
+              match.numberOfRanges == 3,
+              let gramsRange = Range(match.range(at: 1), in: trimmed),
+              let nameRange = Range(match.range(at: 2), in: trimmed),
+              let grams = Double(String(trimmed[gramsRange])),
+              grams > 0
+        else { return nil }
+
+        let name = String(trimmed[nameRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+        let hits = search(name, limit: 5)
+
+        // Demand exactly one strong match. If multiple seed entries share a
+        // name (e.g. raw vs cooked variants), fall back to the LLM so the user
+        // doesn't get the wrong preparation silently.
+        let exactMatches = hits.filter { $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame }
+        if exactMatches.count == 1 {
+            return (exactMatches[0], grams)
+        }
+        if hits.count == 1 {
+            return (hits[0], grams)
+        }
+        return nil
+    }
+
     private func loadCache() {
         guard let data = UserDefaults.standard.data(forKey: cacheKey),
               let decoded = try? JSONDecoder().decode([FoodDatabaseItem].self, from: data)
