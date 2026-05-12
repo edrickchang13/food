@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-latest
     timeout-minutes: 45
     steps:
       - name: Checkout
@@ -30,10 +30,23 @@ jobs:
           # Use the default GITHUB_TOKEN to push; the workflow has contents:write.
           persist-credentials: true
 
-      - name: Show Xcode version
+      - name: List available Xcode versions
         run: |
+          ls -d /Applications/Xcode*.app 2>&1 || true
+          echo "current selected:"
+          xcode-select -p
           xcodebuild -version
           swift --version
+
+      - name: Select newest available Xcode
+        run: |
+          NEWEST=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          if [ -n "$NEWEST" ]; then
+            sudo xcode-select -s "$NEWEST/Contents/Developer"
+            echo "Switched to $NEWEST"
+            xcodebuild -version
+            swift --version
+          fi
 
       - name: Resolve Swift Package dependencies
         working-directory: ios
