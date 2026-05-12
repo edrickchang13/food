@@ -33,6 +33,23 @@ final class EngineState {
     private let priorExpenditureKey = "engine.priorExpenditureKcalPerDay"
     private let onboardingDateKey = "engine.onboardingDate"
     private let lastCheckInKey = "engine.lastCheckInDate"
+    private let programModeKey = "engine.programMode"
+
+    /// The user's chosen relationship with the coaching engine. Persisted to UserDefaults.
+    /// Default is `.coached` so users coming from a fresh install get the full experience.
+    var programMode: ProgramMode {
+        get {
+            if let raw = UserDefaults.standard.string(forKey: programModeKey),
+               let mode = ProgramMode(rawValue: raw) {
+                return mode
+            }
+            return .coached
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: programModeKey)
+            refresh()
+        }
+    }
 
     init(weightStore: WeightStore, foodStore: FoodStore) {
         self.weightStore = weightStore

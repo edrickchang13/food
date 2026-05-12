@@ -5,6 +5,12 @@
 DerivedData/
 build/
 
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved.user
+*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+
 # Android Studio / Gradle
 .gradle/
 local.properties

@@ -8,6 +8,7 @@
 import SwiftUI
 import HealthKit
 import WidgetKit
+import BulkAIEngine
 
 @main
 struct calorietrackerApp: App {
@@ -19,6 +20,8 @@ struct calorietrackerApp: App {
     @State private var profileStore = ProfileStore()
     @State private var chatStore = ChatStore()
     @State private var storeManager = StoreManager()
+    @State private var measurementStore = MeasurementStore()
+    @State private var periodStore = PeriodStore()
     @State private var engineState: EngineState
     @State private var showCheckIn = false
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
@@ -33,6 +36,14 @@ struct calorietrackerApp: App {
         case "dark": return .dark
         default: return nil
         }
+    }
+
+    /// Auto-present the check-in only if (a) onboarding is done, (b) the engine reports it's due,
+    /// and (c) the user's program mode actually wants the prompt (Manual mode stays silent).
+    private var shouldAutoPresentCheckIn: Bool {
+        hasCompletedOnboarding
+            && engineState.snapshot.checkInDue
+            && engineState.programMode.promptsWeeklyCheckIn
     }
 
     init() {
@@ -62,6 +73,8 @@ struct calorietrackerApp: App {
                         .environment(profileStore)
                         .environment(chatStore)
                         .environment(storeManager)
+                        .environment(measurementStore)
+                        .environment(periodStore)
                         .environment(engineState)
                 } else {
                     OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
@@ -73,6 +86,8 @@ struct calorietrackerApp: App {
                         .environment(profileStore)
                         .environment(chatStore)
                         .environment(storeManager)
+                        .environment(measurementStore)
+                        .environment(periodStore)
                         .environment(engineState)
                 }
             }
@@ -89,12 +104,10 @@ struct calorietrackerApp: App {
                 engineState.refresh()
             }
             .onAppear {
-                if hasCompletedOnboarding && engineState.snapshot.checkInDue {
-                    showCheckIn = true
-                }
+                if shouldAutoPresentCheckIn { showCheckIn = true }
             }
-            .onChange(of: engineState.snapshot.checkInDue) { _, due in
-                if due && hasCompletedOnboarding { showCheckIn = true }
+            .onChange(of: engineState.snapshot.checkInDue) { _, _ in
+                if shouldAutoPresentCheckIn { showCheckIn = true }
             }
             .sheet(isPresented: $showCheckIn) {
                 CheckInReviewView()

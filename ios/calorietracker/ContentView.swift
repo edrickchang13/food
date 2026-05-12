@@ -3,6 +3,7 @@ import PhotosUI
 import UIKit
 import HealthKit
 import StoreKit
+import BulkAIEngine
 import WidgetKit
 
 // MARK: - Camera Mode
@@ -1791,6 +1792,7 @@ struct ProfileView: View {
     @Environment(NotificationManager.self) private var notificationManager
     @Environment(HealthKitManager.self) private var healthKitManager
     @Environment(StoreManager.self) private var storeManager
+    @Environment(EngineState.self) private var engineState
     private var profile: UserProfile {
         get { profileStore.profile }
         nonmutating set { profileStore.profile = newValue }
@@ -1815,6 +1817,7 @@ struct ProfileView: View {
     @State private var showRecalculateConfirm = false
     @State private var showCalculationMethods = false
     @State private var showEngineDebug = false
+    @State private var showManualCheckIn = false
     @State private var showAutoMacroEditAlert = false
     @State private var showMaxPinnedAlert = false
     @State private var showInvalidGoalWeightAlert = false
@@ -2111,6 +2114,60 @@ struct ProfileView: View {
                         }
                     }
                     .tint(.primary)
+
+                    Picker(selection: Binding(
+                        get: { engineState.programMode },
+                        set: { engineState.programMode = $0 }
+                    )) {
+                        Text("Coached").tag(ProgramMode.coached)
+                        Text("Collaborative").tag(ProgramMode.collaborative)
+                        Text("Manual").tag(ProgramMode.manual)
+                    } label: {
+                        Label {
+                            Text("Coaching mode")
+                        } icon: {
+                            Image(systemName: "person.crop.circle.badge.checkmark")
+                                .foregroundStyle(AppColors.calorie)
+                        }
+                    }
+                    .tint(.primary)
+
+                    Button {
+                        showManualCheckIn = true
+                    } label: {
+                        Label {
+                            Text("Run check-in now")
+                        } icon: {
+                            Image(systemName: "calendar.badge.checkmark")
+                                .foregroundStyle(AppColors.calorie)
+                        }
+                    }
+                    .tint(.primary)
+                }
+                .listRowBackground(AppColors.appCard)
+
+                Section("Body") {
+                    NavigationLink {
+                        BodyMeasurementsView()
+                    } label: {
+                        Label {
+                            Text("Body measurements")
+                        } icon: {
+                            Image(systemName: "ruler")
+                                .foregroundStyle(AppColors.calorie)
+                        }
+                    }
+
+                    NavigationLink {
+                        PeriodTrackingView()
+                    } label: {
+                        Label {
+                            Text("Period tracking")
+                        } icon: {
+                            Image(systemName: "drop.fill")
+                                .foregroundStyle(AppColors.calorie)
+                        }
+                    }
                 }
                 .listRowBackground(AppColors.appCard)
 
@@ -2890,6 +2947,9 @@ struct ProfileView: View {
                             }
                         }
                 }
+            }
+            .sheet(isPresented: $showManualCheckIn) {
+                CheckInReviewView()
             }
             .sheet(isPresented: $showFudAIPlusPaywall) {
                 PaywallView()
