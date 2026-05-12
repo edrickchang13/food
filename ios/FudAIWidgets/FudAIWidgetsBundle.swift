@@ -2,7 +2,7 @@ import WidgetKit
 import SwiftUI
 
 @main
-struct FudAIWidgetsBundle: WidgetBundle {
+struct BulkAIWidgetsBundle: WidgetBundle {
     var body: some Widget {
         CalorieWidget()
         ProteinWidget()
