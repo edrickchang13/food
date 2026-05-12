@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEnginePackageTests.build/primary.swiftdeps"
+  },
+  "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEnginePackageTests.derived/runner.swift": {
+    "dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEnginePackageTests.build/runner.d",
+    "object": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEnginePackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEnginePackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEnginePackageTests.build/runner.swiftdeps",
+    "diagnostics": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEnginePackageTests.build/runner.dia"
+  }
+}

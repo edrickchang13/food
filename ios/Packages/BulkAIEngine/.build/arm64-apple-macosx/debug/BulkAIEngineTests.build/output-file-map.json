@@ -1,0 +1,47 @@
+{
+  "": {
+    "swift-dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/primary.swiftdeps"
+  },
+  "/Users/edrickchang/food/ios/Packages/BulkAIEngine/Tests/BulkAIEngineTests/CalendarDayTests.swift": {
+    "dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/CalendarDayTests.d",
+    "object": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/CalendarDayTests.swift.o",
+    "swiftmodule": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/CalendarDayTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/CalendarDayTests.swiftdeps",
+    "diagnostics": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/CalendarDayTests.dia"
+  },
+  "/Users/edrickchang/food/ios/Packages/BulkAIEngine/Tests/BulkAIEngineTests/ExpenditureTests.swift": {
+    "dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/ExpenditureTests.d",
+    "object": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/ExpenditureTests.swift.o",
+    "swiftmodule": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/ExpenditureTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/ExpenditureTests.swiftdeps",
+    "diagnostics": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/ExpenditureTests.dia"
+  },
+  "/Users/edrickchang/food/ios/Packages/BulkAIEngine/Tests/BulkAIEngineTests/ProgramModeTests.swift": {
+    "dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/ProgramModeTests.d",
+    "object": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/ProgramModeTests.swift.o",
+    "swiftmodule": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/ProgramModeTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/ProgramModeTests.swiftdeps",
+    "diagnostics": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/ProgramModeTests.dia"
+  },
+  "/Users/edrickchang/food/ios/Packages/BulkAIEngine/Tests/BulkAIEngineTests/TargetMacrosTests.swift": {
+    "dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/TargetMacrosTests.d",
+    "object": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/TargetMacrosTests.swift.o",
+    "swiftmodule": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/TargetMacrosTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/TargetMacrosTests.swiftdeps",
+    "diagnostics": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/TargetMacrosTests.dia"
+  },
+  "/Users/edrickchang/food/ios/Packages/BulkAIEngine/Tests/BulkAIEngineTests/WeeklyCheckInTests.swift": {
+    "dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/WeeklyCheckInTests.d",
+    "object": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/WeeklyCheckInTests.swift.o",
+    "swiftmodule": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/WeeklyCheckInTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/WeeklyCheckInTests.swiftdeps",
+    "diagnostics": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/WeeklyCheckInTests.dia"
+  },
+  "/Users/edrickchang/food/ios/Packages/BulkAIEngine/Tests/BulkAIEngineTests/WeightTrendTests.swift": {
+    "dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/WeightTrendTests.d",
+    "object": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/WeightTrendTests.swift.o",
+    "swiftmodule": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/WeightTrendTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/WeightTrendTests.swiftdeps",
+    "diagnostics": "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngineTests.build/WeightTrendTests.dia"
+  }
+}
