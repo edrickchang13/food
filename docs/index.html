@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bulk AI source</title>
+<style>
+  :root {
+    --bg: #0f0f10;
+    --fg: #e7e7ea;
+    --muted: #8a8a90;
+    --accent: #ff6b6b;
+    --card: #1a1a1c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    padding: 6vh 6vw;
+  }
+  h1 {
+    font-size: clamp(2rem, 1rem + 4vw, 3.25rem);
+    font-weight: 800;
+    margin: 0 0 0.25em;
+    letter-spacing: -0.02em;
+  }
+  h2 {
+    margin: 2em 0 0.5em;
+    font-size: 1.1rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+  p { margin: 0 0 1em; max-width: 65ch; color: #c8c8cc; }
+  code, pre {
+    font-family: "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.95em;
+  }
+  pre {
+    background: var(--card);
+    border: 1px solid #2a2a2e;
+    padding: 1em 1.2em;
+    border-radius: 12px;
+    overflow-x: auto;
+    color: var(--accent);
+    user-select: all;
+  }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid currentColor; }
+  a:hover { opacity: 0.7; }
+  .container { max-width: 720px; margin: 0 auto; }
+  ol { padding-left: 1.4em; }
+  ol li { margin: 0.4em 0; }
+  .pill {
+    display: inline-block;
+    padding: 0.25em 0.7em;
+    background: var(--card);
+    border: 1px solid #2a2a2e;
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 0.85em;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <span class="pill">AltStore source</span>
+  <h1>Bulk AI</h1>
+  <p>Dynamic, adherence-neutral nutrition tracker. Forked from Fud AI (MIT) for personal use.</p>
+
+  <h2>Add to AltStore</h2>
+  <ol>
+    <li>Open AltStore on your iPhone.</li>
+    <li>Browse tab → Sources → tap the <strong>+</strong>.</li>
+    <li>Paste this URL:</li>
+  </ol>
+  <pre>https://edrickchang13.github.io/food/source.json</pre>
+  <p>AltStore will fetch the manifest, show Bulk AI in the source, and offer the latest build to install. Each push to <code>main</code> kicks off a fresh build automatically.</p>
+
+  <h2>Direct download</h2>
+  <p>Latest <code>.ipa</code>: <a href="https://github.com/edrickchang13/food/releases/latest">github.com/edrickchang13/food/releases/latest</a></p>
+</div>
+</body>
+</html>

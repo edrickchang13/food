@@ -11,6 +11,10 @@ build/
 Package.resolved.user
 *.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
 
+# Python
+__pycache__/
+*.pyc
+
 # Android Studio / Gradle
 .gradle/
 local.properties

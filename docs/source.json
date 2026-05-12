@@ -1,0 +1,38 @@
+{
+  "name": "Bulk AI",
+  "identifier": "com.edrickchang.bulkai.source",
+  "sourceURL": "https://edrickchang13.github.io/food/source.json",
+  "apps": [
+    {
+      "name": "Bulk AI",
+      "bundleIdentifier": "com.edrickchang.bulkai",
+      "developerName": "edrickchang13",
+      "subtitle": "Dynamic, adherence-neutral nutrition tracker",
+      "localizedDescription": "Bulk AI tracks your weight trend with EWMA smoothing, computes your TDEE dynamically from real intake plus weight change, and proposes new daily targets every week via an adherence-neutral check-in. Forked from Fud AI (MIT). iOS only.",
+      "iconURL": "https://edrickchang13.github.io/food/icon.png",
+      "tintColor": "FF6B6B",
+      "category": "lifestyle",
+      "screenshotURLs": [],
+      "versions": [],
+      "appPermissions": {
+        "entitlements": [
+          {
+            "name": "com.apple.developer.healthkit",
+            "description": "Read and write nutrition, weight, and body measurement data via Apple Health."
+          }
+        ],
+        "privacy": [
+          {
+            "name": "NSHealthShareUsageDescription",
+            "description": "Read your weight, height, and body composition to keep your profile accurate."
+          },
+          {
+            "name": "NSHealthUpdateUsageDescription",
+            "description": "Write your nutrition and body measurements so all your health data stays in one place."
+          }
+        ]
+      }
+    }
+  ],
+  "news": []
+}

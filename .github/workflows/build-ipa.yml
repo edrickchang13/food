@@ -1,0 +1,135 @@
+name: Build Bulk AI IPA
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.github/FUNDING.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-ipa
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # We push back to main with the updated source.json, so we need the full
+          # history to be able to push without a fast-forward error.
+          fetch-depth: 0
+          # Use the default GITHUB_TOKEN to push; the workflow has contents:write.
+          persist-credentials: true
+
+      - name: Show Xcode version
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Resolve Swift Package dependencies
+        working-directory: ios
+        run: |
+          xcodebuild \
+            -project calorietracker.xcodeproj \
+            -scheme calorietracker \
+            -resolvePackageDependencies
+
+      - name: Build unsigned .app
+        working-directory: ios
+        run: |
+          xcodebuild \
+            -project calorietracker.xcodeproj \
+            -scheme calorietracker \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            ONLY_ACTIVE_ARCH=NO \
+            build
+
+      - name: Package .ipa (widget extension stripped for free signing)
+        id: package
+        working-directory: ios
+        run: |
+          APP_PATH="build/Build/Products/Release-iphoneos/calorietracker.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "::error::expected .app at $APP_PATH"
+            exit 1
+          fi
+
+          # AltStore + free signing can't grant the entitlements the widget
+          # extension uses (app groups, etc), so strip it before packaging.
+          # The main app installs and runs cleanly; widgets won't appear.
+          rm -rf "$APP_PATH/PlugIns"
+
+          rm -rf Payload
+          mkdir Payload
+          cp -R "$APP_PATH" Payload/
+          rm -f BulkAI.ipa
+          zip -qr BulkAI.ipa Payload
+
+          SIZE=$(stat -f%z BulkAI.ipa 2>/dev/null || stat -c%s BulkAI.ipa)
+          echo "size=$SIZE" >> "$GITHUB_OUTPUT"
+          ls -lh BulkAI.ipa
+
+      - name: Set version
+        id: version
+        run: |
+          # Monotonically increasing, matches GitHub Actions' run_number.
+          # Format keeps AltStore happy with numeric comparison.
+          VERSION="1.0.${{ github.run_number }}"
+          DATE=$(date -u +%Y-%m-%dT%H:%M:%S%z | sed 's/\([+-][0-9][0-9]\)\([0-9][0-9]\)/\1:\2/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"
+          echo "Building version $VERSION at $DATE"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Build ${{ steps.version.outputs.version }}
+          body: |
+            Automated build of Bulk AI for AltStore sideloading.
+
+            * Commit: ${{ github.sha }}
+            * Built: ${{ steps.version.outputs.date }}
+            * Run: ${{ github.run_number }}
+
+            Add this source URL to AltStore on your phone:
+            `https://${{ github.repository_owner }}.github.io/food/source.json`
+          files: ios/BulkAI.ipa
+          make_latest: 'true'
+
+      - name: Update AltStore source.json
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          DATE: ${{ steps.version.outputs.date }}
+          SIZE: ${{ steps.package.outputs.size }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+          SHA: ${{ github.sha }}
+        run: |
+          python3 .github/scripts/update_source.py
+
+      - name: Commit source.json bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/source.json
+          if git diff --cached --quiet; then
+            echo "No source.json change to commit"
+          else
+            git commit -m "ci: bump source.json to v${{ steps.version.outputs.version }} [skip ci]"
+            git push
+          fi
