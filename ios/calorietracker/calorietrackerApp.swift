@@ -11,14 +11,15 @@ import WidgetKit
 
 @main
 struct calorietrackerApp: App {
-    @State private var foodStore = FoodStore()
-    @State private var weightStore = WeightStore()
+    @State private var foodStore: FoodStore
+    @State private var weightStore: WeightStore
     @State private var bodyFatStore = BodyFatStore()
     @State private var notificationManager = NotificationManager()
     @State private var healthKitManager = HealthKitManager()
     @State private var profileStore = ProfileStore()
     @State private var chatStore = ChatStore()
     @State private var storeManager = StoreManager()
+    @State private var engineState: EngineState
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("appearanceMode") private var appearanceMode = "system"
     @AppStorage("notificationsEnabled") private var notificationsEnabled = false
@@ -39,6 +40,12 @@ struct calorietrackerApp: App {
             UserDefaults.standard.removeObject(forKey: "userProfile")
         }
         APIKeyManager.migrateIfNeeded()
+
+        let food = FoodStore()
+        let weight = WeightStore()
+        _foodStore = State(wrappedValue: food)
+        _weightStore = State(wrappedValue: weight)
+        _engineState = State(wrappedValue: EngineState(weightStore: weight, foodStore: food))
     }
 
     var body: some Scene {
@@ -54,6 +61,7 @@ struct calorietrackerApp: App {
                         .environment(profileStore)
                         .environment(chatStore)
                         .environment(storeManager)
+                        .environment(engineState)
                 } else {
                     OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
                         .environment(notificationManager)
@@ -64,6 +72,7 @@ struct calorietrackerApp: App {
                         .environment(profileStore)
                         .environment(chatStore)
                         .environment(storeManager)
+                        .environment(engineState)
                 }
             }
             .tint(AppThemeColor.color(for: appThemeColorRaw).color)
@@ -76,6 +85,7 @@ struct calorietrackerApp: App {
             }
             .onReceive(NotificationCenter.default.publisher(for: .userProfileDidChange)) { _ in
                 refreshWidgetSnapshot()
+                engineState.refresh()
             }
         }
         .onChange(of: scenePhase) { _, newPhase in

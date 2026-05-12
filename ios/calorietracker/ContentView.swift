@@ -1814,6 +1814,7 @@ struct ProfileView: View {
     @State private var showClearFoodLogConfirmation = false
     @State private var showRecalculateConfirm = false
     @State private var showCalculationMethods = false
+    @State private var showEngineDebug = false
     @State private var showAutoMacroEditAlert = false
     @State private var showMaxPinnedAlert = false
     @State private var showInvalidGoalWeightAlert = false
@@ -2094,6 +2095,18 @@ struct ProfileView: View {
                             Text("Calculation Methods")
                         } icon: {
                             Image(systemName: "book")
+                                .foregroundStyle(AppColors.calorie)
+                        }
+                    }
+                    .tint(.primary)
+
+                    Button {
+                        showEngineDebug = true
+                    } label: {
+                        Label {
+                            Text("Engine (debug)")
+                        } icon: {
+                            Image(systemName: "waveform.path.ecg")
                                 .foregroundStyle(AppColors.calorie)
                         }
                     }
@@ -2867,6 +2880,16 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $showCalculationMethods) {
                 CalculationMethodsView()
+            }
+            .sheet(isPresented: $showEngineDebug) {
+                NavigationStack {
+                    EngineDebugView()
+                        .toolbar {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                Button("Done") { showEngineDebug = false }
+                            }
+                        }
+                }
             }
             .sheet(isPresented: $showFudAIPlusPaywall) {
                 PaywallView()
