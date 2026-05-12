@@ -24,7 +24,7 @@ struct ChatService {
             case .invalidResponse:
                 return "Could not understand the AI response. Please try again."
             case .subscriptionRequired:
-                return "Fud AI Plus is not active. Subscribe or switch back to Bring Your Own Key in Settings."
+                return "Bulk AI Plus is not active. Subscribe or switch back to Bring Your Own Key in Settings."
             }
         }
     }
@@ -226,7 +226,7 @@ struct ChatService {
         }
         if provider == .openrouter {
             headers["HTTP-Referer"] = "https://github.com/apoorvdarshan/fud-ai"
-            headers["X-Title"] = "Fud AI"
+            headers["X-Title"] = "Bulk AI"
         }
 
         let toolsArray = openAIToolsArray()

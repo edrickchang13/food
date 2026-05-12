@@ -18,13 +18,13 @@ enum FudAIProxyClient {
         var errorDescription: String? {
             switch self {
             case .subscriptionRequired:
-                return "Fud AI Plus is not active. Subscribe or switch back to Bring Your Own Key in Settings."
+                return "Bulk AI Plus is not active. Subscribe or switch back to Bring Your Own Key in Settings."
             case .quotaExceeded(let message):
                 return message
             case .apiError(let message):
                 return message
             case .invalidResponse:
-                return "Unexpected response from Fud AI Plus."
+                return "Unexpected response from Bulk AI Plus."
             case .networkError(let error):
                 return "Network error: \(error.localizedDescription)"
             }
@@ -45,7 +45,7 @@ enum FudAIProxyClient {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse else { throw ProxyError.invalidResponse }
             guard (200..<300).contains(http.statusCode) else {
-                let message = parseProxyMessage(from: data) ?? "Fud AI Plus usage failed with HTTP \(http.statusCode)."
+                let message = parseProxyMessage(from: data) ?? "Bulk AI Plus usage failed with HTTP \(http.statusCode)."
                 throw ProxyError.apiError(message)
             }
             return try JSONDecoder().decode(AIAccessQuotaSnapshot.self, from: data)
@@ -79,7 +79,7 @@ enum FudAIProxyClient {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse else { throw ProxyError.invalidResponse }
             guard (200..<300).contains(http.statusCode) else {
-                let message = parseProxyMessage(from: data) ?? "Fud AI Plus request failed with HTTP \(http.statusCode)."
+                let message = parseProxyMessage(from: data) ?? "Bulk AI Plus request failed with HTTP \(http.statusCode)."
                 if http.statusCode == 402 || http.statusCode == 429 {
                     throw ProxyError.quotaExceeded(message)
                 }
@@ -194,7 +194,7 @@ struct GeminiService {
             case .apiError(let message):
                 return "API error: \(message)"
             case .subscriptionRequired:
-                return "Fud AI Plus is not active. Subscribe or switch back to Bring Your Own Key in Settings."
+                return "Bulk AI Plus is not active. Subscribe or switch back to Bring Your Own Key in Settings."
             }
         }
     }
@@ -550,7 +550,7 @@ struct GeminiService {
         }
         if provider == .openrouter {
             headers["HTTP-Referer"] = "https://github.com/apoorvdarshan/fud-ai"
-            headers["X-Title"] = "Fud AI"
+            headers["X-Title"] = "Bulk AI"
         }
 
         let data = try await makeRequest(url: url, headers: headers, body: body)

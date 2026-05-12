@@ -216,7 +216,7 @@ private struct FudAIPlusIntroView: View {
                 }
 
                 VStack(spacing: 8) {
-                    Text("Fud AI Plus")
+                    Text("Bulk AI Plus")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                     Text("New: use food scan, voice, and Coach without setting up any API key.")
                         .font(.system(.callout, design: .rounded))
@@ -288,7 +288,7 @@ private struct AboutView: View {
     }
 
     private var shareMessage: String {
-        String(localized: "I've been tracking my meals with Fud AI — snap a photo, speak it, or type it, and the AI logs the calories. It's free, open source, and your data stays on your device.\n\nDownload: https://fud-ai.app")
+        String(localized: "I've been tracking my meals with Bulk AI — snap a photo, speak it, or type it, and the AI logs the calories. It's free, open source, and your data stays on your device.\n\nDownload: https://fud-ai.app")
     }
 
     var body: some View {
@@ -3000,7 +3000,7 @@ struct ProfileView: View {
                     // Delete All Data is local-only. We intentionally do NOT touch Apple
                     // Health samples — that data is personal and belongs to the user, not
                     // this app's storage. If they want HK cleaned up they can do it from
-                    // the Health app's Sources → Fud AI screen.
+                    // the Health app's Sources → Bulk AI screen.
                     foodStore.replaceAllEntries([])
                     weightStore.replaceAllEntries([])
                     // Wipe the food-image folder defensively — replaceAllEntries

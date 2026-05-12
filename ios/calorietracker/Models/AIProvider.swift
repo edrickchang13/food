@@ -2,14 +2,14 @@ import Foundation
 
 enum AIAccessMode: String, CaseIterable, Codable, Identifiable {
     case bringYourOwnKey = "Bring Your Own Key"
-    case fudAIPlus = "Fud AI Plus"
+    case fudAIPlus = "Bulk AI Plus"
 
     var id: String { rawValue }
 
     var displayName: String {
         switch self {
         case .bringYourOwnKey: "Bring Your Own Key"
-        case .fudAIPlus: "Fud AI Plus"
+        case .fudAIPlus: "Bulk AI Plus"
         }
     }
 

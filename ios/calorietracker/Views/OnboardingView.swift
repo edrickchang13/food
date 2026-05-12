@@ -640,7 +640,7 @@ struct OnboardingView: View {
                     .multilineTextAlignment(.center)
 
                 VStack(spacing: 12) {
-                    Text("Fud AI would like to send you Notifications")
+                    Text("Bulk AI would like to send you Notifications")
                         .font(.system(.subheadline, design: .rounded, weight: .medium))
                         .multilineTextAlignment(.center)
                     Divider()
@@ -804,7 +804,7 @@ struct OnboardingView: View {
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .multilineTextAlignment(.center)
 
-                    Text("BYOK keeps Fud AI free. Plus is optional for no API setup and supports development.")
+                    Text("BYOK keeps Bulk AI free. Plus is optional for no API setup and supports development.")
                         .font(.system(.callout, design: .rounded))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -813,7 +813,7 @@ struct OnboardingView: View {
                 VStack(spacing: 12) {
                     aiAccessCard(
                         mode: .fudAIPlus,
-                        title: "Fud AI Plus",
+                        title: "Bulk AI Plus",
                         subtitle: "No setup for non-technical users. Gemini food scans, voice, and Coach with fallback.",
                         badge: storeManager.isSubscribed ? "Active" : "Default"
                     )
