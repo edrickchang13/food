@@ -109,11 +109,8 @@ private enum AppUpdateChecker {
 
 // MARK: - Main Content View
 struct ContentView: View {
-    @Environment(StoreManager.self) private var storeManager
     @AppStorage(AppThemeColor.storageKey) private var appThemeColorRaw = AppThemeColor.defaultColor.rawValue
     @State private var appUpdateState: AppUpdateState = .idle
-    @State private var showFudAIPlusIntro = false
-    @State private var showFudAIPlusPaywall = false
 
     var body: some View {
         TabView {
@@ -156,24 +153,6 @@ struct ContentView: View {
         .tint(AppThemeColor.color(for: appThemeColorRaw).color)
         .task {
             await refreshAppUpdateState()
-            await storeManager.checkEntitlements()
-            maybeShowFudAIPlusIntro()
-        }
-        .sheet(isPresented: $showFudAIPlusIntro) {
-            FudAIPlusIntroView(
-                onUpgrade: {
-                    AIAccessSettings.mode = .fudAIPlus
-                    showFudAIPlusIntro = false
-                    showFudAIPlusPaywall = true
-                },
-                onKeepBYOK: {
-                    AIAccessSettings.mode = .bringYourOwnKey
-                    showFudAIPlusIntro = false
-                }
-            )
-        }
-        .sheet(isPresented: $showFudAIPlusPaywall) {
-            PaywallView()
         }
     }
 
@@ -185,93 +164,6 @@ struct ContentView: View {
 
         appUpdateState = .checking
         appUpdateState = await AppUpdateChecker.check()
-    }
-
-    @MainActor
-    private func maybeShowFudAIPlusIntro() {
-        guard !AIAccessSettings.hasSeenPlusIntro else { return }
-        guard !storeManager.isSubscribed else { return }
-        AIAccessSettings.hasSeenPlusIntro = true
-        showFudAIPlusIntro = true
-    }
-}
-
-private struct FudAIPlusIntroView: View {
-    let onUpgrade: () -> Void
-    let onKeepBYOK: () -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            VStack(spacing: 18) {
-                ZStack {
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .frame(width: 96, height: 96)
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 40, weight: .semibold))
-                        .foregroundStyle(
-                            LinearGradient(colors: AppColors.calorieGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
-                        )
-                }
-
-                VStack(spacing: 8) {
-                    Text("Bulk AI Plus")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                    Text("New: use food scan, voice, and Coach without setting up any API key.")
-                        .font(.system(.callout, design: .rounded))
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 28)
-                }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    plusIntroRow("Gemini models with automatic fallback")
-                    plusIntroRow("\(AIAccessSettings.paidFoodDailyRequestLimit) food logs, \(AIAccessSettings.paidCoachDailyRequestLimit) Coach messages/day")
-                    plusIntroRow("BYOK still works and you can switch anytime")
-                }
-                .font(.system(.subheadline, design: .rounded))
-                .padding(.horizontal, 30)
-                .padding(.top, 4)
-            }
-            Spacer()
-
-            VStack(spacing: 10) {
-                Button(action: onUpgrade) {
-                    Text("Upgrade")
-                        .font(.system(.body, design: .rounded, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(
-                            LinearGradient(colors: AppColors.calorieGradient, startPoint: .leading, endPoint: .trailing),
-                            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        )
-                }
-
-                Button(action: onKeepBYOK) {
-                    Text("Keep BYOK")
-                        .font(.system(.body, design: .rounded, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 44)
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 28)
-        }
-        .background(AppColors.appBackground)
-        .presentationDetents([.medium])
-    }
-
-    private func plusIntroRow(_ text: String) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(AppColors.calorie)
-            Text(text)
-                .foregroundStyle(.primary)
-            Spacer(minLength: 0)
-        }
     }
 }
 
@@ -1830,18 +1722,10 @@ struct ProfileView: View {
     @State private var customAIInstructions: String = AIProviderSettings.userContext
     @State private var savedAIInstructions: String = AIProviderSettings.userContext
     @FocusState private var customInstructionsFocused: Bool
-    @State private var fallbackEnabled: Bool = AIProviderSettings.fallbackEnabled
-    @State private var selectedFallbackProvider: AIProvider = AIProviderSettings.selectedFallbackProvider
-    @State private var selectedFallbackModel: String = AIProviderSettings.selectedFallbackModel
-    @State private var fallbackApiKeyText: String = AIProviderSettings.apiKey(for: AIProviderSettings.selectedFallbackProvider) ?? ""
-    @State private var fallbackBaseURL: String = AIProviderSettings.customBaseURL(for: AIProviderSettings.selectedFallbackProvider) ?? ""
-    @State private var showFallbackAPIKey = false
     @State private var selectedSpeechProvider: SpeechProvider = SpeechSettings.selectedProvider
     @State private var selectedSpeechLanguage: SpeechLanguage = SpeechSettings.selectedLanguage(for: SpeechSettings.selectedProvider)
     @State private var speechApiKeyText: String = SpeechSettings.apiKey(for: SpeechSettings.selectedProvider) ?? ""
     @State private var showSpeechAPIKey = false
-    @State private var selectedAccessMode: AIAccessMode = AIAccessSettings.mode
-    @State private var showFudAIPlusPaywall = false
 
     // Height formatting
     private var heightDisplay: String {
@@ -2277,38 +2161,9 @@ struct ProfileView: View {
                 }
                 .listRowBackground(AppColors.appCard)
 
-                AIAccessSettingsSection(
-                    selectedAccessMode: $selectedAccessMode,
-                    showFudAIPlusPaywall: $showFudAIPlusPaywall
-                )
-
-                if selectedAccessMode == .fudAIPlus {
-                    FudAIPlusManagedSettingsSection()
-                } else {
-                    // Section 4: AI Provider
-                    Section("AI Provider") {
-                    Picker(selection: $selectedProvider) {
-                        ForEach(AIProvider.allCases) { provider in
-                            Label(provider.rawValue, systemImage: provider.icon).tag(provider)
-                        }
-                    } label: {
-                        Label {
-                            Text("Provider")
-                        } icon: {
-                            Image(systemName: "cpu")
-                                .foregroundStyle(AppColors.calorie)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .tint(.secondary)
-                    .onChange(of: selectedProvider) { _, newProvider in
-                        AIProviderSettings.selectedProvider = newProvider
-                        selectedModel = newProvider.defaultModel
-                        AIProviderSettings.selectedModel = newProvider.defaultModel
-                        apiKeyText = AIProviderSettings.apiKey(for: newProvider) ?? ""
-                        customBaseURL = AIProviderSettings.customBaseURL(for: newProvider) ?? ""
-                    }
-
+                // Section 4: AI. Bulk AI is Gemini-only — users supply a free key
+                // from aistudio.google.com/apikey. Stored in iOS Keychain.
+                Section("AI") {
                     if selectedProvider.supportsCustomModelName {
                         // Free-form TextField for any model ID, with optional preset suggestions menu
                         // (e.g., OpenRouter has presets but lets user type any of openrouter.ai/models).
@@ -2433,8 +2288,7 @@ struct ProfileView: View {
                         }
                     }
                 }
-                    .listRowBackground(AppColors.appCard)
-                }
+                .listRowBackground(AppColors.appCard)
 
                 // Custom AI Instructions (User Context) — prepended to every AI request when non-empty
                 Section {
@@ -2470,211 +2324,11 @@ struct ProfileView: View {
                 }
                 .listRowBackground(AppColors.appCard)
 
-                if selectedAccessMode == .bringYourOwnKey {
-                    // Fallback Provider — retry on a second provider when the primary fails
-                    Section {
-                    Toggle(isOn: $fallbackEnabled) {
-                        Label {
-                            Text("Enable Fallback")
-                        } icon: {
-                            Image(systemName: "arrow.triangle.2.circlepath")
-                                .foregroundStyle(AppColors.calorie)
-                        }
-                    }
-                    .tint(AppColors.calorie)
-                    .onChange(of: fallbackEnabled) { _, newValue in
-                        AIProviderSettings.fallbackEnabled = newValue
-                    }
 
-                    if fallbackEnabled {
-                        // Fallback provider list shows all 13 — same provider as primary IS allowed
-                        // (so e.g. Gemini Pro primary + Gemini Flash fallback works for capacity diversity).
-                        // The collision is handled at the model layer below + at the runtime check in
-                        // AIProviderSettings.currentFallbackConfig.
-                        Picker(selection: $selectedFallbackProvider) {
-                            ForEach(AIProvider.allCases) { provider in
-                                Label(provider.rawValue, systemImage: provider.icon).tag(provider)
-                            }
-                        } label: {
-                            Label {
-                                Text("Provider")
-                            } icon: {
-                                Image(systemName: "cpu")
-                                    .foregroundStyle(AppColors.calorie)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .tint(.secondary)
-                        .onChange(of: selectedFallbackProvider) { _, newProvider in
-                            AIProviderSettings.selectedFallbackProvider = newProvider
-                            if !newProvider.supportsCustomModelName,
-                               !newProvider.models.contains(selectedFallbackModel) {
-                                selectedFallbackModel = newProvider.defaultModel
-                                AIProviderSettings.selectedFallbackModel = selectedFallbackModel
-                            }
-                            // If switching fallback to same provider as primary AND model collides,
-                            // bump to first non-primary model so picker doesn't show identical config.
-                            if newProvider == selectedProvider, selectedFallbackModel == selectedModel,
-                               let alt = newProvider.models.first(where: { $0 != selectedModel }) {
-                                selectedFallbackModel = alt
-                                AIProviderSettings.selectedFallbackModel = alt
-                            }
-                            fallbackApiKeyText = AIProviderSettings.apiKey(for: newProvider) ?? ""
-                            fallbackBaseURL = AIProviderSettings.customBaseURL(for: newProvider) ?? ""
-                        }
-
-                        if selectedFallbackProvider.supportsCustomModelName {
-                            // Free-form TextField + preset Menu, mirrors primary AI Provider section.
-                            // When fallback provider == primary, the preset menu hides the primary's model.
-                            let presetOptions: [String] = {
-                                if selectedFallbackProvider == selectedProvider {
-                                    return selectedFallbackProvider.models.filter { $0 != selectedModel }
-                                }
-                                return selectedFallbackProvider.models
-                            }()
-                            HStack {
-                                Label {
-                                    Text("Model")
-                                } icon: {
-                                    Image(systemName: "brain")
-                                        .foregroundStyle(AppColors.calorie)
-                                }
-                                Spacer()
-                                TextField(
-                                    selectedFallbackProvider == .openrouter
-                                        ? "e.g. anthropic/claude-sonnet-4"
-                                        : "e.g. gpt-4o-mini",
-                                    text: $selectedFallbackModel
-                                )
-                                .textFieldStyle(.plain)
-                                .multilineTextAlignment(.trailing)
-                                .autocorrectionDisabled()
-                                .textInputAutocapitalization(.never)
-                                .onChange(of: selectedFallbackModel) { _, newModel in
-                                    AIProviderSettings.selectedFallbackModel = newModel
-                                }
-                                if !presetOptions.isEmpty {
-                                    Menu {
-                                        ForEach(presetOptions, id: \.self) { model in
-                                            Button(model) {
-                                                selectedFallbackModel = model
-                                                AIProviderSettings.selectedFallbackModel = model
-                                            }
-                                        }
-                                    } label: {
-                                        Image(systemName: "list.bullet.circle")
-                                            .foregroundStyle(AppColors.calorie)
-                                    }
-                                }
-                            }
-                        } else {
-                            // Same provider as primary → exclude the primary's model from the picker so
-                            // user can't accidentally pick an identical config.
-                            let modelOptions: [String] = {
-                                if selectedFallbackProvider == selectedProvider {
-                                    return selectedFallbackProvider.models.filter { $0 != selectedModel }
-                                }
-                                return selectedFallbackProvider.models
-                            }()
-                            if !modelOptions.isEmpty {
-                                Picker(selection: $selectedFallbackModel) {
-                                    ForEach(modelOptions, id: \.self) { model in
-                                        Text(model).tag(model)
-                                    }
-                                } label: {
-                                    Label {
-                                        Text("Model")
-                                    } icon: {
-                                        Image(systemName: "brain")
-                                            .foregroundStyle(AppColors.calorie)
-                                    }
-                                }
-                                .pickerStyle(.menu)
-                                .tint(.secondary)
-                                .onChange(of: selectedFallbackModel) { _, newModel in
-                                    AIProviderSettings.selectedFallbackModel = newModel
-                                }
-                                .onAppear {
-                                    if !modelOptions.contains(selectedFallbackModel),
-                                       let first = modelOptions.first {
-                                        selectedFallbackModel = first
-                                        AIProviderSettings.selectedFallbackModel = first
-                                    }
-                                }
-                            }
-                        }
-
-                        if selectedFallbackProvider.requiresAPIKey {
-                            HStack {
-                                Label {
-                                    Text("API Key")
-                                } icon: {
-                                    Image(systemName: "key.fill")
-                                        .foregroundStyle(AppColors.calorie)
-                                }
-                                Spacer()
-                                Group {
-                                    if showFallbackAPIKey {
-                                        TextField(selectedFallbackProvider.apiKeyPlaceholder, text: $fallbackApiKeyText)
-                                    } else {
-                                        SecureField(selectedFallbackProvider.apiKeyPlaceholder, text: $fallbackApiKeyText)
-                                    }
-                                }
-                                .textFieldStyle(.plain)
-                                .multilineTextAlignment(.trailing)
-                                .autocorrectionDisabled()
-                                .textInputAutocapitalization(.never)
-                                .onChange(of: fallbackApiKeyText) { _, newValue in
-                                    AIProviderSettings.setAPIKey(newValue.isEmpty ? nil : newValue, for: selectedFallbackProvider)
-                                }
-                                Button {
-                                    showFallbackAPIKey.toggle()
-                                } label: {
-                                    Image(systemName: showFallbackAPIKey ? "eye.fill" : "eye.slash.fill")
-                                        .foregroundStyle(.secondary)
-                                        .font(.system(size: 14))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-
-                        if selectedFallbackProvider == .ollama || selectedFallbackProvider.requiresCustomEndpoint {
-                            HStack {
-                                Label {
-                                    Text(selectedFallbackProvider.requiresCustomEndpoint ? "Base URL" : "Server URL")
-                                } icon: {
-                                    Image(systemName: "link")
-                                        .foregroundStyle(AppColors.calorie)
-                                }
-                                Spacer()
-                                TextField(
-                                    selectedFallbackProvider.requiresCustomEndpoint
-                                        ? "https://your-endpoint.com/v1"
-                                        : selectedFallbackProvider.baseURL,
-                                    text: $fallbackBaseURL
-                                )
-                                .textFieldStyle(.plain)
-                                .multilineTextAlignment(.trailing)
-                                .autocorrectionDisabled()
-                                .textInputAutocapitalization(.never)
-                                .keyboardType(.URL)
-                                .onChange(of: fallbackBaseURL) { _, newValue in
-                                    AIProviderSettings.setCustomBaseURL(newValue.isEmpty ? nil : newValue, for: selectedFallbackProvider)
-                                }
-                            }
-                        }
-                    }
-                } header: {
-                    Text("Fallback Provider")
-                } footer: {
-                    Text("If your primary provider fails (overloaded, no credits, network error), the request automatically retries on this fallback. Same provider as primary is allowed — just pick a different model.")
-                }
-                    .listRowBackground(AppColors.appCard)
-
-                    // Speech-to-Text Provider
+                    // Speech-to-Text Provider — Bulk AI only exposes the free options.
                     Section {
                     Picker(selection: $selectedSpeechProvider) {
-                        ForEach(SpeechProvider.allCases) { provider in
+                        ForEach([SpeechProvider.nativeIOS, .gemini], id: \.self) { provider in
                             Text(provider.rawValue).tag(provider)
                         }
                     } label: {
@@ -2755,7 +2409,6 @@ struct ProfileView: View {
                     Text("Used when you tap the voice icon to log a meal. Each provider remembers its own language. Provider Auto keeps the provider default; Use iPhone Language sends your current iPhone language when supported.")
                 }
                     .listRowBackground(AppColors.appCard)
-                }
 
                 // Section 5: Health & Data
                 Section("Health & Data") {
@@ -2984,12 +2637,6 @@ struct ProfileView: View {
             .sheet(isPresented: $showManualCheckIn) {
                 CheckInReviewView()
             }
-            .sheet(isPresented: $showFudAIPlusPaywall) {
-                PaywallView()
-            }
-            .onAppear {
-                selectedAccessMode = AIAccessSettings.mode
-            }
             .alert("Auto-balanced", isPresented: $showAutoMacroEditAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
@@ -3141,225 +2788,6 @@ struct ProfileView: View {
             }
         } else {
             healthKitManager.stopObserver()
-        }
-    }
-
-}
-
-private struct FudAIPlusManagedSettingsSection: View {
-    @State private var quotaSnapshot: AIAccessQuotaSnapshot = .fallback
-    @State private var quotaError: String?
-    @State private var isLoadingQuota = false
-    @State private var selectedPlusSpeechLanguage: SpeechLanguage = SpeechSettings.selectedLanguage(for: .gemini)
-
-    var body: some View {
-        Section {
-            quotaRow(icon: "fork.knife", title: "Food Analysis", bucket: quotaSnapshot.food)
-            quotaRow(icon: "waveform", title: "Speech-to-Text", bucket: quotaSnapshot.speech)
-            quotaRow(icon: "message.fill", title: "Coach", bucket: quotaSnapshot.coach)
-            quotaRow(icon: "shield.lefthalf.filled", title: "Daily Safety Limit", bucket: quotaSnapshot.global)
-
-            Picker(selection: $selectedPlusSpeechLanguage) {
-                ForEach(SpeechLanguage.allCases) { language in
-                    Text(language.displayName).tag(language)
-                }
-            } label: {
-                Label {
-                    Text("Speech Language")
-                } icon: {
-                    Image(systemName: "globe")
-                        .foregroundStyle(AppColors.calorie)
-                }
-            }
-            .pickerStyle(.menu)
-            .tint(.secondary)
-            .onChange(of: selectedPlusSpeechLanguage) { _, newLanguage in
-                SpeechSettings.setLanguage(newLanguage, for: .gemini)
-            }
-
-            if isLoadingQuota {
-                HStack {
-                    ProgressView()
-                    Text("Refreshing usage")
-                        .foregroundStyle(.secondary)
-                }
-            } else if let quotaError {
-                Text(quotaError)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        } header: {
-            Text("Fud AI Plus")
-        } footer: {
-            Text("Remaining daily Plus usage is refreshed from Fud AI's server. Plus voice uses Gemini Audio. Provider Auto uses your iPhone language for Plus; choose a language to override it. Provider, model, fallback, and speech API key settings are managed by Plus.")
-        }
-        .listRowBackground(AppColors.appCard)
-        .task {
-            selectedPlusSpeechLanguage = SpeechSettings.selectedLanguage(for: .gemini)
-            await refreshQuota()
-        }
-    }
-
-    private func quotaRow(icon: String, title: String, bucket: AIAccessQuotaSnapshot.Bucket) -> some View {
-        HStack {
-            Label {
-                Text(title)
-            } icon: {
-                Image(systemName: icon)
-                    .foregroundStyle(AppColors.calorie)
-            }
-            Spacer()
-            Text("\(bucket.remaining)/\(bucket.limit) left")
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    private func refreshQuota() async {
-        guard AIAccessSettings.hasActivePlusEntitlement else { return }
-        isLoadingQuota = true
-        quotaError = nil
-        do {
-            quotaSnapshot = try await FudAIProxyClient.quotaSnapshot()
-        } catch {
-            quotaError = "Could not refresh usage right now."
-        }
-        isLoadingQuota = false
-    }
-}
-
-private struct AIAccessSettingsSection: View {
-    @Environment(StoreManager.self) private var storeManager
-    @Binding var selectedAccessMode: AIAccessMode
-    @Binding var showFudAIPlusPaywall: Bool
-    @State private var isManagingSubscription = false
-
-    var body: some View {
-        Section {
-            Picker(selection: $selectedAccessMode) {
-                ForEach(AIAccessMode.allCases) { mode in
-                    Label(mode.displayName, systemImage: mode.icon).tag(mode)
-                }
-            } label: {
-                Label {
-                    Text("Mode")
-                } icon: {
-                    Image(systemName: selectedAccessMode.icon)
-                        .foregroundStyle(AppColors.calorie)
-                }
-            }
-            .pickerStyle(.menu)
-            .tint(.secondary)
-            .onChange(of: selectedAccessMode) { _, newMode in
-                AIAccessSettings.mode = newMode
-                if newMode == .fudAIPlus && !storeManager.isSubscribed {
-                    showFudAIPlusPaywall = true
-                }
-            }
-
-            if selectedAccessMode == .fudAIPlus {
-                plusStatusRow
-                plusActionButton
-                if storeManager.isSubscribed {
-                    switchToBYOKButton
-                }
-            } else {
-                upgradeButton
-            }
-        } header: {
-            Text("AI Access")
-        } footer: {
-            Text("BYOK is the free route if you can create your own Gemini/API key. Plus is optional no-setup access and supports development. Switching to BYOK does not cancel a subscription; use Cancel or Manage Subscription for that.")
-        }
-        .listRowBackground(AppColors.appCard)
-    }
-
-    private var plusStatusRow: some View {
-        HStack {
-            Label {
-                Text("Status")
-            } icon: {
-                Image(systemName: storeManager.isSubscribed ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
-                    .foregroundStyle(storeManager.isSubscribed ? .green : AppColors.calorie)
-            }
-            Spacer()
-            Text(storeManager.isSubscribed ? storeManager.currentPlanName : "Subscription needed")
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    private var plusActionButton: some View {
-        Button {
-            if storeManager.isSubscribed {
-                Task { await openSubscriptionManagement() }
-            } else {
-                showFudAIPlusPaywall = true
-            }
-        } label: {
-            Label {
-                Text(storeManager.isSubscribed ? "Cancel or Manage Subscription" : "Upgrade to Plus")
-            } icon: {
-                Image(systemName: storeManager.isSubscribed ? "creditcard.fill" : "sparkles")
-                    .foregroundStyle(AppColors.calorie)
-            }
-        }
-        .tint(.primary)
-        .disabled(isManagingSubscription)
-    }
-
-    private var switchToBYOKButton: some View {
-        Button {
-            selectedAccessMode = .bringYourOwnKey
-            AIAccessSettings.mode = .bringYourOwnKey
-        } label: {
-            Label {
-                Text("Switch to BYOK")
-            } icon: {
-                Image(systemName: "key.fill")
-                    .foregroundStyle(AppColors.calorie)
-            }
-        }
-        .tint(.primary)
-    }
-
-    private var upgradeButton: some View {
-        Button {
-            selectedAccessMode = .fudAIPlus
-            AIAccessSettings.mode = .fudAIPlus
-            showFudAIPlusPaywall = true
-        } label: {
-            Label {
-                Text("Upgrade to Fud AI Plus")
-            } icon: {
-                Image(systemName: "sparkles")
-                    .foregroundStyle(AppColors.calorie)
-            }
-        }
-        .tint(.primary)
-    }
-
-    @MainActor
-    private func openSubscriptionManagement() async {
-        isManagingSubscription = true
-        defer { isManagingSubscription = false }
-
-        guard let scene = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .first(where: { $0.activationState == .foregroundActive }) else {
-            openAppleSubscriptionsURL()
-            return
-        }
-
-        do {
-            try await AppStore.showManageSubscriptions(in: scene)
-            await storeManager.checkEntitlements()
-        } catch {
-            openAppleSubscriptionsURL()
-        }
-    }
-
-    private func openAppleSubscriptionsURL() {
-        if let url = URL(string: "https://apps.apple.com/account/subscriptions") {
-            UIApplication.shared.open(url)
         }
     }
 }
