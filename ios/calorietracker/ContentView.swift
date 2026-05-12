@@ -2190,6 +2190,17 @@ struct ProfileView: View {
                                 .foregroundStyle(AppColors.calorie)
                         }
                     }
+
+                    NavigationLink {
+                        FoodDatabaseView()
+                    } label: {
+                        Label {
+                            Text("Food database")
+                        } icon: {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundStyle(AppColors.calorie)
+                        }
+                    }
                 }
                 .listRowBackground(AppColors.appCard)
 
