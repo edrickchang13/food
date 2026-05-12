@@ -89,11 +89,12 @@ struct WeightChartSection: View {
                         .symbolSize(30)
                     }
 
-                    if let goalKg = goalWeightKg {
-                        RuleMark(y: .value("Goal", displayWeight(goalKg)))
-                            .foregroundStyle(.green.opacity(0.7))
-                            .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
-                    }
+                    // Always include the goal rule; hide via opacity when nil.
+                    // Older Swift result-builder synthesis (Xcode 16) chokes on
+                    // ForEach + conditional in the same Chart block.
+                    RuleMark(y: .value("Goal", displayWeight(goalWeightKg ?? 0)))
+                        .foregroundStyle(.green.opacity(goalWeightKg == nil ? 0 : 0.7))
+                        .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
                 }
                 .chartYScale(domain: weightYDomain)
                 .chartXAxis {
@@ -683,11 +684,11 @@ struct BodyFatChartSection: View {
                         .symbolSize(30)
                     }
 
-                    if let goalFraction = goalBodyFatFraction {
-                        RuleMark(y: .value("Goal", displayPercent(goalFraction)))
-                            .foregroundStyle(.green.opacity(0.7))
-                            .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
-                    }
+                    // Goal rule is unconditional + opacity-gated for the same
+                    // result-builder reason as the weight chart above.
+                    RuleMark(y: .value("Goal", displayPercent(goalBodyFatFraction ?? 0)))
+                        .foregroundStyle(.green.opacity(goalBodyFatFraction == nil ? 0 : 0.7))
+                        .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
                 }
                 .chartYScale(domain: bodyFatYDomain)
                 .chartXAxis {
