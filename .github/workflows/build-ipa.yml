@@ -71,15 +71,42 @@ jobs:
             ONLY_ACTIVE_ARCH=NO \
             build
 
-      - name: Package .ipa (widget extension stripped for free signing)
+      - name: Set version
+        id: version
+        run: |
+          # Monotonically increasing, matches GitHub Actions' run_number.
+          # Format keeps AltStore happy with numeric comparison.
+          VERSION="1.0.${{ github.run_number }}"
+          DATE=$(date -u +%Y-%m-%dT%H:%M:%S%z | sed 's/\([+-][0-9][0-9]\)\([0-9][0-9]\)/\1:\2/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"
+          echo "Building version $VERSION at $DATE"
+
+      - name: Package .ipa (widget extension stripped, version stamped)
         id: package
         working-directory: ios
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD_NUMBER: ${{ github.run_number }}
         run: |
           APP_PATH="build/Build/Products/Release-iphoneos/calorietracker.app"
           if [ ! -d "$APP_PATH" ]; then
             echo "::error::expected .app at $APP_PATH"
             exit 1
           fi
+
+          # Stamp the build's CFBundleShortVersionString + CFBundleVersion into
+          # the .app's Info.plist so the in-app Settings "Build" row shows the
+          # version we're publishing to AltStore. PlistBuddy Set fails when the
+          # key is missing, so fall through to Add in that case.
+          INFO_PLIST="$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$INFO_PLIST" 2>/dev/null \
+            || /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string $VERSION" "$INFO_PLIST"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$INFO_PLIST" 2>/dev/null \
+            || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $BUILD_NUMBER" "$INFO_PLIST"
+          echo "Stamped Info.plist with version $VERSION (build $BUILD_NUMBER):"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$INFO_PLIST"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$INFO_PLIST"
 
           # AltStore + free signing can't grant the entitlements the widget
           # extension uses (app groups, etc), so strip it before packaging.
@@ -95,17 +122,6 @@ jobs:
           SIZE=$(stat -f%z BulkAI.ipa 2>/dev/null || stat -c%s BulkAI.ipa)
           echo "size=$SIZE" >> "$GITHUB_OUTPUT"
           ls -lh BulkAI.ipa
-
-      - name: Set version
-        id: version
-        run: |
-          # Monotonically increasing, matches GitHub Actions' run_number.
-          # Format keeps AltStore happy with numeric comparison.
-          VERSION="1.0.${{ github.run_number }}"
-          DATE=$(date -u +%Y-%m-%dT%H:%M:%S%z | sed 's/\([+-][0-9][0-9]\)\([0-9][0-9]\)/\1:\2/')
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "date=$DATE" >> "$GITHUB_OUTPUT"
-          echo "Building version $VERSION at $DATE"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

@@ -1776,6 +1776,16 @@ struct ProfileView: View {
         AppThemeColor.color(for: appThemeColorRaw)
     }
 
+    /// Shown in the Settings "Build" row. Reads the values stamped into Info.plist
+    /// by the CI workflow before .ipa packaging, so each AltStore update bumps
+    /// this string visibly.
+    private var buildVersionString: String {
+        let info = Bundle.main.infoDictionary ?? [:]
+        let version = info["CFBundleShortVersionString"] as? String ?? "dev"
+        let build = info["CFBundleVersion"] as? String ?? "0"
+        return "v\(version) (\(build))"
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -2454,6 +2464,24 @@ struct ProfileView: View {
                         .foregroundStyle(.red)
                     }
                     .buttonStyle(.plain)
+                }
+                .listRowBackground(AppColors.appCard)
+
+                // Build info — version + run number get stamped by the CI
+                // workflow before .ipa packaging. Bumps on every push to main.
+                Section {
+                    HStack {
+                        Label {
+                            Text("Build")
+                        } icon: {
+                            Image(systemName: "hammer")
+                                .foregroundStyle(AppColors.calorie)
+                        }
+                        Spacer()
+                        Text(buildVersionString)
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
                 }
                 .listRowBackground(AppColors.appCard)
             }
