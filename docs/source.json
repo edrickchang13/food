@@ -25,18 +25,17 @@
       "appPermissions": {
         "entitlements": [
           {
-            "name": "com.apple.developer.healthkit",
-            "description": "Read and write nutrition, weight, and body measurement data via Apple Health."
+            "name": "com.apple.developer.healthkit"
           }
         ],
         "privacy": [
           {
             "name": "NSHealthShareUsageDescription",
-            "description": "Read your weight, height, and body composition to keep your profile accurate."
+            "usageDescription": "Read your weight, height, and body composition to keep your profile accurate."
           },
           {
             "name": "NSHealthUpdateUsageDescription",
-            "description": "Write your nutrition and body measurements so all your health data stays in one place."
+            "usageDescription": "Write your nutrition and body measurements so all your health data stays in one place."
           }
         ]
       }
