@@ -407,11 +407,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				APP_DISPLAY_NAME = "Bulk AI Debug";
-				APP_GROUP_IDENTIFIER = group.com.apoorvdarshan.calorietracker.debug;
+				APP_GROUP_IDENTIFIER = group.com.edrickchang.bulkai.debug;
 				CODE_SIGN_ENTITLEMENTS = calorietracker/calorietracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 23RV7FYH36;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = calorietracker/Info.plist;
@@ -434,7 +434,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 3.4.1;
-					PRODUCT_BUNDLE_IDENTIFIER = com.apoorvdarshan.calorietracker.debug;
+					PRODUCT_BUNDLE_IDENTIFIER = com.edrickchang.bulkai.debug;
 					PRODUCT_NAME = "$(TARGET_NAME)";
 					REVENUECAT_API_KEY = appl_gTWwNXfsUvRsJAxvqyNandnyjVa;
 					STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -459,11 +459,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				APP_DISPLAY_NAME = "Bulk AI";
-				APP_GROUP_IDENTIFIER = group.com.apoorvdarshan.calorietracker;
+				APP_GROUP_IDENTIFIER = group.com.edrickchang.bulkai;
 				CODE_SIGN_ENTITLEMENTS = calorietracker/calorietracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 23RV7FYH36;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = calorietracker/Info.plist;
@@ -486,7 +486,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 3.4.1;
-					PRODUCT_BUNDLE_IDENTIFIER = com.apoorvdarshan.calorietracker;
+					PRODUCT_BUNDLE_IDENTIFIER = com.edrickchang.bulkai;
 					PRODUCT_NAME = "$(TARGET_NAME)";
 					REVENUECAT_API_KEY = appl_gTWwNXfsUvRsJAxvqyNandnyjVa;
 					STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -538,7 +538,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 23RV7FYH36;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -603,7 +603,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 23RV7FYH36;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -632,11 +632,11 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = 23RV7FYH36;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.apoorvdarshan.calorietrackerTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.edrickchang.bulkaiTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -654,11 +654,11 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = 23RV7FYH36;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.apoorvdarshan.calorietrackerTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.edrickchang.bulkaiTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -675,10 +675,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = 23RV7FYH36;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.apoorvdarshan.calorietrackerUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.edrickchang.bulkaiUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -695,10 +695,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = 23RV7FYH36;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.apoorvdarshan.calorietrackerUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.edrickchang.bulkaiUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -716,11 +716,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				APP_DISPLAY_NAME = "Bulk AI Debug";
-				APP_GROUP_IDENTIFIER = group.com.apoorvdarshan.calorietracker.debug;
+				APP_GROUP_IDENTIFIER = group.com.edrickchang.bulkai.debug;
 				CODE_SIGN_ENTITLEMENTS = FudAIWidgets/FudAIWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 23RV7FYH36;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FudAIWidgets/Info.plist;
 				INFOPLIST_KEY_AppGroupIdentifier = "$(APP_GROUP_IDENTIFIER)";
@@ -733,7 +733,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 3.4.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.apoorvdarshan.calorietracker.debug.FudAIWidgets;
+				PRODUCT_BUNDLE_IDENTIFIER = com.edrickchang.bulkai.debug.Widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -755,11 +755,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				APP_DISPLAY_NAME = "Bulk AI";
-				APP_GROUP_IDENTIFIER = group.com.apoorvdarshan.calorietracker;
+				APP_GROUP_IDENTIFIER = group.com.edrickchang.bulkai;
 				CODE_SIGN_ENTITLEMENTS = FudAIWidgets/FudAIWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 23RV7FYH36;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FudAIWidgets/Info.plist;
 				INFOPLIST_KEY_AppGroupIdentifier = "$(APP_GROUP_IDENTIFIER)";
@@ -772,7 +772,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 3.4.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.apoorvdarshan.calorietracker.FudAIWidgets;
+				PRODUCT_BUNDLE_IDENTIFIER = com.edrickchang.bulkai.Widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
