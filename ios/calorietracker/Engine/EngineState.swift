@@ -94,15 +94,26 @@ final class EngineState {
         )
     }
 
-    /// Persists the new prior. Call this after the user accepts a weekly check-in proposal.
-    func commitNewPriorExpenditure(_ kcalPerDay: Double, on day: CalendarDay) {
-        UserDefaults.standard.set(kcalPerDay, forKey: priorExpenditureKey)
+    /// User accepted (or adjusted) the proposal: advance the cadence AND update the
+    /// prior expenditure to the new estimate so next week's ±15% clamp anchors here.
+    func commitAcceptedCheckIn(newExpenditureKcalPerDay: Double, on day: CalendarDay) {
+        UserDefaults.standard.set(newExpenditureKcalPerDay, forKey: priorExpenditureKey)
         persist(day: day, forKey: lastCheckInKey)
+        refresh()
+    }
+
+    /// User skipped the proposal: advance the cadence so we don't re-prompt for 7 days,
+    /// but do NOT update the prior expenditure. The next calc still anchors to the
+    /// last value the user actually accepted.
+    func commitSkippedCheckIn(on day: CalendarDay) {
+        persist(day: day, forKey: lastCheckInKey)
+        refresh()
     }
 
     /// Record that onboarding completed today, so check-in cadence has an anchor.
     func recordOnboardingComplete(on day: CalendarDay = CalendarDay(date: .now, calendar: .bulkAI)) {
         persist(day: day, forKey: onboardingDateKey)
+        refresh()
     }
 
     // MARK: - Mappers (static so they're unit-testable in isolation)

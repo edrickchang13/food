@@ -24,6 +24,12 @@ public struct MacroTargets: Equatable, Codable, Sendable {
     public let fatG: Double
     public let carbsG: Double
 
+    public init(proteinG: Double, fatG: Double, carbsG: Double) {
+        self.proteinG = proteinG
+        self.fatG = fatG
+        self.carbsG = carbsG
+    }
+
     public var totalKcal: Double {
         proteinG * 4 + fatG * 9 + carbsG * 4
     }

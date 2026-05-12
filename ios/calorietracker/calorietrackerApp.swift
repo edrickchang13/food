@@ -20,6 +20,7 @@ struct calorietrackerApp: App {
     @State private var chatStore = ChatStore()
     @State private var storeManager = StoreManager()
     @State private var engineState: EngineState
+    @State private var showCheckIn = false
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("appearanceMode") private var appearanceMode = "system"
     @AppStorage("notificationsEnabled") private var notificationsEnabled = false
@@ -86,6 +87,19 @@ struct calorietrackerApp: App {
             .onReceive(NotificationCenter.default.publisher(for: .userProfileDidChange)) { _ in
                 refreshWidgetSnapshot()
                 engineState.refresh()
+            }
+            .onAppear {
+                if hasCompletedOnboarding && engineState.snapshot.checkInDue {
+                    showCheckIn = true
+                }
+            }
+            .onChange(of: engineState.snapshot.checkInDue) { _, due in
+                if due && hasCompletedOnboarding { showCheckIn = true }
+            }
+            .sheet(isPresented: $showCheckIn) {
+                CheckInReviewView()
+                    .environment(engineState)
+                    .environment(foodStore)
             }
         }
         .onChange(of: scenePhase) { _, newPhase in
