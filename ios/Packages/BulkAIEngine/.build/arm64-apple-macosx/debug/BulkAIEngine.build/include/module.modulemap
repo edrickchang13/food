@@ -1,3 +1,0 @@
-module BulkAIEngine {
-    header "/Users/edrickchang/food/ios/Packages/BulkAIEngine/.build/arm64-apple-macosx/debug/BulkAIEngine.build/include/BulkAIEngine-Swift.h"
-}
