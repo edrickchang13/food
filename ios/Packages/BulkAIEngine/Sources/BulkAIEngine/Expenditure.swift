@@ -19,6 +19,18 @@ public enum ExpenditureConfidence: String, Codable, Sendable {
     case high
 }
 
+/// Distinguishes a freshly computed estimate from a held-prior value.
+///
+/// The UI should surface `.holding` as a clear "Holding" state rather
+/// than implying the engine ran a fresh computation.
+public enum ExpenditureStatus: String, Codable, Sendable {
+    /// Engine produced a fresh estimate from data in the current window.
+    case estimated
+    /// Insufficient data — the returned `kcalPerDay` is the unchanged prior.
+    /// Check `holdingReason` for a short human-readable explanation.
+    case holding
+}
+
 public struct ExpenditureEstimate: Equatable, Codable, Sendable {
     public let kcalPerDay: Double
     public let confidence: ExpenditureConfidence
@@ -28,6 +40,10 @@ public struct ExpenditureEstimate: Equatable, Codable, Sendable {
     public let priorKcalPerDay: Double
     /// Whether a guardrail clamp was applied (±15% adjustment cap or BMR floor/ceiling).
     public let clampApplied: Bool
+    /// Whether the engine computed a fresh estimate or held the prior.
+    public let status: ExpenditureStatus
+    /// Short human-readable explanation when `status == .holding`; `nil` otherwise.
+    public let holdingReason: String?
 
     public init(
         kcalPerDay: Double,
@@ -36,7 +52,9 @@ public struct ExpenditureEstimate: Equatable, Codable, Sendable {
         foodLogDays: Int,
         weightLogDays: Int,
         priorKcalPerDay: Double,
-        clampApplied: Bool
+        clampApplied: Bool,
+        status: ExpenditureStatus = .estimated,
+        holdingReason: String? = nil
     ) {
         self.kcalPerDay = kcalPerDay
         self.confidence = confidence
@@ -45,6 +63,8 @@ public struct ExpenditureEstimate: Equatable, Codable, Sendable {
         self.weightLogDays = weightLogDays
         self.priorKcalPerDay = priorKcalPerDay
         self.clampApplied = clampApplied
+        self.status = status
+        self.holdingReason = holdingReason
     }
 }
 
@@ -62,6 +82,13 @@ public enum Expenditure {
     public static let maxWeeklyAdjustmentRatio: Double = 0.15
     public static let bmrFloorMultiplier: Double = 1.1
     public static let bmrCeilingMultiplier: Double = 2.5
+    /// UI-facing alias for `minFoodLogs`: minimum intake-log days required for a fresh estimate.
+    /// Lets UI display copy like "Logged N/3 days this week" without importing raw constant names.
+    public static let minIntakeDaysForFreshEstimate: Int = minFoodLogs
+    /// UI-facing alias for `minWeightLogs`: minimum weight-log days required for a fresh estimate.
+    public static let minTrendDaysForFreshEstimate: Int = minWeightLogs
+    /// UI-facing alias for `defaultWindowDays`: the sufficiency-evaluation window length.
+    public static let sufficiencyWindowDays: Int = defaultWindowDays
 
     /// Estimates current TDEE using the energy-balance equation:
     /// `expenditure = avgIntake - (trendChangeKg * kcalPerKg) / windowDays`.
@@ -94,6 +121,17 @@ public enum Expenditure {
         let trendHasEndpoints = trendInWindow.count >= 2
 
         guard !belowThreshold, trendHasEndpoints else {
+            let reason: String = {
+                let needsFood = foodLogDays < minFoodLogs
+                let needsWeight = weightLogDays < minWeightLogs
+                if needsFood && needsWeight {
+                    return "Need more food + weight logs"
+                } else if needsFood {
+                    return "Need at least \(minFoodLogs) days of food logs in the past \(windowDays)"
+                } else {
+                    return "Need at least \(minWeightLogs) weight entry in the past \(windowDays) days"
+                }
+            }()
             return ExpenditureEstimate(
                 kcalPerDay: priorKcalPerDay,
                 confidence: .low,
@@ -101,7 +139,9 @@ public enum Expenditure {
                 foodLogDays: foodLogDays,
                 weightLogDays: weightLogDays,
                 priorKcalPerDay: priorKcalPerDay,
-                clampApplied: false
+                clampApplied: false,
+                status: .holding,
+                holdingReason: reason
             )
         }
 
@@ -137,7 +177,8 @@ public enum Expenditure {
             foodLogDays: foodLogDays,
             weightLogDays: weightLogDays,
             priorKcalPerDay: priorKcalPerDay,
-            clampApplied: clampApplied
+            clampApplied: clampApplied,
+            status: .estimated
         )
     }
 

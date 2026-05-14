@@ -81,25 +81,59 @@ struct CheckInReviewView: View {
     private var expenditureCard: some View {
         card(title: "Dynamic expenditure") {
             if let exp = snapshot.expenditure {
-                statRow(label: "Previous estimate", value: "\(Int(exp.priorKcalPerDay)) kcal/day")
-                statRow(label: "New estimate", value: "\(Int(exp.kcalPerDay)) kcal/day")
-                statRow(
-                    label: "Change",
-                    value: formattedDelta(exp.kcalPerDay - exp.priorKcalPerDay, unit: "kcal/day")
-                )
-                Divider().padding(.vertical, 4)
-                statRow(label: "Confidence", value: exp.confidence.rawValue.capitalized)
-                if exp.clampApplied {
-                    Text("A safety cap was applied. The engine never moves expenditure more than 15% in one week, and stays within physiologically reasonable BMR bounds.")
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 4)
+                if exp.status == .holding {
+                    // The engine is suspending updates because the past 7
+                    // days don't have enough nutrition / weight data to
+                    // produce a fresh estimate. Show the held value with a
+                    // clear "Holding" badge instead of a misleading
+                    // low-confidence number.
+                    holdingBanner(reason: exp.holdingReason ?? "Need more logs in the past 7 days")
+                    statRow(label: "Held estimate", value: "\(Int(exp.kcalPerDay)) kcal/day")
+                    statRow(label: "Food logs / 7d", value: "\(exp.foodLogDays) / \(Expenditure.minIntakeDaysForFreshEstimate)")
+                    statRow(label: "Weight logs / 7d", value: "\(exp.weightLogDays) / \(Expenditure.minTrendDaysForFreshEstimate)")
+                } else {
+                    statRow(label: "Previous estimate", value: "\(Int(exp.priorKcalPerDay)) kcal/day")
+                    statRow(label: "New estimate", value: "\(Int(exp.kcalPerDay)) kcal/day")
+                    statRow(
+                        label: "Change",
+                        value: formattedDelta(exp.kcalPerDay - exp.priorKcalPerDay, unit: "kcal/day")
+                    )
+                    Divider().padding(.vertical, 4)
+                    statRow(label: "Confidence", value: exp.confidence.rawValue.capitalized)
+                    if exp.clampApplied {
+                        Text("A safety cap was applied. The engine never moves expenditure more than 15% in one week, and stays within physiologically reasonable BMR bounds.")
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 4)
+                    }
                 }
             } else {
                 Text("Not enough data yet.")
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    /// Yellow-tinted explainer that surfaces the engine's holding state
+    /// honestly. The choice to suspend the estimate (rather than compute a
+    /// low-confidence one from noise) is a core engine pitch — we want this
+    /// failure mode visible, not buried.
+    private func holdingBanner(reason: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "pause.circle.fill")
+                .foregroundStyle(BulkAITheme.Color.macroFat)
+                .font(.system(size: 16, weight: .semibold))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Holding")
+                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                    .foregroundStyle(.white)
+                Text(reason)
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 4)
     }
 
     private var proposedPlanCard: some View {

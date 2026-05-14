@@ -153,6 +153,9 @@ struct DynamicTDEEExplainer: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: BulkAITheme.Spacing.xl) {
                     heroSection
+                    if let exp = engineState.snapshot.expenditure, exp.status == .holding {
+                        holdingCard(estimate: exp)
+                    }
                     equationCard
                     footerSection
                 }
@@ -175,6 +178,61 @@ struct DynamicTDEEExplainer: View {
     }
 
     // MARK: - Sections
+
+    /// Surfaced above the equation card whenever the engine is in its
+    /// Holding state. Tells the user that the displayed expenditure is the
+    /// PRIOR estimate held in place — not a fresh computation — because the
+    /// past 7 days don't have enough food + weight data to update reliably.
+    private func holdingCard(estimate: ExpenditureEstimate) -> some View {
+        VStack(alignment: .leading, spacing: BulkAITheme.Spacing.sm) {
+            HStack(spacing: BulkAITheme.Spacing.sm) {
+                Image(systemName: "pause.circle.fill")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(BulkAITheme.Color.macroFat)
+                Text("Holding")
+                    .font(BulkAITheme.Typography.title3)
+                    .foregroundStyle(.white)
+                Spacer(minLength: 0)
+            }
+
+            Text(estimate.holdingReason ?? "Need more food + weight logs in the past 7 days.")
+                .font(BulkAITheme.Typography.body)
+                .foregroundStyle(.white.opacity(0.75))
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: BulkAITheme.Spacing.md) {
+                metric(label: "FOOD LOGS",
+                       value: "\(estimate.foodLogDays) / \(Expenditure.minIntakeDaysForFreshEstimate)")
+                metric(label: "WEIGHT LOGS",
+                       value: "\(estimate.weightLogDays) / \(Expenditure.minTrendDaysForFreshEstimate)")
+                Spacer(minLength: 0)
+            }
+            .padding(.top, BulkAITheme.Spacing.xxs)
+        }
+        .padding(BulkAITheme.Spacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: BulkAITheme.Radius.lg)
+                .fill(BulkAITheme.Color.macroFat.opacity(0.12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: BulkAITheme.Radius.lg)
+                        .stroke(BulkAITheme.Color.macroFat.opacity(0.35), lineWidth: 1)
+                )
+        )
+    }
+
+    private func metric(label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(BulkAITheme.Typography.caption2)
+                .foregroundStyle(.white.opacity(0.55))
+                .tracking(0.6)
+            Text(value)
+                .font(BulkAITheme.Typography.headline)
+                .foregroundStyle(.white)
+                .monospacedDigit()
+        }
+    }
 
     private var heroSection: some View {
         VStack(alignment: .leading, spacing: BulkAITheme.Spacing.xs) {
