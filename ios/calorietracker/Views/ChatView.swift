@@ -39,7 +39,7 @@ struct ChatView: View {
 
                 inputBar
             }
-            .background(AppColors.appBackground)
+            .background(BulkAITheme.Color.background)
             .navigationTitle("Coach")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -48,7 +48,7 @@ struct ChatView: View {
                         if !messages.isEmpty { showResetConfirmation = true }
                     } label: {
                         Image(systemName: "arrow.counterclockwise")
-                            .foregroundStyle(messages.isEmpty ? Color.secondary : AppColors.calorie)
+                            .foregroundStyle(messages.isEmpty ? Color.secondary : BulkAITheme.Color.accent)
                     }
                     .disabled(messages.isEmpty)
                 }
@@ -84,11 +84,11 @@ struct ChatView: View {
                             lineWidth: 0.8
                         )
                     )
-                    .shadow(color: AppColors.calorie.opacity(0.18), radius: 24, x: 0, y: 10)
+                    .shadow(color: BulkAITheme.Color.accent.opacity(0.18), radius: 24, x: 0, y: 10)
                 Image(systemName: "bubble.left.and.bubble.right.fill")
                     .font(.system(size: 44))
                     .foregroundStyle(
-                        LinearGradient(colors: AppColors.calorieGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+                        LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
                     )
             }
             Text("Ask your Coach")
@@ -214,19 +214,19 @@ struct ChatView: View {
                             .font(.system(.footnote, design: .rounded, weight: .medium))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
-                            .foregroundStyle(AppColors.calorie)
+                            .foregroundStyle(BulkAITheme.Color.accent)
                             .background(
                                 Capsule().fill(.ultraThinMaterial)
                             )
                             .overlay(
                                 Capsule()
-                                    .fill(AppColors.calorie.opacity(0.10))
+                                    .fill(BulkAITheme.Color.accent.opacity(0.10))
                             )
                             .overlay(
                                 Capsule()
                                     .stroke(
                                         LinearGradient(
-                                            colors: [AppColors.calorie.opacity(0.35), AppColors.calorie.opacity(0.10)],
+                                            colors: [BulkAITheme.Color.accent.opacity(0.35), BulkAITheme.Color.accent.opacity(0.10)],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         ),
@@ -261,14 +261,14 @@ struct ChatView: View {
                     .frame(width: 34, height: 34)
                     .background(
                         canSend
-                            ? AnyShapeStyle(LinearGradient(colors: AppColors.calorieGradient, startPoint: .topLeading, endPoint: .bottomTrailing))
-                            : AnyShapeStyle(Color.secondary.opacity(0.35)),
+                            ? AnyShapeStyle(LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .topLeading, endPoint: .bottomTrailing))
+                            : AnyShapeStyle(BulkAITheme.Color.surfaceElevated),
                         in: Circle()
                     )
                     .overlay(
                         Circle().stroke(Color.white.opacity(canSend ? 0.25 : 0.10), lineWidth: 0.6)
                     )
-                    .shadow(color: canSend ? AppColors.calorie.opacity(0.35) : .clear, radius: 8, x: 0, y: 4)
+                    .shadow(color: canSend ? BulkAITheme.Color.accent.opacity(0.35) : .clear, radius: 8, x: 0, y: 4)
             }
             .disabled(!canSend)
             .padding(.trailing, 5)
@@ -365,7 +365,7 @@ private struct MessageBubble: View {
             Image(systemName: "sparkles")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(
-                    LinearGradient(colors: AppColors.calorieGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+                    LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
                 )
         }
         .padding(.top, 8)
@@ -384,7 +384,7 @@ private struct MessageBubble: View {
                 if isUser { bubbleHighlight }
             }
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .shadow(color: isUser ? AppColors.calorie.opacity(0.28) : Color.black.opacity(0.12),
+            .shadow(color: isUser ? BulkAITheme.Color.accent.opacity(0.28) : Color.black.opacity(0.12),
                     radius: isUser ? 10 : 6, x: 0, y: isUser ? 6 : 3)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -392,13 +392,13 @@ private struct MessageBubble: View {
     @ViewBuilder
     private var bubbleBackground: some View {
         if isUser {
-            LinearGradient(colors: AppColors.calorieGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
         } else {
             ZStack {
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(.ultraThinMaterial)
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(AppColors.calorie.opacity(0.035))
+                    .fill(BulkAITheme.Color.accent.opacity(0.035))
             }
         }
     }
@@ -436,7 +436,7 @@ private struct TypingIndicator: View {
             ForEach(0..<3) { i in
                 Circle()
                     .fill(
-                        LinearGradient(colors: AppColors.calorieGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+                        LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
                     )
                     .frame(width: 7, height: 7)
                     .opacity(phase == i ? 1 : 0.3)

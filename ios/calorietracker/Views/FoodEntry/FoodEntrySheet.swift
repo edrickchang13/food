@@ -497,6 +497,7 @@ struct FoodEntrySheet: View {
         for entry in stagedEntries {
             foodStore.addEntry(entry)
         }
+        Haptics.medium()
         stagedEntries.removeAll()
         dismiss()
     }
