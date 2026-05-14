@@ -192,7 +192,7 @@ private struct AboutView: View {
                             Text("Rate the App")
                         } icon: {
                             Image(systemName: "star.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -208,7 +208,7 @@ private struct AboutView: View {
                             Text("Share the App")
                         } icon: {
                             Image(systemName: "square.and.arrow.up.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -219,7 +219,7 @@ private struct AboutView: View {
                             Text("Support on Ko-fi")
                         } icon: {
                             Image(systemName: "cup.and.saucer.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -230,7 +230,7 @@ private struct AboutView: View {
                             Text("Open Source (MIT)")
                         } icon: {
                             Image(systemName: "chevron.left.forwardslash.chevron.right")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -241,7 +241,7 @@ private struct AboutView: View {
                             Text("Star on GitHub")
                         } icon: {
                             Image(systemName: "star.circle.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -252,7 +252,7 @@ private struct AboutView: View {
                             Text("Vote on Product Hunt")
                         } icon: {
                             Image(systemName: "hand.thumbsup.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -263,7 +263,7 @@ private struct AboutView: View {
                             Text("Report an Issue")
                         } icon: {
                             Image(systemName: "exclamationmark.bubble.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -274,7 +274,7 @@ private struct AboutView: View {
                             Text("Request a Feature")
                         } icon: {
                             Image(systemName: "lightbulb.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -285,7 +285,7 @@ private struct AboutView: View {
                             Text("Contact Us")
                         } icon: {
                             Image(systemName: "envelope.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -296,7 +296,7 @@ private struct AboutView: View {
                             Text("Follow on X")
                         } icon: {
                             Image(systemName: "at")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -307,7 +307,7 @@ private struct AboutView: View {
                             Text("Follow on Instagram")
                         } icon: {
                             Image(systemName: "camera.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -318,12 +318,12 @@ private struct AboutView: View {
                             Text("Follow on LinkedIn")
                         } icon: {
                             Image(systemName: "briefcase.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
 
                 Section {
                     // Privacy Policy
@@ -332,7 +332,7 @@ private struct AboutView: View {
                             Text("Privacy Policy")
                         } icon: {
                             Image(systemName: "lock.shield.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -343,12 +343,12 @@ private struct AboutView: View {
                             Text("Terms of Service")
                         } icon: {
                             Image(systemName: "doc.text.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
 
                 Section {
                     VStack(spacing: 4) {
@@ -365,7 +365,7 @@ private struct AboutView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(AppColors.appBackground)
+            .background(BulkAITheme.Color.background)
             .navigationBarHidden(true)
             .sheet(isPresented: $showShareSheet) {
                 ActivityShareSheet(activityItems: [shareMessage, fudAIAppStoreURL])
@@ -382,13 +382,13 @@ private struct AboutView: View {
                     Text("Checking for Updates")
                 } icon: {
                     Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                 }
 
                 Spacer()
 
                 ProgressView()
-                    .tint(AppColors.calorie)
+                    .tint(BulkAITheme.Color.accent)
             }
 
         case .available(let current, let latest, let url):
@@ -406,10 +406,10 @@ private struct AboutView: View {
                     } icon: {
                         ZStack(alignment: .topTrailing) {
                             Image(systemName: "arrow.down.circle.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
 
                             Circle()
-                                .fill(AppColors.calorie)
+                                .fill(BulkAITheme.Color.accent)
                                 .frame(width: 8, height: 8)
                                 .offset(x: 3, y: -3)
                         }
@@ -419,7 +419,7 @@ private struct AboutView: View {
 
                     Text("Update")
                         .fontWeight(.semibold)
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                 }
             }
             .tint(.primary)
@@ -440,7 +440,7 @@ private struct AboutView: View {
                         }
                     } icon: {
                         Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
-                            .foregroundStyle(AppColors.calorie)
+                            .foregroundStyle(BulkAITheme.Color.accent)
                     }
 
                     Spacer()
@@ -459,7 +459,7 @@ private struct AboutView: View {
                         Text("App Version")
                     } icon: {
                         Image(systemName: "checkmark.seal.fill")
-                            .foregroundStyle(AppColors.calorie)
+                            .foregroundStyle(BulkAITheme.Color.accent)
                     }
 
                     Spacer()
@@ -590,14 +590,14 @@ struct HomeView: View {
                     Section(isToday ? "Today's Food" : "Food Log") {
                         Text("No foods logged")
                             .foregroundStyle(.secondary)
-                            .listRowBackground(AppColors.appCard)
+                            .listRowBackground(BulkAITheme.Color.surface)
                     }
                 } else {
                     ForEach(mealGroups) { group in
                         Section {
                             ForEach(group.entries) { entry in
                                 FoodRow(entry: entry)
-                                    .listRowBackground(AppColors.appCard)
+                                    .listRowBackground(BulkAITheme.Color.surface)
                                     .contentShape(Rectangle())
                                     .onTapGesture {
                                         editingEntry = entry
@@ -614,7 +614,7 @@ struct HomeView: View {
                                         } label: {
                                             Label(foodStore.isFavorite(entry) ? "Unfavorite" : "Favorite", systemImage: foodStore.isFavorite(entry) ? "heart.slash.fill" : "heart.fill")
                                         }
-                                        .tint(AppColors.calorie)
+                                        .tint(BulkAITheme.Color.accent)
                                     }
                             }
                         } header: {
@@ -636,7 +636,7 @@ struct HomeView: View {
                                                 .font(.system(.subheadline, design: .rounded, weight: .semibold))
                                         }
                                     }
-                                    .tint(AppColors.calorie)
+                                    .tint(BulkAITheme.Color.accent)
                                     .textCase(nil)
                                 }
                             }
@@ -645,7 +645,7 @@ struct HomeView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(AppColors.appBackground)
+            .background(BulkAITheme.Color.background)
             .animation(.snappy, value: selectedDate)
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
@@ -705,7 +705,7 @@ struct NutritionDetailView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
 
                 Section("Macros") {
                     NutritionDetailRow(icon: "flame.fill", label: "Calories", value: "\(foodStore.calories(for: date))", unit: "kcal", goal: "\(userProfile.effectiveCalories)")
@@ -713,7 +713,7 @@ struct NutritionDetailView: View {
                     NutritionDetailRow(icon: "c.circle.fill", label: "Carbs", value: "\(foodStore.carbs(for: date))", unit: "g", goal: "\(userProfile.effectiveCarbs)")
                     NutritionDetailRow(icon: "f.circle.fill", label: "Fat", value: "\(foodStore.fat(for: date))", unit: "g", goal: "\(userProfile.effectiveFat)")
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
 
                 Section("Detailed Nutrition") {
                     optionalNutritionRow(.sugar, value: foodStore.sugar(for: date))
@@ -726,10 +726,10 @@ struct NutritionDetailView: View {
                     optionalNutritionRow(.sodium, value: foodStore.sodium(for: date))
                     optionalNutritionRow(.potassium, value: foodStore.potassium(for: date))
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
             }
             .scrollContentBackground(.hidden)
-            .background(AppColors.appBackground)
+            .background(BulkAITheme.Color.background)
             .navigationTitle("Nutrition Details")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showHomeNutrientPicker) {
@@ -738,7 +738,7 @@ struct NutritionDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
-                        .tint(AppColors.calorie)
+                        .tint(BulkAITheme.Color.accent)
                 }
             }
         }
@@ -772,7 +772,7 @@ struct NutritionDetailRow: View {
                 Image(systemName: icon)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(
-                        LinearGradient(colors: AppColors.calorieGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+                        LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
                     )
                     .frame(width: 24)
             }
@@ -782,7 +782,7 @@ struct NutritionDetailRow: View {
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 Text(value)
                     .font(.system(.body, design: .rounded, weight: .semibold))
-                    .foregroundStyle(AppColors.calorie)
+                    .foregroundStyle(BulkAITheme.Color.accent)
                     .contentTransition(.numericText())
                 Text(unit)
                     .font(.system(.footnote, design: .rounded))
@@ -818,7 +818,7 @@ struct ContextDescriptionSheet: View {
                             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .strokeBorder(AppColors.calorie.opacity(0.15), lineWidth: 1)
+                                    .strokeBorder(BulkAITheme.Color.accent.opacity(0.15), lineWidth: 1)
                             )
                     }
 
@@ -859,7 +859,7 @@ struct ContextDescriptionSheet: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(AppColors.calorie)
+                    .tint(BulkAITheme.Color.accent)
                     .controlSize(.large)
                 }
                 .padding()
@@ -1024,7 +1024,7 @@ struct FoodRow: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .strokeBorder(AppColors.calorie.opacity(0.15), lineWidth: 1)
+                            .strokeBorder(BulkAITheme.Color.accent.opacity(0.15), lineWidth: 1)
                     )
             } else if let emoji = entry.emoji {
                 Text(emoji)
@@ -1034,7 +1034,7 @@ struct FoodRow: View {
             } else {
                 Image(systemName: "fork.knife")
                     .font(.title3)
-                    .foregroundStyle(AppColors.calorie)
+                    .foregroundStyle(BulkAITheme.Color.accent)
                     .frame(width: 56, height: 56)
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
@@ -1049,7 +1049,7 @@ struct FoodRow: View {
                         if foodStore.isFavorite(entry) {
                             Image(systemName: "heart.fill")
                                 .font(.caption2)
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     Spacer()
@@ -1061,7 +1061,7 @@ struct FoodRow: View {
                 HStack(spacing: 6) {
                     Text("\(entry.calories) kcal")
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
 
                     if let serving = servingText {
                         Text("·")
@@ -1093,7 +1093,7 @@ struct MacroPill: View {
             .foregroundStyle(.secondary)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
-            .background(AppColors.calorie.opacity(0.08), in: Capsule())
+            .background(BulkAITheme.Color.accent.opacity(0.08), in: Capsule())
     }
 }
 
@@ -1225,7 +1225,7 @@ struct ProgressTabView: View {
                 }
                 .padding(.vertical)
             }
-            .background(AppColors.appBackground)
+            .background(BulkAITheme.Color.background)
             .navigationBarHidden(true)
             .sheet(isPresented: $showLogWeight) {
                 LogWeightSheet(
@@ -2534,7 +2534,7 @@ private struct ThemeColorSettingsView: View {
                             Spacer()
                             if selectedColor == themeColor {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(AppColors.calorie)
+                                    .foregroundStyle(BulkAITheme.Color.accent)
                             }
                         }
                     }
@@ -2543,10 +2543,10 @@ private struct ThemeColorSettingsView: View {
             } footer: {
                 Text("Changes the main app color and home screen icon used for tabs, buttons, icons, charts, and progress rings.")
             }
-            .listRowBackground(AppColors.appCard)
+            .listRowBackground(BulkAITheme.Color.surface)
         }
         .scrollContentBackground(.hidden)
-        .background(AppColors.appBackground)
+        .background(BulkAITheme.Color.background)
         .navigationTitle("Theme Color")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -2599,7 +2599,7 @@ struct AIConsentSheetView: View {
                         Image(systemName: "sparkles")
                             .font(.system(size: 36))
                             .foregroundStyle(
-                                LinearGradient(colors: AppColors.calorieGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+                                LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
                             )
                     }
                     .padding(.top, 28)
@@ -2634,7 +2634,7 @@ struct AIConsentSheetView: View {
 
                     Link("View privacy policy", destination: URL(string: "https://fud-ai.app/privacy.html")!)
                         .font(.system(.footnote, design: .rounded, weight: .medium))
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                 }
                 .padding(.bottom, 24)
             }
@@ -2647,7 +2647,7 @@ struct AIConsentSheetView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
                         .background(
-                            LinearGradient(colors: AppColors.calorieGradient, startPoint: .leading, endPoint: .trailing),
+                            LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .leading, endPoint: .trailing),
                             in: RoundedRectangle(cornerRadius: 14)
                         )
                 }
@@ -2671,7 +2671,7 @@ struct AIConsentSheetView: View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 18))
-                .foregroundStyle(AppColors.calorie)
+                .foregroundStyle(BulkAITheme.Color.accent)
                 .frame(width: 28, height: 28)
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
