@@ -325,6 +325,10 @@ struct UserProfile: Codable, Equatable {
 extension Notification.Name {
     static let userProfileDidChange = Notification.Name("userProfileDidChange")
     static let weightGoalReached = Notification.Name("weightGoalReached")
+    /// Posted by Dashboard when the user taps a Weekly Nutrition day
+    /// column. `userInfo["date"]` carries the start-of-day Date.
+    /// FoodLogView observes this and updates its own selectedDate.
+    static let foodLogShouldShowDate = Notification.Name("foodLogShouldShowDate")
 }
 
 enum AutoBalanceMacro: String, Codable, CaseIterable, Identifiable {

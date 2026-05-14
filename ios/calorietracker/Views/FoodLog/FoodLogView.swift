@@ -71,6 +71,15 @@ struct FoodLogView: View {
         )) { wrapper in
             FoodEntrySheet(initialTime: wrapper.date)
         }
+        // Listen for Dashboard's Weekly Nutrition day-column taps. The
+        // post carries a start-of-day Date in userInfo["date"]. We jump
+        // straight to that day so the user lands on the chart they
+        // tapped instead of always seeing today.
+        .onReceive(NotificationCenter.default.publisher(for: .foodLogShouldShowDate)) { note in
+            if let date = note.userInfo?["date"] as? Date {
+                selectedDate = Calendar.current.startOfDay(for: date)
+            }
+        }
     }
 
     private struct IdentifiableDate: Identifiable {
