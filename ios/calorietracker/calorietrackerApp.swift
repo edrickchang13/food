@@ -54,6 +54,13 @@ struct calorietrackerApp: App {
             UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
             UserDefaults.standard.removeObject(forKey: "userProfile")
         }
+        // UI-test bypass: flip onboarding to complete + grant AI consent so a
+        // freshly-installed simulator goes straight to the Dashboard. The real
+        // onboarding flow stays untouched; this is just for `xcodebuild test`.
+        if CommandLine.arguments.contains("--skip-onboarding") {
+            UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+            UserDefaults.standard.set(true, forKey: "aiAnalysisConsentGiven")
+        }
         APIKeyManager.migrateIfNeeded()
 
         let food = FoodStore()

@@ -22,6 +22,29 @@ struct DashboardView: View {
     @State private var showStrategy: Bool = false
     @State private var showEditGoal: Bool = false
     @State private var showSetProgram: Bool = false
+    @State private var showTDEEExplainer: Bool = false
+    @State private var showLogWeight: Bool = false
+    @State private var showLogBodyFat: Bool = false
+    @State private var showAllWeights: Bool = false
+    @State private var showBodyMeasurements: Bool = false
+    @State private var showFoodDatabase: Bool = false
+    @State private var foodEntryRoute: FoodEntryRoute?
+    @State private var inlineAlert: InlineAlert?
+
+    /// Where to open `FoodEntrySheet` from. Stored as an Identifiable so
+    /// `.sheet(item:)` reads as "open at this tab".
+    private struct FoodEntryRoute: Identifiable {
+        let id = UUID()
+        let tabIndex: Int
+    }
+
+    /// Simple alert payload for the "coming in a later phase" stubs so taps
+    /// never feel dead — the user gets a definitive answer instead of silence.
+    private struct InlineAlert: Identifiable {
+        let id = UUID()
+        let title: String
+        let message: String
+    }
 
     // Memoized aggregations — recomputed only when the underlying store
     // arrays change, not on every body call (which runs 5+ times per frame
@@ -53,20 +76,20 @@ struct DashboardView: View {
                         weightTrend: insightWeightTrend,
                         energyBalance: insightEnergyBalance,
                         goalProgress: insightGoalProgress,
-                        onSeeAll: { /* TODO Phase G */ }
+                        onSeeAll: { showTDEEExplainer = true }
                     )
                     HabitsSection(
                         weighInData: cachedWeighInHabitData,
                         weighInThisWeek: "\(cachedWeighInsThisWeek)/7",
                         foodLoggingData: cachedFoodLoggingHabitData,
                         foodLoggingThisWeek: "\(cachedFoodLogsThisWeek)/7",
-                        onWeighInTap: { /* TODO */ },
-                        onFoodLoggingTap: { /* TODO */ }
+                        onWeighInTap: { showLogWeight = true },
+                        onFoodLoggingTap: { foodEntryRoute = FoodEntryRoute(tabIndex: 0) }
                     )
                     BodyMetricsRow(
                         scaleWeight: scaleWeightCard,
                         bodyFat: bodyFatCard,
-                        onSeeAll: { /* TODO */ }
+                        onSeeAll: { showBodyMeasurements = true }
                     )
                     NutritionGrid(
                         calories: NutritionGrid.MacroTotal(
@@ -89,18 +112,33 @@ struct DashboardView: View {
                             target: profile.effectiveCarbs,
                             unit: "g"
                         ),
-                        onSeeAll: { /* TODO */ },
-                        onTapMacro: { _ in /* TODO */ }
+                        onSeeAll: { foodEntryRoute = FoodEntryRoute(tabIndex: 3) },
+                        onTapMacro: { _ in foodEntryRoute = FoodEntryRoute(tabIndex: 3) }
                     )
                     GeneralSection(
                         stepsHistory: [3200, 2100, 4500, 1800, 2800, 3600, 2400],
                         stepsValue: "2800 steps",
-                        onStepsTap: { /* TODO HealthKit wiring */ },
-                        onSeeAll: { /* TODO */ }
+                        onStepsTap: {
+                            inlineAlert = InlineAlert(
+                                title: "Connect Apple Health",
+                                message: "Step counts wire up in P15. Until then, the sparkline shows a placeholder week."
+                            )
+                        },
+                        onSeeAll: {
+                            inlineAlert = InlineAlert(
+                                title: "Activity details",
+                                message: "Full activity history arrives once Apple Health is wired in P15."
+                            )
+                        }
                     )
                     MoreSection(
-                        onCustomizeDashboard: { /* TODO Phase G */ },
-                        onNutritionDataManager: { /* TODO Phase G */ },
+                        onCustomizeDashboard: {
+                            inlineAlert = InlineAlert(
+                                title: "Customize Dashboard",
+                                message: "Section reorder + visibility toggles ship in a later phase."
+                            )
+                        },
+                        onNutritionDataManager: { showFoodDatabase = true },
                         onStrategy: { showStrategy = true },
                         onEditGoal: { showEditGoal = true },
                         onSetProgram: { showSetProgram = true }
@@ -114,8 +152,8 @@ struct DashboardView: View {
 
             DashboardSearchBar(
                 query: $searchQuery,
-                onBarcodeTap: { /* TODO Phase D camera flow */ },
-                onAITap: { /* TODO Phase D AI flow */ }
+                onBarcodeTap: { foodEntryRoute = FoodEntryRoute(tabIndex: 2) },
+                onAITap: { foodEntryRoute = FoodEntryRoute(tabIndex: 1) }
             )
             .padding(.horizontal, 16)
             .padding(.bottom, 8)
@@ -130,6 +168,47 @@ struct DashboardView: View {
         }
         .sheet(isPresented: $showSetProgram) {
             SetProgramFlow()
+        }
+        .sheet(isPresented: $showTDEEExplainer) {
+            DynamicTDEEExplainer()
+        }
+        .sheet(isPresented: $showLogWeight) {
+            LogWeightSheet(
+                currentWeightKg: weightStore.latestEntry?.weightKg ?? profile.weightKg
+            ) { weightKg in
+                weightStore.addEntry(WeightEntry(weightKg: weightKg))
+            }
+        }
+        .sheet(isPresented: $showLogBodyFat) {
+            let seed = bodyFatStore.latestEntry?.bodyFatFraction
+                ?? profile.bodyFatPercentage
+                ?? 0.20
+            LogBodyFatSheet(currentFraction: seed) { fraction in
+                bodyFatStore.addEntry(BodyFatEntry(bodyFatFraction: fraction))
+            }
+        }
+        .sheet(isPresented: $showAllWeights) {
+            AllWeightHistoryView(
+                entries: weightStore.entries.sorted { $0.date > $1.date },
+                useMetric: false,
+                onDelete: { entry in weightStore.deleteEntry(entry) }
+            )
+        }
+        .sheet(isPresented: $showBodyMeasurements) {
+            NavigationStack { BodyMeasurementsView() }
+        }
+        .sheet(isPresented: $showFoodDatabase) {
+            NavigationStack { FoodDatabaseView() }
+        }
+        .sheet(item: $foodEntryRoute) { route in
+            FoodEntrySheet(initialTab: route.tabIndex)
+        }
+        .alert(item: $inlineAlert) { item in
+            Alert(
+                title: Text(item.title),
+                message: Text(item.message),
+                dismissButton: .default(Text("Got it"))
+            )
         }
         .onAppear { recomputeAggregations() }
         // `FoodEntry` is not `Equatable`; observe count + the last-entry id as a
@@ -203,7 +282,7 @@ struct DashboardView: View {
             accent: BulkAITheme.Color.expenditure,
             sparkline: flatSparkline(value: engineState.snapshot.expenditure?.kcalPerDay ?? 0, count: 7),
             valueText: "\(Int(engineState.snapshot.expenditure?.kcalPerDay ?? 0)) kcal",
-            onTap: {}
+            onTap: { showTDEEExplainer = true }
         )
     }
 
@@ -217,7 +296,7 @@ struct DashboardView: View {
             accent: BulkAITheme.Color.weightTrend,
             sparkline: trendKgs.isEmpty ? nil : trendKgs,
             valueText: String(format: "%.1f lbs", latest * 2.20462),
-            onTap: {}
+            onTap: { showAllWeights = true }
         )
     }
 
@@ -235,7 +314,7 @@ struct DashboardView: View {
             accent: BulkAITheme.Color.macroCalories,
             sparkline: intake.map { Double($0) },
             valueText: label,
-            onTap: {}
+            onTap: { showTDEEExplainer = true }
         )
     }
 
@@ -247,7 +326,7 @@ struct DashboardView: View {
             accent: BulkAITheme.Color.macroCarbs,
             sparkline: nil,
             valueText: "—",
-            onTap: {}
+            onTap: { showStrategy = true }
         )
     }
 
@@ -260,7 +339,10 @@ struct DashboardView: View {
             .map { $0.weightKg * 2.20462 }
             .reversed()
         let current = String(format: "%.1f lbs", (weightStore.latestEntry?.weightKg ?? 0) * 2.20462)
-        return (history: Array(recent), current: current, onTap: {})
+        // Tap on the scale-weight card opens the log-weight sheet so the user
+        // can record today's reading from the dashboard without bouncing into
+        // Settings or the Progress tab first.
+        return (history: Array(recent), current: current, onTap: { showLogWeight = true })
     }
 
     private var bodyFatCard: (history: [Double?], current: String, onTap: () -> Void)? {
@@ -273,7 +355,7 @@ struct DashboardView: View {
             .reversed()
         let currentFraction = bodyFatStore.latestEntry?.bodyFatFraction ?? profile.bodyFatPercentage ?? 0
         let current = String(format: "%.1f %%", currentFraction * 100)
-        return (history: Array(recent), current: current, onTap: {})
+        return (history: Array(recent), current: current, onTap: { showLogBodyFat = true })
     }
 
     // MARK: - Habit data
