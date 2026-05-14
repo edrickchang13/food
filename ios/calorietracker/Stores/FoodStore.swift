@@ -36,6 +36,49 @@ class FoodStore {
     var onEntryDeleted: ((UUID) -> Void)?
     var onEntryUpdated: ((FoodEntry) -> Void)?
 
+    /// Per-day index, populated lazily on first read and maintained
+    /// incrementally by add/update/delete. Keyed by the user-calendar's
+    /// startOfDay for the entry's timestamp. Avoids the O(N) full-array
+    /// scan per `entries(for:date)` call — critical at 3,806 imported
+    /// entries where ProgressTabView would otherwise burn ~1.4M filter
+    /// comparisons per render at the 1Y range and trip the iOS watchdog.
+    @ObservationIgnored private var dayIndex: [Date: [FoodEntry]]? = nil
+
+    /// Shared start-of-day reducer.
+    private func dayKey(for date: Date) -> Date {
+        Calendar.current.startOfDay(for: date)
+    }
+
+    private func rebuildDayIndex() {
+        dayIndex = Dictionary(grouping: entries) { dayKey(for: $0.timestamp) }
+    }
+
+    private func dayIndexEnsured() -> [Date: [FoodEntry]] {
+        if let dayIndex { return dayIndex }
+        rebuildDayIndex()
+        return dayIndex ?? [:]
+    }
+
+    private func indexInsert(_ entry: FoodEntry) {
+        guard dayIndex != nil else { return }   // lazy: skip if never read yet
+        let key = dayKey(for: entry.timestamp)
+        dayIndex?[key, default: []].append(entry)
+    }
+
+    private func indexRemove(_ entry: FoodEntry) {
+        guard dayIndex != nil else { return }
+        let key = dayKey(for: entry.timestamp)
+        dayIndex?[key]?.removeAll { $0.id == entry.id }
+        if dayIndex?[key]?.isEmpty == true {
+            dayIndex?.removeValue(forKey: key)
+        }
+    }
+
+    private func indexReplace(old: FoodEntry, new: FoodEntry) {
+        indexRemove(old)
+        indexInsert(new)
+    }
+
     private let storageKey = "foodEntries"
     private let favoritesKey = "favoriteFoodEntries"
     private(set) var favorites: [FoodEntry] = []
@@ -80,10 +123,8 @@ class FoodStore {
     // MARK: - Date-parameterized queries
 
     func entries(for date: Date) -> [FoodEntry] {
-        let calendar = Calendar.current
-        return entries
-            .filter { calendar.isDate($0.timestamp, inSameDayAs: date) }
-            .sorted { $0.timestamp > $1.timestamp }
+        let key = dayKey(for: date)
+        return (dayIndexEnsured()[key] ?? []).sorted { $0.timestamp > $1.timestamp }
     }
 
     func entriesByMeal(for date: Date, order: FoodLogSortOrder = .standard) -> [FoodLogMealGroup] {
@@ -134,7 +175,8 @@ class FoodStore {
     }
 
     func calories(for date: Date) -> Int {
-        entries(for: date).reduce(0) { $0 + $1.calories }
+        let key = dayKey(for: date)
+        return (dayIndexEnsured()[key] ?? []).reduce(0) { $0 + $1.calories }
     }
 
     func protein(for date: Date) -> Int {
@@ -264,6 +306,7 @@ class FoodStore {
         var entry = entry
         offloadImageToDiskIfNeeded(&entry)
         entries.append(entry)
+        indexInsert(entry)
         saveEntries()
         onEntriesChanged?()
         onEntryAdded?(entry)
@@ -276,6 +319,8 @@ class FoodStore {
     func addEntries(_ newEntries: [FoodEntry]) {
         guard !newEntries.isEmpty else { return }
         entries.append(contentsOf: newEntries)
+        // Rebuild rather than N inserts; faster at thousands of entries.
+        if dayIndex != nil { rebuildDayIndex() }
         saveEntries()
         onEntriesChanged?()
         // Skip onEntryAdded callbacks for bulk; engine refreshes once via
@@ -284,9 +329,11 @@ class FoodStore {
 
     func updateEntry(_ entry: FoodEntry) {
         guard let index = entries.firstIndex(where: { $0.id == entry.id }) else { return }
+        let old = entries[index]
         var entry = entry
         offloadImageToDiskIfNeeded(&entry)
         entries[index] = entry
+        indexReplace(old: old, new: entry)
         saveEntries()
         onEntriesChanged?()
         // Single callback so HealthKit can serialize delete-then-write atomically.
@@ -303,6 +350,7 @@ class FoodStore {
             FoodImageStore.shared.delete(filename: filename)
         }
         entries.removeAll { $0.id == id }
+        indexRemove(entry)
         saveEntries()
         onEntriesChanged?()
         onEntryDeleted?(id)
@@ -370,6 +418,8 @@ class FoodStore {
               let decoded = try? JSONDecoder().decode([FoodEntry].self, from: data)
         else { return }
         entries = decoded
+        // Invalidate any stale per-day cache; first reader rebuilds lazily.
+        dayIndex = nil
 
         // Legacy migration: rows written by pre-FoodImageStore builds embedded
         // JPEG bytes in the JSON blob. Offload any such rows to disk, stamp

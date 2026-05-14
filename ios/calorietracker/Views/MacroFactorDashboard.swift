@@ -17,25 +17,24 @@ struct CalorieRingHero: View {
     }
 
     var body: some View {
-        VStack(spacing: 22) {
+        VStack(spacing: 14) {
             ZStack {
-                // Background arc
-                halfRing
+                HalfRingShape()
                     .stroke(
-                        AppColors.calorie.opacity(0.12),
-                        style: StrokeStyle(lineWidth: 12, lineCap: .round)
+                        AppColors.calorie.opacity(0.14),
+                        style: StrokeStyle(lineWidth: 14, lineCap: .round)
                     )
-                // Foreground arc
-                halfRing
+                HalfRingShape()
                     .trim(from: 0, to: progress * 0.5)
                     .stroke(
                         AppColors.calorie,
-                        style: StrokeStyle(lineWidth: 12, lineCap: .round)
+                        style: StrokeStyle(lineWidth: 14, lineCap: .round)
                     )
                     .animation(.spring(response: 0.7, dampingFraction: 0.8), value: progress)
 
-                // Center label
-                VStack(spacing: 0) {
+                // Number sits inside the arc bowl, near the bottom of the
+                // ring frame so the arc visually crowns it.
+                VStack(spacing: -2) {
                     Text("\(consumed)")
                         .font(.system(size: 56, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
@@ -45,9 +44,10 @@ struct CalorieRingHero: View {
                         .font(.system(.callout, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
-                .offset(y: 6)
+                .frame(maxHeight: .infinity, alignment: .bottom)
+                .padding(.bottom, 4)
             }
-            .frame(height: 180)
+            .aspectRatio(2.4, contentMode: .fit)
 
             // Side labels under the arc (Remaining ← center → Target)
             HStack {
@@ -55,19 +55,7 @@ struct CalorieRingHero: View {
                 Spacer()
                 sideLabel("\(target)", "Target")
             }
-            .padding(.horizontal, 24)
-        }
-    }
-
-    private var halfRing: Path {
-        Path { path in
-            path.addArc(
-                center: CGPoint(x: 90, y: 90),
-                radius: 78,
-                startAngle: .degrees(180),
-                endAngle: .degrees(360),
-                clockwise: false
-            )
+            .padding(.horizontal, 16)
         }
     }
 
@@ -82,6 +70,26 @@ struct CalorieRingHero: View {
                 .font(.system(.caption, design: .rounded))
                 .foregroundStyle(.secondary)
         }
+    }
+}
+
+/// Half-circle (top arc only) sized to fill its rect. Center sits at the
+/// rect's bottom middle; radius adapts to whichever dimension constrains.
+/// Stroke a fixed amount of inset is left so the line caps don't clip.
+private struct HalfRingShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let inset: CGFloat = 8
+        let radius = min(rect.width / 2 - inset, rect.height - inset)
+        let center = CGPoint(x: rect.midX, y: rect.maxY - inset)
+        path.addArc(
+            center: center,
+            radius: max(0, radius),
+            startAngle: .degrees(180),
+            endAngle: .degrees(360),
+            clockwise: false
+        )
+        return path
     }
 }
 
@@ -109,10 +117,12 @@ struct MacroProgressBar: View {
                     Capsule()
                         .fill(color.opacity(0.18))
                         .frame(height: 6)
-                    Capsule()
-                        .fill(color)
-                        .frame(width: max(8, geo.size.width * progress), height: 6)
-                        .animation(.spring(response: 0.7, dampingFraction: 0.8), value: progress)
+                    if progress > 0 {
+                        Capsule()
+                            .fill(color)
+                            .frame(width: max(6, geo.size.width * progress), height: 6)
+                            .animation(.spring(response: 0.7, dampingFraction: 0.8), value: progress)
+                    }
                 }
             }
             .frame(height: 6)
