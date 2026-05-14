@@ -59,7 +59,7 @@ class NotificationManager {
             scheduleRepeatingMeal(
                 id: "meal.dinner",
                 title: "Dinner Time",
-                body: "Log your dinner to stay on track!",
+                body: "Log your dinner — the engine reads today's intake.",
                 hour: dinnerHour, minute: dinnerMinute
             )
         }
@@ -96,8 +96,8 @@ class NotificationManager {
         ), fireDate > now else { return }
 
         let content = UNMutableNotificationContent()
-        content.title = "Don't Break Your \(currentStreak)-Day Streak!"
-        content.body = "Log something before the day ends."
+        content.title = "\(currentStreak)-day logging run going."
+        content.body = "Log something before the day ends to keep the trend continuous."
         content.sound = .default
 
         var dateComponents = DateComponents()
