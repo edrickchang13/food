@@ -2,18 +2,23 @@ import SwiftUI
 
 // MARK: - EditGoal_WeightAndRate
 
-/// Step 1 of the Edit Goal wizard — target-weight ruler plus weekly-rate slider.
+/// Step 1 of the Edit Goal wizard — target-weight ruler plus weekly-rate picker.
 ///
 /// Reference: `~/Downloads/macrofactor-screens/IMG_6476.PNG`
 ///
 /// The two stat tiles at the top update live while the user drags the ruler,
 /// mirroring MacroFactor's behaviour. A `SegmentedToggle` switches the rate
-/// input between Standard (locked slider) and Custom (unlocked slider).
+/// input between Standard and Custom. In Standard mode, a three-pill picker
+/// (Slower / Standard / Faster) sets the rate as a percent of bodyweight:
+/// 0.25 %, 0.45 %, and 0.65 %/wk respectively. Standard at 0.45 %/wk equals
+/// roughly +0.86 lb/wk for a 190-lb starting weight, matching MacroFactor.
+/// Custom mode keeps a free Slider over 0–1.5 kg/wk unchanged.
 struct EditGoal_WeightAndRate: View {
 
     @Binding var targetWeightKg: Double
     @Binding var weeklyChangeKg: Double
     @Binding var isCustomRate: Bool
+    @Binding var standardTier: StandardRateTier
     let currentWeightKg: Double
     let useImperial: Bool
 
@@ -66,12 +71,15 @@ struct EditGoal_WeightAndRate: View {
         return formatter.string(from: date)
     }
 
+    /// Resolved rate label shown below the rate row.
+    /// Standard mode prefixes the tier name; Custom mode prefixes "Custom".
     private var displayRate: String {
+        let prefix = isCustomRate ? "Custom" : standardTier.displayName
         if useImperial {
             let lbPerWeek = weeklyChangeKg * lbPerKg
-            return String(format: "%.1f lb / week", lbPerWeek)
+            return String(format: "%@: +%.2f lb / wk", prefix, lbPerWeek)
         }
-        return String(format: "%.2f kg / week", weeklyChangeKg)
+        return String(format: "%@: +%.2f kg / wk", prefix, weeklyChangeKg)
     }
 
     // MARK: - Body
@@ -87,7 +95,13 @@ struct EditGoal_WeightAndRate: View {
         }
         .onAppear { syncRulerValue() }
         .onChange(of: targetWeightKg) { syncRulerValue() }
-        .onChange(of: isCustomRate) { _, new in rateSegment = new ? 1 : 0 }
+        .onChange(of: isCustomRate) { _, isNowCustom in
+            rateSegment = isNowCustom ? 1 : 0
+            // When switching back to Standard, snap the rate to the current tier.
+            if !isNowCustom {
+                weeklyChangeKg = standardTier.weeklyRateKg(forBodyweightKg: currentWeightKg)
+            }
+        }
         .onChange(of: rateSegment) { _, new in isCustomRate = new == 1 }
     }
 
@@ -153,22 +167,67 @@ struct EditGoal_WeightAndRate: View {
                 accent: BulkAITheme.Color.macroCarbs
             )
 
-            rateSlider
-        }
-    }
-
-    private var rateSlider: some View {
-        VStack(spacing: BulkAITheme.Spacing.xs) {
-            Slider(value: $weeklyChangeKg, in: 0.0...1.5, step: 0.05)
-                .tint(BulkAITheme.Color.accent)
-                .disabled(!isCustomRate)
-                .opacity(isCustomRate ? 1.0 : 0.5)
+            if isCustomRate {
+                customRateSlider
+            } else {
+                tierPillRow
+            }
 
             Text(displayRate)
                 .font(BulkAITheme.Typography.caption.monospacedDigit())
                 .foregroundStyle(.white.opacity(0.7))
                 .frame(maxWidth: .infinity)
         }
+    }
+
+    // MARK: - Tier pill row (Standard mode)
+
+    /// Three-pill picker matching the dark-theme aesthetic: surfaceElevated
+    /// track, white pill + black text for the selected tier.
+    private var tierPillRow: some View {
+        HStack(spacing: BulkAITheme.Spacing.xxs) {
+            ForEach(StandardRateTier.allCases) { tier in
+                tierPill(tier: tier)
+            }
+        }
+        .padding(BulkAITheme.Spacing.xxs)
+        .background(
+            Capsule().fill(BulkAITheme.Color.surfaceElevated)
+        )
+    }
+
+    @ViewBuilder
+    private func tierPill(tier: StandardRateTier) -> some View {
+        let isSelected = tier == standardTier
+        Button {
+            withAnimation(.snappy) {
+                standardTier = tier
+                weeklyChangeKg = tier.weeklyRateKg(forBodyweightKg: currentWeightKg)
+            }
+        } label: {
+            Text(tier.displayName)
+                .font(BulkAITheme.Typography.body)
+                .fontWeight(isSelected ? .semibold : .medium)
+                .foregroundStyle(isSelected ? Color.black : Color.white.opacity(0.7))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, BulkAITheme.Spacing.xs)
+                .background {
+                    if isSelected {
+                        Capsule().fill(Color.white)
+                    }
+                }
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(tier.displayName)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    // MARK: - Custom rate slider
+
+    private var customRateSlider: some View {
+        Slider(value: $weeklyChangeKg, in: 0.0...1.5, step: 0.05)
+            .tint(BulkAITheme.Color.accent)
     }
 
     // MARK: - Ruler binding (display units ↔ kg)
@@ -201,12 +260,14 @@ struct EditGoal_WeightAndRate: View {
         @State var targetKg: Double = 80
         @State var rateKg: Double = 0.5
         @State var isCustom: Bool = false
+        @State var tier: StandardRateTier = .standard
 
         var body: some View {
             EditGoal_WeightAndRate(
                 targetWeightKg: $targetKg,
                 weeklyChangeKg: $rateKg,
                 isCustomRate: $isCustom,
+                standardTier: $tier,
                 currentWeightKg: 86.0,
                 useImperial: false
             )
@@ -222,12 +283,14 @@ struct EditGoal_WeightAndRate: View {
         @State var targetKg: Double = 79.5
         @State var rateKg: Double = 0.45
         @State var isCustom: Bool = true
+        @State var tier: StandardRateTier = .standard
 
         var body: some View {
             EditGoal_WeightAndRate(
                 targetWeightKg: $targetKg,
                 weeklyChangeKg: $rateKg,
                 isCustomRate: $isCustom,
+                standardTier: $tier,
                 currentWeightKg: 86.0,
                 useImperial: true
             )

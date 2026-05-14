@@ -33,6 +33,7 @@ final class ExpenditureEdgeCaseTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 2000,
             bmrKcalPerDay: 1600,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertEqual(est.kcalPerDay, 1760, accuracy: 0.5)
@@ -57,6 +58,7 @@ final class ExpenditureEdgeCaseTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 1600,
             bmrKcalPerDay: 1200,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertEqual(est.foodLogDays, 4)
@@ -83,6 +85,7 @@ final class ExpenditureEdgeCaseTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 1900,
             bmrKcalPerDay: 1400,
+            windowDays: 14,
             referenceDay: day(13)
         )
         // Unique food-log days = 4 (two entries on day 0 collapse to one day).
@@ -105,6 +108,7 @@ final class ExpenditureEdgeCaseTests: XCTestCase {
             trend: allInterpolated,
             priorKcalPerDay: 2400,
             bmrKcalPerDay: 1600,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertEqual(est.confidence, .low)
@@ -124,6 +128,7 @@ final class ExpenditureEdgeCaseTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 2700,
             bmrKcalPerDay: 1600,
+            windowDays: 14,
             referenceDay: day(27)
         )
         XCTAssertEqual(est.confidence, .low)
@@ -146,6 +151,7 @@ final class ExpenditureEdgeCaseTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 2500,
             bmrKcalPerDay: 1600,
+            windowDays: 14,
             referenceDay: day(0)
         )
         XCTAssertEqual(est.confidence, .low)
@@ -177,6 +183,7 @@ final class ExpenditureEdgeCaseTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 2500,
             bmrKcalPerDay: 1400,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertFalse(est.kcalPerDay.isNaN)
@@ -224,6 +231,7 @@ final class ExpenditureEdgeCaseTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 6000,
             bmrKcalPerDay: 1400,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertLessThanOrEqual(est.kcalPerDay, 1400 * 2.5 + 0.1)
@@ -236,6 +244,7 @@ final class ExpenditureEdgeCaseTests: XCTestCase {
             trend: trendExtreme,
             priorKcalPerDay: 20000,
             bmrKcalPerDay: 1400,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertEqual(estExtreme.kcalPerDay, 1400 * 2.5, accuracy: 0.5)
@@ -254,6 +263,7 @@ final class ExpenditureEdgeCaseTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 0,
             bmrKcalPerDay: 1600,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertFalse(est.kcalPerDay.isNaN)
@@ -285,6 +295,7 @@ final class ExpenditureEdgeCaseTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 2400,
             bmrKcalPerDay: 1600,
+            windowDays: 14,
             referenceDay: anchor
         )
         // Stable weight → expenditure = average intake = 2400.
@@ -316,6 +327,7 @@ final class ExpenditureEdgeCaseTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 2600,
             bmrKcalPerDay: 1500,
+            windowDays: 14,
             referenceDay: anchor
         )
         XCTAssertEqual(est.kcalPerDay, 2600, accuracy: 1)
@@ -335,6 +347,7 @@ final class ExpenditureEdgeCaseTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 2200,
             bmrKcalPerDay: 1500,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertEqual(est.kcalPerDay, 2200, accuracy: 1)

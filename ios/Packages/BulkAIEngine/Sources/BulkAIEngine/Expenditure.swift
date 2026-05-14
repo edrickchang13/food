@@ -51,9 +51,12 @@ public struct ExpenditureEstimate: Equatable, Codable, Sendable {
 public enum Expenditure {
     /// Energy equivalent of body mass: ~7700 kcal per kg of body weight change.
     public static let kcalPerKg: Double = 7700
-    public static let defaultWindowDays: Int = 14
-    public static let minFoodLogs: Int = 4
-    public static let minWeightLogs: Int = 3
+    /// Required by spec: Holding-state evaluation window is exactly 7 days.
+    public static let defaultWindowDays: Int = 7
+    /// Required by spec: fewer than 3 days of nutrition data triggers Holding state.
+    public static let minFoodLogs: Int = 3
+    /// Required by spec: fewer than 1 day of weight data triggers Holding state.
+    public static let minWeightLogs: Int = 1
     public static let highConfidenceFoodLogs: Int = 10
     public static let highConfidenceWeightLogs: Int = 7
     public static let maxWeeklyAdjustmentRatio: Double = 0.15
@@ -168,3 +171,4 @@ public enum BMR {
         return sex == .male ? base + 5 : base - 161
     }
 }
+

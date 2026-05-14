@@ -34,6 +34,19 @@ struct EditFoodEntryView: View {
     @State private var isQuantityEditing = false
     @State private var mealType: MealType
 
+    // User-editable micronutrient overrides. When non-nil these win at save
+    // time over the scaled baseline values, letting users correct the data
+    // from any food database without being forced to accept scaled math.
+    @State private var editedSugar: Double?
+    @State private var editedAddedSugar: Double?
+    @State private var editedFiber: Double?
+    @State private var editedSaturatedFat: Double?
+    @State private var editedMonounsaturatedFat: Double?
+    @State private var editedPolyunsaturatedFat: Double?
+    @State private var editedCholesterol: Double?
+    @State private var editedSodium: Double?
+    @State private var editedPotassium: Double?
+
     private var scale: Double {
         guard baseServingSizeGrams > 0 else { return 1 }
         return servingSizeGrams / baseServingSizeGrams
@@ -92,6 +105,17 @@ struct EditFoodEntryView: View {
         ))
         self._selectedServingUnitID = State(initialValue: initialServingUnitID)
         self._mealType = State(initialValue: entry.mealType)
+        // Seed editable overrides from the logged entry values so existing
+        // data is visible and editable immediately without any user action.
+        self._editedSugar = State(initialValue: entry.sugar)
+        self._editedAddedSugar = State(initialValue: entry.addedSugar)
+        self._editedFiber = State(initialValue: entry.fiber)
+        self._editedSaturatedFat = State(initialValue: entry.saturatedFat)
+        self._editedMonounsaturatedFat = State(initialValue: entry.monounsaturatedFat)
+        self._editedPolyunsaturatedFat = State(initialValue: entry.polyunsaturatedFat)
+        self._editedCholesterol = State(initialValue: entry.cholesterol)
+        self._editedSodium = State(initialValue: entry.sodium)
+        self._editedPotassium = State(initialValue: entry.potassium)
     }
 
     private static func formatGrams(_ value: Double) -> String {
@@ -178,15 +202,15 @@ struct EditFoodEntryView: View {
 
                     Section {
                         DisclosureGroup("More Nutrition") {
-                            OptionalNutritionDisplayRow(label: "Sugar", value: scaledSugar, unit: "g")
-                            OptionalNutritionDisplayRow(label: "Added Sugar", value: scaledAddedSugar, unit: "g")
-                            OptionalNutritionDisplayRow(label: "Fiber", value: scaledFiber, unit: "g")
-                            OptionalNutritionDisplayRow(label: "Saturated Fat", value: scaledSaturatedFat, unit: "g")
-                            OptionalNutritionDisplayRow(label: "Mono Fat", value: scaledMonounsaturatedFat, unit: "g")
-                            OptionalNutritionDisplayRow(label: "Poly Fat", value: scaledPolyunsaturatedFat, unit: "g")
-                            OptionalNutritionDisplayRow(label: "Cholesterol", value: scaledCholesterol, unit: "mg")
-                            OptionalNutritionDisplayRow(label: "Sodium", value: scaledSodium, unit: "mg")
-                            OptionalNutritionDisplayRow(label: "Potassium", value: scaledPotassium, unit: "mg")
+                            OptionalNutritionEditRow(label: "Sugar", value: $editedSugar, unit: "g")
+                            OptionalNutritionEditRow(label: "Added Sugar", value: $editedAddedSugar, unit: "g")
+                            OptionalNutritionEditRow(label: "Fiber", value: $editedFiber, unit: "g")
+                            OptionalNutritionEditRow(label: "Saturated Fat", value: $editedSaturatedFat, unit: "g")
+                            OptionalNutritionEditRow(label: "Mono Fat", value: $editedMonounsaturatedFat, unit: "g")
+                            OptionalNutritionEditRow(label: "Poly Fat", value: $editedPolyunsaturatedFat, unit: "g")
+                            OptionalNutritionEditRow(label: "Cholesterol", value: $editedCholesterol, unit: "mg")
+                            OptionalNutritionEditRow(label: "Sodium", value: $editedSodium, unit: "mg")
+                            OptionalNutritionEditRow(label: "Potassium", value: $editedPotassium, unit: "mg")
                         }
                         .tint(AppColors.calorie)
                     }
@@ -252,15 +276,15 @@ struct EditFoodEntryView: View {
             emoji: entry.emoji,
             source: entry.source,
             mealType: mealType,
-            sugar: scaledSugar,
-            addedSugar: scaledAddedSugar,
-            fiber: scaledFiber,
-            saturatedFat: scaledSaturatedFat,
-            monounsaturatedFat: scaledMonounsaturatedFat,
-            polyunsaturatedFat: scaledPolyunsaturatedFat,
-            cholesterol: scaledCholesterol,
-            sodium: scaledSodium,
-            potassium: scaledPotassium,
+            sugar: editedSugar ?? scaledSugar,
+            addedSugar: editedAddedSugar ?? scaledAddedSugar,
+            fiber: editedFiber ?? scaledFiber,
+            saturatedFat: editedSaturatedFat ?? scaledSaturatedFat,
+            monounsaturatedFat: editedMonounsaturatedFat ?? scaledMonounsaturatedFat,
+            polyunsaturatedFat: editedPolyunsaturatedFat ?? scaledPolyunsaturatedFat,
+            cholesterol: editedCholesterol ?? scaledCholesterol,
+            sodium: editedSodium ?? scaledSodium,
+            potassium: editedPotassium ?? scaledPotassium,
             servingSizeGrams: servingSizeGrams,
             servingUnitOptions: servingUnitOptions,
             selectedServingUnit: servingUnitOptions.isEmpty ? nil : selectedServingOption.unit,
@@ -268,5 +292,54 @@ struct EditFoodEntryView: View {
         )
         foodStore.updateEntry(updated)
         dismiss()
+    }
+}
+
+// MARK: - Helpers
+
+/// Editable micronutrient row. Wraps a `TextField` bound through a computed
+/// `Binding<String>` so an `Optional<Double>` can be edited as plain text and
+/// round-tripped back to the model. An empty field clears the value (sets
+/// it to `nil`); a comma is accepted as a decimal separator for locale
+/// compatibility.
+private struct OptionalNutritionEditRow: View {
+    let label: String
+    @Binding var value: Double?
+    let unit: String
+
+    private var stringBinding: Binding<String> {
+        Binding(
+            get: {
+                guard let value else { return "" }
+                // Drop trailing .0 for clean editing.
+                if value.rounded() == value { return String(Int(value)) }
+                return String(format: "%.1f", value)
+            },
+            set: { newString in
+                let trimmed = newString.trimmingCharacters(in: .whitespaces)
+                if trimmed.isEmpty {
+                    value = nil
+                } else if let parsed = Double(trimmed.replacingOccurrences(of: ",", with: ".")) {
+                    value = parsed
+                }
+                // If the string isn't parseable yet (mid-edit, e.g. "1.")
+                // leave value unchanged so the binding doesn't fight the user.
+            }
+        )
+    }
+
+    var body: some View {
+        HStack {
+            Text(label)
+            Spacer(minLength: 8)
+            TextField("—", text: stringBinding)
+                .multilineTextAlignment(.trailing)
+                .keyboardType(.decimalPad)
+                .monospacedDigit()
+                .frame(maxWidth: 80)
+            Text(unit)
+                .foregroundStyle(.secondary)
+                .frame(width: 18, alignment: .leading)
+        }
     }
 }

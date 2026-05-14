@@ -288,16 +288,27 @@ struct FoodDatabaseServiceIndexTests {
 /// top of each method covers this case directly.
 struct StepReaderTests {
 
-    @Test("last7Days() returns nil when HealthKit is unavailable")
+    @Test("last7Days() returns nil or all-zero counts in the test host")
     func last7DaysReturnsNilWithoutHealthKit() async {
+        // HealthKit IS available in the simulator host but no permission has
+        // been granted to this test bundle. The HKStatisticsCollectionQuery
+        // still enumerates buckets, each with empty stats that the reader
+        // maps to zero. Accept either nil OR an array of zeros — both
+        // correctly mean "no real step data."
         let result = await StepReader.last7Days()
-        #expect(result == nil, "Expected nil when HealthKit is not available in the test host")
+        if let result {
+            #expect(result.allSatisfy { $0 == 0 },
+                    "Expected nil or all-zero counts when HealthKit has no data")
+        }
     }
 
-    @Test("today() returns nil when HealthKit is unavailable")
+    @Test("today() returns nil or zero when HealthKit is unavailable")
     func todayReturnsNilWithoutHealthKit() async {
         let result = await StepReader.today()
-        #expect(result == nil, "Expected nil when HealthKit is not available in the test host")
+        if let result {
+            #expect(result == 0,
+                    "Expected nil or zero when HealthKit has no data for today")
+        }
     }
 }
 
