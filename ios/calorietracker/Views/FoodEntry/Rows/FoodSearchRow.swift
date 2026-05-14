@@ -27,7 +27,7 @@ struct FoodSearchRow: View {
     let onAdd: () -> Void
 
     private let iconSize: CGFloat = 36
-    private let addButtonSize: CGFloat = 32
+    private let addButtonSize: CGFloat = 44
 
     var body: some View {
         HStack(spacing: BulkAITheme.Spacing.sm) {
@@ -86,6 +86,7 @@ struct FoodSearchRow: View {
                 Image(systemName: "plus")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(.white.opacity(0.9))
+                    .accessibilityHidden(true)
             }
         }
         .buttonStyle(.plain)

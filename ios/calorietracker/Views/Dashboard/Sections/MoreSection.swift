@@ -19,6 +19,7 @@ struct MoreSection: View {
             Text("More")
                 .font(BulkAITheme.Typography.title3)
                 .foregroundStyle(.white)
+                .accessibilityAddTraits(.isHeader)
 
             VStack(spacing: 0) {
                 MoreRow(

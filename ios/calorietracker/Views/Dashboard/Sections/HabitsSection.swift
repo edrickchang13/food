@@ -17,6 +17,7 @@ struct HabitsSection: View {
             Text("Habits")
                 .font(BulkAITheme.Typography.title3)
                 .foregroundStyle(.white)
+                .accessibilityAddTraits(.isHeader)
 
             HStack(alignment: .top, spacing: BulkAITheme.Spacing.sm) {
                 card(

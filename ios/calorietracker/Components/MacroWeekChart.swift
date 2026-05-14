@@ -103,6 +103,19 @@ struct MacroWeekChart: View {
                 }
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(chartAccessibilityLabel)
+    }
+
+    /// Builds a concise VoiceOver summary: "7-day macro chart. Monday: 3414 kcal,
+    /// 190g protein, 113g fat, 407g carbs. …". Keeps it scannable for screen
+    /// reader users without reading every bar label.
+    private var chartAccessibilityLabel: String {
+        guard !days.isEmpty else { return "Macro week chart, no data" }
+        let summary = days.map { day in
+            "\(day.weekday): \(day.kcal) kcal, \(day.proteinG)g protein, \(day.fatG)g fat, \(day.carbsG)g carbs"
+        }.joined(separator: ". ")
+        return "7-day macro chart. \(summary)"
     }
 
     @ViewBuilder

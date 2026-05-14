@@ -50,6 +50,20 @@ struct FoodEntrySheet: View {
     @State private var stagedEntries: [FoodEntry] = []
     @State private var portionItem: FoodDatabaseItem?
 
+    // Memoized search results — recomputed only when filterQuery or the tab
+    // changes, not on every body call. Each body call would otherwise execute
+    // up to 3 full-corpus scans over 6,900+ items (seed + USDA + AI cache).
+    @State private var cachedFavorites: [FoodDatabaseItem] = []
+    @State private var cachedSuggestions: [FoodDatabaseItem] = []
+    @State private var cachedLibrary: [FoodDatabaseItem] = []
+
+    // Cached formatter — avoid re-allocating DateFormatter on every body call.
+    private static let hourFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "h a"
+        return f
+    }()
+
     // AI flow state — mirrors QuickAddSheet's analyze pipeline.
     @State private var activeFlow: EntryFlow?
     @State private var pendingLabelImage: UIImage?
@@ -140,6 +154,17 @@ struct FoodEntrySheet: View {
             )
         }
         .interactiveDismissDisabled(activeFlow == .analyzing)
+        .onAppear { recomputeSearchResults() }
+        .onChange(of: filterQuery) { recomputeSearchResults() }
+        .onChange(of: selectedTab) { recomputeSearchResults() }
+    }
+
+    // MARK: - Search result recompute
+
+    private func recomputeSearchResults() {
+        cachedFavorites = computedFilteredFavorites()
+        cachedSuggestions = computedFilteredSuggestions()
+        cachedLibrary = computedFilteredLibrary()
     }
 
     // MARK: - Tab body
@@ -149,9 +174,9 @@ struct FoodEntrySheet: View {
         switch selectedTab {
         case 0:
             SearchView(
-                timeLabel: hourLabel,
-                favorites: filteredFavorites,
-                suggestions: filteredSuggestions,
+                timeLabel: Self.hourFormatter.string(from: time),
+                favorites: cachedFavorites,
+                suggestions: cachedSuggestions,
                 onTapItem: { portionItem = $0 },
                 onAddItem: { stageDefaultPortion(of: $0) }
             )
@@ -195,7 +220,7 @@ struct FoodEntrySheet: View {
         case 4:
             LibraryView(
                 mode: $libraryMode,
-                items: filteredLibrary,
+                items: cachedLibrary,
                 onTapItem: { portionItem = $0 },
                 onAddItem: { stageDefaultPortion(of: $0) }
             )
@@ -374,9 +399,9 @@ struct FoodEntrySheet: View {
         }
     }
 
-    // MARK: - Filtered data
+    // MARK: - Filtered data (compute functions — call from recomputeSearchResults only)
 
-    private var filteredFavorites: [FoodDatabaseItem] {
+    private func computedFilteredFavorites() -> [FoodDatabaseItem] {
         // Real favorites aren't tracked yet — surface a small head of the
         // seed DB so the strip isn't empty. Phase E swaps this for the
         // user's actually-favorited items.
@@ -384,7 +409,7 @@ struct FoodEntrySheet: View {
         return Array(pool.prefix(6))
     }
 
-    private var filteredSuggestions: [FoodDatabaseItem] {
+    private func computedFilteredSuggestions() -> [FoodDatabaseItem] {
         let trimmed = filterQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
             // Surface a curated default set for the chosen time slot. Until the
@@ -394,17 +419,9 @@ struct FoodEntrySheet: View {
         return foodDatabase.search(trimmed, limit: 15)
     }
 
-    private var filteredLibrary: [FoodDatabaseItem] {
+    private func computedFilteredLibrary() -> [FoodDatabaseItem] {
         let trimmed = filterQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         return foodDatabase.search(trimmed, limit: 30)
-    }
-
-    // MARK: - Formatting
-
-    private var hourLabel: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h a"
-        return formatter.string(from: time)
     }
 
     private var bottomBarPlaceholder: String {

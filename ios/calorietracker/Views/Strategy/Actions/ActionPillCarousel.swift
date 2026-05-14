@@ -56,6 +56,7 @@ struct ActionPillCarousel: View {
                 Image(systemName: config.icon)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
+                    .accessibilityHidden(true)
 
                 Text(config.label)
                     .font(BulkAITheme.Typography.body)

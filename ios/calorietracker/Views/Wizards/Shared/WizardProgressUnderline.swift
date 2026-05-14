@@ -18,6 +18,8 @@ struct WizardProgressUnderline: View {
     let stepCount: Int
     let currentStep: Int
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private static let pillHeight: CGFloat = 4
     private static let pillSpacing: CGFloat = 6
 
@@ -42,7 +44,7 @@ struct WizardProgressUnderline: View {
             .fill(active ? Color.white : BulkAITheme.Color.surfaceElevated)
             .frame(maxWidth: .infinity)
             .frame(height: Self.pillHeight)
-            .animation(.easeOut(duration: 0.2), value: active)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: active)
     }
 }
 

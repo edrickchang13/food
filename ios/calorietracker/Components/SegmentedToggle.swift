@@ -15,6 +15,7 @@ struct SegmentedToggle: View {
     let accent: Color
 
     @Namespace private var pillNamespace
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(
         options: (String, String),
@@ -41,8 +42,12 @@ struct SegmentedToggle: View {
     private func segment(label: String, index: Int) -> some View {
         let isSelected = index == selection
         return Button {
-            withAnimation(.snappy) {
+            if reduceMotion {
                 selection = index
+            } else {
+                withAnimation(.snappy) {
+                    selection = index
+                }
             }
         } label: {
             Text(label)
@@ -61,6 +66,7 @@ struct SegmentedToggle: View {
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(label)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

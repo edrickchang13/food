@@ -23,6 +23,7 @@ struct FloatingBottomBar: View {
     // MARK: Focus
 
     @FocusState private var isFilterFocused: Bool
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     // MARK: Layout constants
 
@@ -45,7 +46,13 @@ struct FloatingBottomBar: View {
         .frame(height: Self.barHeight)
         .background(
             RoundedRectangle(cornerRadius: BulkAITheme.Radius.lg, style: .continuous)
-                .fill(.ultraThinMaterial)
+                // When Reduce Transparency is on, materials become opaque but
+                // the resulting surface color can lose contrast. Fall back to
+                // a fully opaque surface token so text targets stay legible.
+                .fill(reduceTransparency
+                    ? AnyShapeStyle(BulkAITheme.Color.surfaceElevated)
+                    : AnyShapeStyle(.ultraThinMaterial)
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: BulkAITheme.Radius.lg, style: .continuous)
                         .stroke(Color.white.opacity(0.06), lineWidth: 0.5)

@@ -70,6 +70,7 @@ struct SetProgram_Preferences: View {
                         ? BulkAITheme.Color.accent
                         : BulkAITheme.Color.macroCarbs
                     )
+                    .accessibilityHidden(true)
 
                 Text(preference.displayName)
                     .font(BulkAITheme.Typography.headline)
@@ -91,6 +92,8 @@ struct SetProgram_Preferences: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(preference.displayName), \(preference.subtitle)")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 

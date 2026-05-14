@@ -23,6 +23,24 @@ struct DashboardView: View {
     @State private var showEditGoal: Bool = false
     @State private var showSetProgram: Bool = false
 
+    // Memoized aggregations — recomputed only when the underlying store
+    // arrays change, not on every body call (which runs 5+ times per frame
+    // during scroll at 3,806 entries = ~19k+ iterations per frame otherwise).
+    @State private var cachedWeekTotals: [WeeklyNutritionCard.DayTotals] = []
+    @State private var cachedLast30DaysIntake: [Int] = []
+    @State private var cachedWeighInHabitData: [Date: Double] = [:]
+    @State private var cachedFoodLoggingHabitData: [Date: Double] = [:]
+    @State private var cachedWeighInsThisWeek: Int = 0
+    @State private var cachedFoodLogsThisWeek: Int = 0
+
+    // Cached formatter — DateFormatter construction allocates ~40 KB of
+    // ICU data on iOS; doing it in a computed var runs it on every body call.
+    private static let todayLabelFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEEE, MMMM d"
+        return f
+    }()
+
     private var profile: UserProfile { profileStore.profile }
 
     var body: some View {
@@ -38,10 +56,10 @@ struct DashboardView: View {
                         onSeeAll: { /* TODO Phase G */ }
                     )
                     HabitsSection(
-                        weighInData: weighInHabitData(),
-                        weighInThisWeek: "\(weighInsThisWeek())/7",
-                        foodLoggingData: foodLoggingHabitData(),
-                        foodLoggingThisWeek: "\(foodLogsThisWeek())/7",
+                        weighInData: cachedWeighInHabitData,
+                        weighInThisWeek: "\(cachedWeighInsThisWeek)/7",
+                        foodLoggingData: cachedFoodLoggingHabitData,
+                        foodLoggingThisWeek: "\(cachedFoodLogsThisWeek)/7",
                         onWeighInTap: { /* TODO */ },
                         onFoodLoggingTap: { /* TODO */ }
                     )
@@ -113,6 +131,23 @@ struct DashboardView: View {
         .sheet(isPresented: $showSetProgram) {
             SetProgramFlow()
         }
+        .onAppear { recomputeAggregations() }
+        // `FoodEntry` is not `Equatable`; observe count + the last-entry id as a
+        // cheap proxy — any add, delete, or update changes at least one of these.
+        .onChange(of: foodStore.entries.count) { recomputeAggregations() }
+        .onChange(of: foodStore.entries.last?.id) { recomputeAggregations() }
+        .onChange(of: weightStore.entries.count) { recomputeAggregations() }
+    }
+
+    // MARK: - Aggregation recompute
+
+    private func recomputeAggregations() {
+        cachedWeekTotals = weekTotals()
+        cachedLast30DaysIntake = lastNDaysIntake(30)
+        cachedWeighInHabitData = weighInHabitData()
+        cachedFoodLoggingHabitData = foodLoggingHabitData()
+        cachedWeighInsThisWeek = weighInsThisWeek()
+        cachedFoodLogsThisWeek = foodLogsThisWeek()
     }
 
     // MARK: - Pager
@@ -120,8 +155,8 @@ struct DashboardView: View {
     private var pager: some View {
         TabView(selection: $pagerIndex) {
             WeeklyNutritionCard(
-                dateLabel: todayLabelAllCaps(),
-                week: weekTotals(),
+                dateLabel: Self.todayLabelFormatter.string(from: .now).uppercased(),
+                week: cachedWeekTotals,
                 targets: dailyTargets(),
                 selectedIndex: $weeklySelectedIndex,
                 consumedVsRemaining: $weeklyMode
@@ -129,7 +164,7 @@ struct DashboardView: View {
             .tag(0)
 
             EnergyBalanceCard(
-                dailyNutrition: lastNDaysIntake(30),
+                dailyNutrition: cachedLast30DaysIntake,
                 dailyTargets: Array(repeating: profile.effectiveCalories, count: 30),
                 dailyExpenditure: lastNDaysExpenditure(30),
                 mode: $energyMode
@@ -187,7 +222,8 @@ struct DashboardView: View {
     }
 
     private var insightEnergyBalance: InsightsAnalyticsGrid.Insight {
-        let intake = lastNDaysIntake(7)
+        // Reuse the cached 30-day array; last 7 entries are the trailing week.
+        let intake = cachedLast30DaysIntake.suffix(7).map { $0 }
         let avgIntake = intake.isEmpty ? 0 : intake.reduce(0, +) / max(intake.count, 1)
         let exp = Int(engineState.snapshot.expenditure?.kcalPerDay ?? 0)
         let delta = avgIntake - exp
@@ -330,9 +366,4 @@ struct DashboardView: View {
         Array(repeating: value, count: count)
     }
 
-    private func todayLabelAllCaps() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE, MMMM d"
-        return formatter.string(from: .now).uppercased()
-    }
 }

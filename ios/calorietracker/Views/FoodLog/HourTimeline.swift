@@ -112,8 +112,11 @@ struct HourTimeline: View {
                 Image(systemName: "plus")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
+                    .accessibilityHidden(true)
             }
-            .contentShape(Circle())
+            // Expand the hit area to 44pt without affecting the visual circle size.
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Add food at \(formatted(hour: Calendar.current.component(.hour, from: hourStart)))")
