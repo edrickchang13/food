@@ -32,9 +32,17 @@ struct FoodEntrySheet: View {
     /// "+" affordance to drop the header into the slot the user tapped.
     let initialTime: Date?
 
-    init(initialTime: Date? = nil) {
+    /// Initial tab. Used by Dashboard search-bar affordances to deep-link the
+    /// sheet into Scan (barcode) or AI without making the user pick the tab
+    /// first. Indices match the `tabs` array: 0 Search / 1 AI / 2 Scan /
+    /// 3 Quick Add / 4 Library.
+    let initialTab: Int
+
+    init(initialTime: Date? = nil, initialTab: Int = 0) {
         self.initialTime = initialTime
+        self.initialTab = initialTab
         _time = State(initialValue: initialTime ?? .now)
+        _selectedTab = State(initialValue: initialTab)
     }
 
     // Header state
@@ -42,7 +50,7 @@ struct FoodEntrySheet: View {
     @State private var mealType: MealType? = nil
 
     // Tab + bottom bar state
-    @State private var selectedTab: Int = 0
+    @State private var selectedTab: Int
     @State private var filterQuery: String = ""
     @State private var libraryMode: Int = 1   // 0 = Recipes, 1 = Foods
 
