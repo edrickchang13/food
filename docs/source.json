@@ -15,6 +15,13 @@
       "screenshotURLs": [],
       "versions": [
         {
+          "version": "1.0.47",
+          "date": "2026-05-14T21:23:38+00:00",
+          "localizedDescription": "Latest build from main.\n\nCommit bb48b33.",
+          "downloadURL": "https://github.com/edrickchang13/food/releases/download/v1.0.47/BulkAI.ipa",
+          "size": 11893977
+        },
+        {
           "version": "1.0.45",
           "date": "2026-05-14T21:09:51+00:00",
           "localizedDescription": "Latest build from main.\n\nCommit f19a88a.",
@@ -181,13 +188,6 @@
           "localizedDescription": "Latest build from main.\n\nCommit 7b3c7d1.",
           "downloadURL": "https://github.com/edrickchang13/food/releases/download/v1.0.5/BulkAI.ipa",
           "size": 10740974
-        },
-        {
-          "version": "1.0.4",
-          "date": "2026-05-12T21:50:46+00:00",
-          "localizedDescription": "Latest build from main.\n\nCommit 32a0500.",
-          "downloadURL": "https://github.com/edrickchang13/food/releases/download/v1.0.4/BulkAI.ipa",
-          "size": 10738049
         }
       ],
       "appPermissions": {
