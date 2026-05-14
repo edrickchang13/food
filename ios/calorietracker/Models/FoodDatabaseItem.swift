@@ -14,7 +14,40 @@ struct FoodDatabaseItem: Identifiable, Codable, Hashable {
     let carbsPer100g: Double
     let fatPer100g: Double
     let fiberPer100g: Double?
+    let sodiumPer100g: Double?         // milligrams per 100 g
+    let sugarPer100g: Double?          // grams per 100 g
+    let saturatedFatPer100g: Double?   // grams per 100 g
     let source: FoodDatabaseSource
+
+    init(
+        id: String,
+        name: String,
+        category: FoodDatabaseCategory,
+        preparation: FoodPreparation,
+        caloriesPer100g: Double,
+        proteinPer100g: Double,
+        carbsPer100g: Double,
+        fatPer100g: Double,
+        fiberPer100g: Double? = nil,
+        sodiumPer100g: Double? = nil,
+        sugarPer100g: Double? = nil,
+        saturatedFatPer100g: Double? = nil,
+        source: FoodDatabaseSource
+    ) {
+        self.id = id
+        self.name = name
+        self.category = category
+        self.preparation = preparation
+        self.caloriesPer100g = caloriesPer100g
+        self.proteinPer100g = proteinPer100g
+        self.carbsPer100g = carbsPer100g
+        self.fatPer100g = fatPer100g
+        self.fiberPer100g = fiberPer100g
+        self.sodiumPer100g = sodiumPer100g
+        self.sugarPer100g = sugarPer100g
+        self.saturatedFatPer100g = saturatedFatPer100g
+        self.source = source
+    }
 }
 
 enum FoodDatabaseCategory: String, Codable, CaseIterable {

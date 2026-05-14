@@ -33,6 +33,14 @@ enum BulkAITheme {
 
         // Bulk AI accent stays
         static let accent = SwiftUI.Color(hex: "FF6B6B")
+
+        // Two-stop coral gradient for hero CTAs and onboarding flourishes.
+        // Same family as `accent`, with the second stop shifted toward
+        // deeper red so LinearGradient picks up enough delta to read.
+        static let accentGradient: [SwiftUI.Color] = [
+            SwiftUI.Color(hex: "FF6B6B"),
+            SwiftUI.Color(hex: "FF3D6B")
+        ]
     }
 
     // MARK: Typography

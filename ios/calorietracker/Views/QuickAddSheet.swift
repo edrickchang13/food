@@ -677,6 +677,11 @@ struct QuickAddPortionSheet: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Log") {
                         let multiplier = grams / 100
+                        // Scale every per-100g micronutrient the seed exposes
+                        // by the chosen serving so the Food Detail view sees
+                        // the right values for the custom amount the user
+                        // picked (e.g. logging 200 g of a 373 mg-sodium chain
+                        // item should produce a 746 mg row in the detail).
                         let entry = FoodEntry(
                             name: "\(Int(grams))g \(item.name.lowercased())",
                             calories: Int((item.caloriesPer100g * multiplier).rounded()),
@@ -686,7 +691,10 @@ struct QuickAddPortionSheet: View {
                             timestamp: .now,
                             source: .manual,
                             mealType: mealType,
+                            sugar: item.sugarPer100g.map { $0 * multiplier },
                             fiber: item.fiberPer100g.map { $0 * multiplier },
+                            saturatedFat: item.saturatedFatPer100g.map { $0 * multiplier },
+                            sodium: item.sodiumPer100g.map { $0 * multiplier },
                             servingSizeGrams: grams
                         )
                         onLog(entry)

@@ -9,6 +9,18 @@ enum ScanMode: String, CaseIterable, Hashable, Sendable {
     case label
 }
 
+/// The result produced when the user captures an image in the Scan tab.
+///
+/// - `label(UIImage)`: The user captured in Label mode. The parent should
+///   route the image to the nutrition-label OCR analyzer.
+/// - `barcodeUnavailable`: The user captured in Barcode mode. The image is
+///   intentionally not consumed — the parent should show the
+///   `BarcodeUnavailableSheet` instead of feeding the image to any analyzer.
+enum ScanResult {
+    case label(UIImage)
+    case barcodeUnavailable
+}
+
 /// The Scan tab of the Food Entry sheet (`~/Downloads/macrofactor-screens/IMG_6467.PNG`).
 ///
 /// Layout, top to bottom:
@@ -17,19 +29,25 @@ enum ScanMode: String, CaseIterable, Hashable, Sendable {
 /// 2. A large dark camera-viewfinder placeholder that fills the rest of the
 ///    available area. Tapping it presents the project's `CameraView` (an
 ///    `UIImagePickerController` wrapper that lives in `ContentView.swift`)
-///    inside a `fullScreenCover`, and the resulting `UIImage` plus the
-///    currently selected `ScanMode` are forwarded to `onCapture`.
+///    inside a `fullScreenCover`, and the resulting `ScanResult` is forwarded
+///    to `onCapture`.
 ///
 /// `ScanView` deliberately holds no Gemini/database state of its own. The
 /// parent `FoodEntrySheet` decides what to do with the captured image based
-/// on `ScanMode`.
+/// on the `ScanResult`. The parent owns `scanMode` so it can reset the
+/// segment to `.label` from `BarcodeUnavailableSheet`'s "Try label scan" CTA.
 struct ScanView: View {
 
-    /// Called when the user has captured an image. The selected sub-mode is
-    /// included so the caller can route to the correct analyzer.
-    let onCapture: (UIImage, ScanMode) -> Void
+    /// The active sub-mode (Barcode vs Label). Owned by the parent so the
+    /// parent can reset it to `.label` via `BarcodeUnavailableSheet`.
+    @Binding var scanMode: ScanMode
 
-    @State private var mode: ScanMode = .barcode
+    /// Called when the user has captured an image. The result encodes whether
+    /// the image is ready to analyze (`.label`) or whether the barcode path is
+    /// unavailable (`.barcodeUnavailable`), so the caller never needs to
+    /// inspect the internal segment state.
+    let onCapture: (ScanResult) -> Void
+
     @State private var isFlashOn: Bool = false
     @State private var showCamera: Bool = false
     @State private var capturedImage: UIImage?
@@ -38,8 +56,8 @@ struct ScanView: View {
     /// the source of truth for the rest of the view.
     private var selectionIndex: Binding<Int> {
         Binding(
-            get: { mode == .barcode ? 0 : 1 },
-            set: { newValue in mode = (newValue == 0) ? .barcode : .label }
+            get: { scanMode == .barcode ? 0 : 1 },
+            set: { newValue in scanMode = (newValue == 0) ? .barcode : .label }
         )
     }
 
@@ -59,8 +77,13 @@ struct ScanView: View {
         }
         .onChange(of: capturedImage) { _, newValue in
             guard let image = newValue else { return }
-            onCapture(image, mode)
             capturedImage = nil
+            switch scanMode {
+            case .barcode:
+                onCapture(.barcodeUnavailable)
+            case .label:
+                onCapture(.label(image))
+            }
         }
     }
 
@@ -140,12 +163,12 @@ struct ScanView: View {
             .contentShape(RoundedRectangle(cornerRadius: BulkAITheme.Radius.lg, style: .continuous))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(mode == .barcode ? "Scan barcode" : "Scan nutrition label")
+        .accessibilityLabel(scanMode == .barcode ? "Scan barcode" : "Scan nutrition label")
     }
 
     @ViewBuilder
     private var reticle: some View {
-        switch mode {
+        switch scanMode {
         case .barcode:
             RoundedRectangle(cornerRadius: BulkAITheme.Radius.sm, style: .continuous)
                 .stroke(style: StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
@@ -161,7 +184,7 @@ struct ScanView: View {
 }
 
 #Preview("ScanView") {
-    ScanView { _, _ in }
+    ScanView(scanMode: .constant(.barcode)) { _ in }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(BulkAITheme.Color.background)
 }
