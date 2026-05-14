@@ -10,6 +10,7 @@ struct EnergyBalanceCard: View {
     let dailyTargets: [Int]
     let dailyExpenditure: [Int]
     @Binding var mode: Int
+    var isLoading: Bool = false
 
     // MARK: Layout constants
 
@@ -83,6 +84,7 @@ struct EnergyBalanceCard: View {
                     }
                 }
                 .frame(width: width, height: height, alignment: .bottom)
+                .skeleton(isLoading: isLoading, cornerRadius: barCornerRadius)
 
                 // Dotted reference line overlay.
                 DottedLine()
@@ -142,6 +144,7 @@ struct EnergyBalanceCard: View {
                 .fontWeight(.semibold)
                 .foregroundStyle(.white)
                 .monospacedDigit()
+                .skeleton(isLoading: isLoading)
 
             HStack(spacing: 4) {
                 iconView(for: icon, tint: tint)
@@ -287,4 +290,27 @@ private struct EnergyBalanceCardPreviewHarness: View {
 
 #Preview("EnergyBalanceCard") {
     EnergyBalanceCardPreviewHarness()
+}
+
+private struct EnergyBalanceCardLoadingPreviewHarness: View {
+    @State private var mode: Int = 0
+
+    var body: some View {
+        ScrollView {
+            EnergyBalanceCard(
+                dailyNutrition: [],
+                dailyTargets: [],
+                dailyExpenditure: [],
+                mode: $mode,
+                isLoading: true
+            )
+            .padding(BulkAITheme.Spacing.md)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(BulkAITheme.Color.background)
+    }
+}
+
+#Preview("EnergyBalanceCard — loading") {
+    EnergyBalanceCardLoadingPreviewHarness()
 }

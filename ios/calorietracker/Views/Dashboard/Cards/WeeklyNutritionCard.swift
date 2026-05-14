@@ -19,6 +19,7 @@ struct WeeklyNutritionCard: View {
     let targets: DayTotals
     @Binding var selectedIndex: Int
     @Binding var consumedVsRemaining: Int
+    var isLoading: Bool = false
 
     // MARK: Layout constants
 
@@ -144,6 +145,7 @@ struct WeeklyNutritionCard: View {
                     RoundedRectangle(cornerRadius: 3, style: .continuous)
                         .fill(color(for: macro))
                         .frame(width: barWidth, height: filledHeight)
+                        .skeleton(isLoading: isLoading, cornerRadius: 3)
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -214,6 +216,7 @@ struct WeeklyNutritionCard: View {
                     Text("\(value)")
                         .font(BulkAITheme.Typography.headline)
                         .foregroundStyle(.white)
+                        .skeleton(isLoading: isLoading)
                     switch trailing {
                     case .flame:
                         Image(systemName: "flame.fill")
@@ -228,6 +231,7 @@ struct WeeklyNutritionCard: View {
                 Text("of \(target)")
                     .font(BulkAITheme.Typography.caption2)
                     .foregroundStyle(.white.opacity(0.5))
+                    .skeleton(isLoading: isLoading)
             }
         }
     }
@@ -331,4 +335,37 @@ private struct WeeklyNutritionCardPreviewHarness: View {
 
 #Preview("WeeklyNutritionCard") {
     WeeklyNutritionCardPreviewHarness()
+}
+
+private struct WeeklyNutritionCardLoadingPreviewHarness: View {
+    @State private var selectedIndex: Int = 2
+    @State private var mode: Int = 0
+
+    private let targets = WeeklyNutritionCard.DayTotals(
+        weekday: "T",
+        kcal: 3415,
+        protein: 190,
+        fat: 113,
+        carbs: 407
+    )
+
+    var body: some View {
+        ScrollView {
+            WeeklyNutritionCard(
+                dateLabel: "WEDNESDAY, MAY 13",
+                week: [],
+                targets: targets,
+                selectedIndex: $selectedIndex,
+                consumedVsRemaining: $mode,
+                isLoading: true
+            )
+            .padding(BulkAITheme.Spacing.md)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(BulkAITheme.Color.background)
+    }
+}
+
+#Preview("WeeklyNutritionCard — loading") {
+    WeeklyNutritionCardLoadingPreviewHarness()
 }

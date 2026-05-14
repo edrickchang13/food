@@ -10,6 +10,7 @@ struct DailyNutritionCard: View {
     let consumed: (kcal: Int, protein: Int, fat: Int, carbs: Int)
     let target: (kcal: Int, protein: Int, fat: Int, carbs: Int)
     @Binding var mode: Int
+    var isLoading: Bool = false
 
     // MARK: Layout constants
 
@@ -57,6 +58,7 @@ struct DailyNutritionCard: View {
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .monospacedDigit()
+                .skeleton(isLoading: isLoading)
             Text(label)
                 .font(BulkAITheme.Typography.caption)
                 .foregroundStyle(.white.opacity(0.55))
@@ -83,12 +85,14 @@ struct DailyNutritionCard: View {
                     style: StrokeStyle(lineWidth: arcStrokeWidth, lineCap: .round)
                 )
                 .animation(.snappy, value: progress)
+                .skeleton(isLoading: isLoading, cornerRadius: arcDiameter / 2)
 
             VStack(spacing: 2) {
                 Text("\(centerValue)")
                     .font(.system(size: 36, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white)
                     .monospacedDigit()
+                    .skeleton(isLoading: isLoading)
                 Text(centerLabel)
                     .font(BulkAITheme.Typography.caption)
                     .foregroundStyle(.white.opacity(0.55))
@@ -133,11 +137,13 @@ struct DailyNutritionCard: View {
                 total: Double(target),
                 accent: color
             )
+            .skeleton(isLoading: isLoading, cornerRadius: 4)
 
             Text("\(displayValue(consumed: consumed, target: target)) / \(target)g")
                 .font(BulkAITheme.Typography.caption)
                 .foregroundStyle(.white.opacity(0.7))
                 .monospacedDigit()
+                .skeleton(isLoading: isLoading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -240,4 +246,26 @@ private struct DailyNutritionCardPreviewHarness: View {
 
 #Preview("DailyNutritionCard") {
     DailyNutritionCardPreviewHarness()
+}
+
+private struct DailyNutritionCardLoadingPreviewHarness: View {
+    @State private var mode: Int = 0
+
+    var body: some View {
+        ScrollView {
+            DailyNutritionCard(
+                consumed: (kcal: 1820, protein: 110, fat: 64, carbs: 220),
+                target: (kcal: 3415, protein: 190, fat: 113, carbs: 407),
+                mode: $mode,
+                isLoading: true
+            )
+            .padding(BulkAITheme.Spacing.md)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(BulkAITheme.Color.background)
+    }
+}
+
+#Preview("DailyNutritionCard — loading") {
+    DailyNutritionCardLoadingPreviewHarness()
 }

@@ -69,6 +69,14 @@ struct DashboardView: View {
 
     private var profile: UserProfile { profileStore.profile }
 
+    /// True while the first frame's aggregations haven't completed — the
+    /// `recomputeAggregations()` call on `.onAppear` flips both caches non-empty.
+    /// Pager cards and insight tiles shimmer until this flips false so users
+    /// don't see a flash of zeros while the page hydrates.
+    private var isHydrating: Bool {
+        cachedWeekTotals.isEmpty || cachedLast30DaysIntake.isEmpty
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             ScrollView {
@@ -255,7 +263,8 @@ struct DashboardView: View {
                 week: cachedWeekTotals,
                 targets: dailyTargets(),
                 selectedIndex: $weeklySelectedIndex,
-                consumedVsRemaining: $weeklyMode
+                consumedVsRemaining: $weeklyMode,
+                isLoading: isHydrating
             )
             .tag(0)
 
@@ -263,7 +272,8 @@ struct DashboardView: View {
                 dailyNutrition: cachedLast30DaysIntake,
                 dailyTargets: Array(repeating: profile.effectiveCalories, count: 30),
                 dailyExpenditure: lastNDaysExpenditure(30),
-                mode: $energyMode
+                mode: $energyMode,
+                isLoading: isHydrating
             )
             .tag(1)
 
@@ -280,7 +290,8 @@ struct DashboardView: View {
                     fat: profile.effectiveFat,
                     carbs: profile.effectiveCarbs
                 ),
-                mode: $dailyMode
+                mode: $dailyMode,
+                isLoading: isHydrating
             )
             .tag(2)
         }
@@ -299,7 +310,8 @@ struct DashboardView: View {
             accent: BulkAITheme.Color.expenditure,
             sparkline: flatSparkline(value: engineState.snapshot.expenditure?.kcalPerDay ?? 0, count: 7),
             valueText: "\(Int(engineState.snapshot.expenditure?.kcalPerDay ?? 0)) kcal",
-            onTap: { showTDEEExplainer = true }
+            onTap: { showTDEEExplainer = true },
+            isLoading: isHydrating
         )
     }
 
@@ -313,7 +325,8 @@ struct DashboardView: View {
             accent: BulkAITheme.Color.weightTrend,
             sparkline: trendKgs.isEmpty ? nil : trendKgs,
             valueText: String(format: "%.1f lbs", latest * 2.20462),
-            onTap: { showAllWeights = true }
+            onTap: { showAllWeights = true },
+            isLoading: isHydrating
         )
     }
 
@@ -335,7 +348,8 @@ struct DashboardView: View {
             accent: BulkAITheme.Color.macroCalories,
             sparkline: intake.map { Double($0) },
             valueText: label,
-            onTap: { showTDEEExplainer = true }
+            onTap: { showTDEEExplainer = true },
+            isLoading: isHydrating
         )
     }
 
@@ -347,7 +361,8 @@ struct DashboardView: View {
             accent: BulkAITheme.Color.macroCarbs,
             sparkline: nil,
             valueText: "—",
-            onTap: { showStrategy = true }
+            onTap: { showStrategy = true },
+            isLoading: isHydrating
         )
     }
 
