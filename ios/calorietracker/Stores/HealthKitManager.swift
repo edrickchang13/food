@@ -66,6 +66,7 @@ class HealthKitManager {
 
     private var readTypes: Set<HKObjectType> {
         [
+            HKQuantityType(.stepCount),
             HKQuantityType(.bodyMass),
             HKQuantityType(.height),
             HKQuantityType(.bodyFatPercentage),
