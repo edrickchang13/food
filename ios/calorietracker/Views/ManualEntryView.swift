@@ -87,7 +87,8 @@ struct ManualEntryView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(20)
-        .frame(width: 340)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(AppColors.appBackground.ignoresSafeArea())
         .onAppear { focused = .name }
     }
 
