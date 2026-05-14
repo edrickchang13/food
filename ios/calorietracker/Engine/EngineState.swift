@@ -22,6 +22,13 @@ final class EngineState {
     @ObservationIgnored private let weightStore: WeightStore
     @ObservationIgnored private let foodStore: FoodStore
 
+    // `pendingRefresh` is only ever read/written from `scheduleDebouncedRefresh()`,
+    // which is always called from store callbacks that run on the main thread.
+    // `nonisolated(unsafe)` suppresses the Swift 6 cross-isolation warning; the
+    // access pattern is safe by construction.
+    @ObservationIgnored nonisolated(unsafe) private var pendingRefresh: Task<Void, Never>?
+    private static let debounceWindow: Duration = .milliseconds(250)
+
     private(set) var snapshot: EngineSnapshot = EngineSnapshot(
         trend: [],
         currentTrendKg: nil,
@@ -219,9 +226,36 @@ final class EngineState {
 
     // MARK: - Wiring
 
-    private func observeStores() {
-        weightStore.onEntryAdded = { [weak self] _ in self?.refresh() }
-        weightStore.onEntryDeleted = { [weak self] _ in self?.refresh() }
-        foodStore.onEntriesChanged = { [weak self] in self?.refresh() }
+    /// Cancels any in-flight debounce task and starts a new 250 ms trailing-edge
+    /// window. Only store-change callbacks use this path; direct callers (e.g.
+    /// `commitAcceptedCheckIn`) keep calling `refresh()` synchronously so they
+    /// see an up-to-date snapshot immediately.
+    private func scheduleDebouncedRefresh() {
+        pendingRefresh?.cancel()
+        pendingRefresh = Task { [weak self] in
+            do {
+                try await Task.sleep(for: Self.debounceWindow)
+            } catch {
+                // Task was cancelled (a newer change arrived); do nothing.
+                return
+            }
+            guard !Task.isCancelled else { return }
+            self?.refresh()
+            // Release the Task reference so observers (and the unit test)
+            // can distinguish "debounce idle" from "debounce armed". The
+            // next store change immediately reassigns this.
+            self?.pendingRefresh = nil
+        }
     }
+
+    private func observeStores() {
+        weightStore.onEntryAdded = { [weak self] _ in self?.scheduleDebouncedRefresh() }
+        weightStore.onEntryDeleted = { [weak self] _ in self?.scheduleDebouncedRefresh() }
+        foodStore.onEntriesChanged = { [weak self] in self?.scheduleDebouncedRefresh() }
+    }
+
+#if DEBUG
+    /// Exposed for unit testing the debounce mechanism only. Not part of the public API.
+    var pendingRefreshForTesting: Task<Void, Never>? { pendingRefresh }
+#endif
 }

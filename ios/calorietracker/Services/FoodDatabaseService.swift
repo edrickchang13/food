@@ -13,9 +13,33 @@ final class FoodDatabaseService {
     /// lazily on first search so app launch isn't blocked decoding ~1.7 MB JSON.
     private var bundledUSDA: [FoodDatabaseItem]? = nil
 
+    // MARK: - Search index
+
+    /// A lazily-built, name-sorted index over the full corpus.
+    ///
+    /// Design rationale:
+    ///   - `lowerNames` stores each item's lowercased name so binary-search
+    ///     prefix scans never re-lowercase inside the hot loop.
+    ///   - `sourcePriority` stores a stable rank (1 = USDA, 2 = AI) so the
+    ///     indexed pass (which never includes seed items) can still rank USDA
+    ///     above AI when filling the non-seed result slots.
+    ///   - The index is invalidated (set to nil) whenever `record(_:)` adds a
+    ///     new AI-cache row; it rebuilds on the next search call.
+    private struct SortedIndex {
+        let sortedItems: [FoodDatabaseItem]
+        let lowerNames: [String]
+        let sourcePriority: [Int]   // 1 = USDA, 2 = AI cache (seed is not indexed)
+    }
+
+    private var searchIndex: SortedIndex?
+
+    // MARK: - Init
+
     init() {
         loadCache()
     }
+
+    // MARK: - Public API
 
     /// All known items: hand-curated seed + bundled USDA + AI cache, sorted
     /// by name. Used by browse UI when no search is active.
@@ -29,46 +53,43 @@ final class FoodDatabaseService {
     /// the AI cache. Case-insensitive substring on name. Curated seed ranks
     /// first (highest trust), USDA second (verified but plain names), AI cache
     /// last (LLM-derived, lowest trust).
+    ///
+    /// For queries of 2+ characters:
+    ///   1. All seed matches (prefix or substring) are collected first — the
+    ///      seed is only ~36 items so this is O(1) in practice. This guarantees
+    ///      seed hits are never crowded out by USDA results.
+    ///   2. Remaining slots are filled from the USDA+AI corpus via a
+    ///      binary-search prefix scan followed by a substring fallback pass.
+    /// For 0–1 character queries the index is bypassed entirely.
     func search(_ query: String, limit: Int = 25) -> [FoodDatabaseItem] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return Array(FoodDatabaseSeed.items.prefix(limit)) }
 
+        let lower = trimmed.lowercased()
+
+        // Short queries: index overhead not worthwhile; linear scan all sources.
+        guard lower.count >= 2 else {
+            return Array(
+                (FoodDatabaseSeed.items + loadUSDAIfNeeded() + aiCache)
+                    .filter { $0.name.localizedCaseInsensitiveContains(trimmed) }
+                    .prefix(limit)
+            )
+        }
+
+        // Step 1: collect every seed match (the seed is tiny; this is negligible).
         let seedHits = FoodDatabaseSeed.items.filter {
             $0.name.localizedCaseInsensitiveContains(trimmed)
         }
-        let usdaHits = loadUSDAIfNeeded().filter {
-            $0.name.localizedCaseInsensitiveContains(trimmed)
-        }
-        let cacheHits = aiCache.filter {
-            $0.name.localizedCaseInsensitiveContains(trimmed)
-        }
-        return Array((seedHits + usdaHits + cacheHits).prefix(limit))
-    }
 
-    /// One-shot lazy decode of the bundled USDA JSON. Subsequent calls return
-    /// the cached array. Decoding 1.7 MB of simple structs takes ~150 ms on a
-    /// recent iPhone; doing it on first-search keeps cold launch snappy.
-    private func loadUSDAIfNeeded() -> [FoodDatabaseItem] {
-        if let bundledUSDA { return bundledUSDA }
-        guard let url = Bundle.main.url(forResource: "usda-seed", withExtension: "json"),
-              let data = try? Data(contentsOf: url),
-              let decoded = try? JSONDecoder().decode([FoodDatabaseItem].self, from: data)
-        else {
-            bundledUSDA = []
-            return []
-        }
-        bundledUSDA = decoded
-        return decoded
-    }
+        let remaining = limit - seedHits.count
+        guard remaining > 0 else { return Array(seedHits.prefix(limit)) }
 
-    /// Persists an AI-derived nutrition lookup so it shows up on next search.
-    /// Called by the higher-level food parsing flow after a Gemini call that
-    /// returned macros for a previously-unknown item.
-    func record(_ item: FoodDatabaseItem) {
-        guard item.source == .aiEstimated else { return }
-        if aiCache.contains(where: { $0.id == item.id }) { return }
-        aiCache.append(item)
-        saveCache()
+        // Step 2: fill remaining slots from USDA + AI via the binary-search index.
+        let idx = buildIndexIfNeeded()
+        let seedIDs = Set(seedHits.map(\.id))
+        let nonSeedHits = indexedSearch(lower: lower, limit: remaining, excludingIDs: seedIDs, in: idx)
+
+        return seedHits + nonSeedHits
     }
 
     /// Searches the local seed + AI cache, then merges Open Food Facts results
@@ -98,6 +119,18 @@ final class FoodDatabaseService {
             seenIDs.insert(item.id)
         }
         return Array(combined.prefix(limit))
+    }
+
+    /// Persists an AI-derived nutrition lookup so it shows up on next search.
+    /// Called by the higher-level food parsing flow after a Gemini call that
+    /// returned macros for a previously-unknown item.
+    func record(_ item: FoodDatabaseItem) {
+        guard item.source == .aiEstimated else { return }
+        if aiCache.contains(where: { $0.id == item.id }) { return }
+        aiCache.append(item)
+        // Invalidate the sorted index so the new entry is included on the next search.
+        searchIndex = nil
+        saveCache()
     }
 
     /// Caches a Gemini-derived analysis as an AI-estimated database entry. Only
@@ -166,6 +199,133 @@ final class FoodDatabaseService {
             return (hits[0], grams)
         }
         return nil
+    }
+
+    // MARK: - Private helpers
+
+    /// One-shot lazy decode of the bundled USDA JSON. Subsequent calls return
+    /// the cached array. Decoding 1.7 MB of simple structs takes ~150 ms on a
+    /// recent iPhone; doing it on first-search keeps cold launch snappy.
+    private func loadUSDAIfNeeded() -> [FoodDatabaseItem] {
+        if let bundledUSDA { return bundledUSDA }
+        guard let url = Bundle.main.url(forResource: "usda-seed", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let decoded = try? JSONDecoder().decode([FoodDatabaseItem].self, from: data)
+        else {
+            bundledUSDA = []
+            return []
+        }
+        bundledUSDA = decoded
+        return decoded
+    }
+
+    /// Builds the sorted index on first call. Subsequent calls return the cached
+    /// index. Callers must set `searchIndex = nil` to force a rebuild (e.g. when
+    /// the AI cache grows via `record(_:)`).
+    ///
+    /// The index covers USDA and AI-cache items only. Seed items are handled
+    /// directly in `search(_:limit:)` before this index is consulted, so
+    /// including them here would add overhead without benefit.
+    ///
+    /// Items are sorted by lowercased name. `sourcePriority` tracks USDA (1)
+    /// vs AI (2) so the indexed path can still rank USDA above AI items when
+    /// filling the non-seed slots.
+    private func buildIndexIfNeeded() -> SortedIndex {
+        if let searchIndex { return searchIndex }
+
+        let usda  = loadUSDAIfNeeded()
+        let cache = aiCache
+
+        struct Tagged {
+            let item: FoodDatabaseItem
+            let lower: String
+            let priority: Int
+        }
+
+        var tagged: [Tagged] = []
+        tagged.reserveCapacity(usda.count + cache.count)
+        for item in usda  { tagged.append(Tagged(item: item, lower: item.name.lowercased(), priority: 1)) }
+        for item in cache { tagged.append(Tagged(item: item, lower: item.name.lowercased(), priority: 2)) }
+
+        let sorted = tagged.sorted { $0.lower < $1.lower }
+
+        let built = SortedIndex(
+            sortedItems: sorted.map(\.item),
+            lowerNames: sorted.map(\.lower),
+            sourcePriority: sorted.map(\.priority)
+        )
+        searchIndex = built
+        return built
+    }
+
+    /// Binary-search assisted lookup against a pre-sorted index, skipping items
+    /// already returned by the seed pass in `search(_:limit:)`.
+    ///
+    /// Pass 1 — prefix bucket:
+    ///   Binary-searches to the first name >= `lower`, then walks forward while
+    ///   `names[i].hasPrefix(lower)`. All prefix matches are collected (no early
+    ///   exit) so that USDA items with priority 1 don't crowd out AI items with
+    ///   priority 2 in the final prefix sort. After sorting by priority the top
+    ///   `limit` items are taken.
+    ///
+    /// Pass 2 — substring bucket (only when Pass 1 fills < `limit` slots):
+    ///   A single linear scan over the full index collecting names that contain
+    ///   but do not start with the query. Sorted by priority before merging.
+    ///   This restores MacroFactor-style hits such as "Chicken Rice Bowl" for
+    ///   a "rice" query.
+    ///
+    /// Seed items are excluded via `excludingIDs` (already collected upstream)
+    /// so they never appear in this function's output.
+    private func indexedSearch(
+        lower: String,
+        limit: Int,
+        excludingIDs: Set<String>,
+        in idx: SortedIndex
+    ) -> [FoodDatabaseItem] {
+        let names = idx.lowerNames
+
+        // --- Pass 1: binary-search to first prefix match ---
+        var lo = 0, hi = names.count
+        while lo < hi {
+            let mid = lo + (hi - lo) / 2
+            if names[mid] < lower {
+                lo = mid + 1
+            } else {
+                hi = mid
+            }
+        }
+        struct Candidate {
+            let item: FoodDatabaseItem
+            let priority: Int
+        }
+        var prefixBucket: [Candidate] = []
+        var i = lo
+        while i < names.count, names[i].hasPrefix(lower) {
+            let item = idx.sortedItems[i]
+            if !excludingIDs.contains(item.id) {
+                prefixBucket.append(Candidate(item: item, priority: idx.sourcePriority[i]))
+            }
+            i += 1
+        }
+        prefixBucket.sort { $0.priority < $1.priority }
+
+        if prefixBucket.count >= limit {
+            return prefixBucket.prefix(limit).map(\.item)
+        }
+
+        // --- Pass 2: linear substring scan for non-prefix containment ---
+        let remaining = limit - prefixBucket.count
+        var seenIDs = excludingIDs.union(Set(prefixBucket.map { $0.item.id }))
+        var substringBucket: [Candidate] = []
+        for j in 0..<names.count {
+            guard !seenIDs.contains(idx.sortedItems[j].id) else { continue }
+            guard names[j].contains(lower), !names[j].hasPrefix(lower) else { continue }
+            substringBucket.append(Candidate(item: idx.sortedItems[j], priority: idx.sourcePriority[j]))
+            seenIDs.insert(idx.sortedItems[j].id)
+        }
+        substringBucket.sort { $0.priority < $1.priority }
+
+        return (prefixBucket + substringBucket.prefix(remaining)).map(\.item)
     }
 
     private func loadCache() {
