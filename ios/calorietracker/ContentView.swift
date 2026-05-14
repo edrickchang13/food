@@ -111,48 +111,43 @@ private enum AppUpdateChecker {
 struct ContentView: View {
     @AppStorage(AppThemeColor.storageKey) private var appThemeColorRaw = AppThemeColor.defaultColor.rawValue
     @State private var appUpdateState: AppUpdateState = .idle
+    @State private var selectedTab: CustomTabBar.Tab = .home
+    @State private var showQuickAdd = false
 
     var body: some View {
-        TabView {
-            HomeView()
-                .tabItem {
-                    Image(systemName: "house.fill")
-                    Text("Home")
-                }
+        ZStack(alignment: .bottom) {
+            // Content pane keyed by selectedTab. The .opacity dance keeps each
+            // tab's view state alive across switches (no destroy/recreate) so
+            // partially-typed forms and scroll positions persist like a real
+            // TabView would.
+            ZStack {
+                HomeView()
+                    .opacity(selectedTab == .home ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .home)
+                ProgressTabView()
+                    .opacity(selectedTab == .progress ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .progress)
+                ChatView()
+                    .opacity(selectedTab == .coach ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .coach)
+                ProfileView()
+                    .opacity(selectedTab == .settings ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .settings)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.bottom, 56)   // make room for the tab bar without clipping
 
-            ProgressTabView()
-                .tabItem {
-                    Image(systemName: "chart.bar.fill")
-                    Text("Progress")
-                }
-
-            ChatView()
-                .tabItem {
-                    Image(systemName: "bubble.left.and.bubble.right.fill")
-                    Text("Coach")
-                }
-
-            ProfileView()
-                .tabItem {
-                    Image(systemName: "gearshape.fill")
-                    Text("Settings")
-                }
-
-            AboutView(
-                updateState: $appUpdateState,
-                refreshUpdateState: {
-                    await refreshAppUpdateState(force: true)
-                }
-            )
-                .tabItem {
-                    Image(systemName: "info.circle.fill")
-                    Text("About")
-                }
-                .badge(appUpdateState.isUpdateAvailable ? "!" : nil)
+            CustomTabBar(selection: $selectedTab) {
+                showQuickAdd = true
+            }
         }
+        .ignoresSafeArea(.keyboard, edges: .bottom)
         .tint(AppThemeColor.color(for: appThemeColorRaw).color)
         .task {
             await refreshAppUpdateState()
+        }
+        .sheet(isPresented: $showQuickAdd) {
+            QuickAddSheet()
         }
     }
 
