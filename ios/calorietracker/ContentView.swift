@@ -1108,6 +1108,7 @@ struct ProgressTabView: View {
     @State private var showLogWeight = false
     @State private var showLogBodyFat = false
     @State private var showGoalReached = false
+    @State private var showConfetti = false
     @State private var showAllWeights = false
 
     private var userProfile: UserProfile { profileStore.profile }
@@ -1227,6 +1228,13 @@ struct ProgressTabView: View {
             }
             .background(BulkAITheme.Color.background)
             .navigationBarHidden(true)
+            .overlay(alignment: .top) {
+                if showConfetti {
+                    ConfettiView(onComplete: { showConfetti = false })
+                        .ignoresSafeArea()
+                        .allowsHitTesting(false)
+                }
+            }
             .sheet(isPresented: $showLogWeight) {
                 LogWeightSheet(
                     currentWeightKg: weightStore.latestEntry?.weightKg ?? userProfile.weightKg
@@ -1251,6 +1259,7 @@ struct ProgressTabView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .weightGoalReached)) { _ in
                 showGoalReached = true
+                showConfetti = true
             }
             .sheet(isPresented: $showAllWeights) {
                 AllWeightHistoryView(

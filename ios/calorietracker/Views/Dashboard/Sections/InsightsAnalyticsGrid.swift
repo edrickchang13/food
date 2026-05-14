@@ -19,6 +19,7 @@ struct InsightsAnalyticsGrid: View {
         let sparkline: [Double]?
         let valueText: String
         let onTap: () -> Void
+        let isLoading: Bool
 
         init(
             title: String,
@@ -27,7 +28,8 @@ struct InsightsAnalyticsGrid: View {
             accent: Color,
             sparkline: [Double]? = nil,
             valueText: String,
-            onTap: @escaping () -> Void
+            onTap: @escaping () -> Void,
+            isLoading: Bool = false
         ) {
             self.title = title
             self.subtitle = subtitle
@@ -36,6 +38,7 @@ struct InsightsAnalyticsGrid: View {
             self.sparkline = sparkline
             self.valueText = valueText
             self.onTap = onTap
+            self.isLoading = isLoading
         }
     }
 
@@ -90,6 +93,11 @@ struct InsightsAnalyticsGrid: View {
             valueText: insight.valueText,
             onTap: insight.onTap
         )
+        // Wrap the whole tile rather than touching InsightCard's internals —
+        // the Components/ directory is out of scope for this wave. The
+        // `.skeleton` modifier keeps the tile in the layout tree at opacity 0
+        // so the 2x2 grid's row baselines don't shift between states.
+        .skeleton(isLoading: insight.isLoading, cornerRadius: BulkAITheme.Radius.sm)
     }
 }
 
