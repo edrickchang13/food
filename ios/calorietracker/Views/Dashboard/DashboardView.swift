@@ -93,7 +93,13 @@ struct DashboardView: View {
                         weightTrend: insightWeightTrend,
                         energyBalance: insightEnergyBalance,
                         goalProgress: insightGoalProgress,
-                        onSeeAll: { showTDEEExplainer = true }
+                        // 'See All' on the Insights row used to open the
+                        // engine algorithm screen; users wanted the calorie
+                        // chart instead. Forwarding to today's Food Log
+                        // gives them the per-day macro chart + entry list
+                        // directly (and the engine math is still reachable
+                        // via Settings → Goals → Energy balance).
+                        onSeeAll: { openTodayInFoodLog() }
                     )
                     HabitsSection(
                         weighInData: cachedWeighInHabitData,
@@ -329,7 +335,11 @@ struct DashboardView: View {
             accent: BulkAITheme.Color.expenditure,
             sparkline: flatSparkline(value: engineState.snapshot.expenditure?.kcalPerDay ?? 0, count: 7),
             valueText: "\(Int(engineState.snapshot.expenditure?.kcalPerDay ?? 0)) kcal",
-            onTap: { showTDEEExplainer = true },
+            // Open today's Food Log instead of the engine algorithm
+            // screen — users wanted the calorie chart, not the math.
+            // Engine details still reachable via Settings → Goals →
+            // Energy balance for users who want the formula breakdown.
+            onTap: { openTodayInFoodLog() },
             isLoading: isHydrating
         )
     }
@@ -367,7 +377,9 @@ struct DashboardView: View {
             accent: BulkAITheme.Color.macroCalories,
             sparkline: intake.map { Double($0) },
             valueText: label,
-            onTap: { showTDEEExplainer = true },
+            // Same reroute as Expenditure: today's Food Log shows the
+            // intake delta in chart form. Engine math still in Settings.
+            onTap: { openTodayInFoodLog() },
             isLoading: isHydrating
         )
     }
@@ -505,6 +517,15 @@ struct DashboardView: View {
 
     private func flatSparkline(value: Double, count: Int) -> [Double] {
         Array(repeating: value, count: count)
+    }
+
+    /// Drill from a calorie-themed insight tile / See All link into
+    /// today's Food Log chart. Reuses the parent tab-router callback
+    /// that PR #30 established for Weekly Nutrition day taps so all
+    /// dashboard calorie surfaces land in one place.
+    private func openTodayInFoodLog() {
+        let today = Calendar.current.startOfDay(for: .now)
+        onSelectFoodLogDay?(today)
     }
 
 }
