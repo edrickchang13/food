@@ -10,6 +10,7 @@ struct MoreSection: View {
 
     let onCustomizeDashboard: () -> Void
     let onNutritionDataManager: () -> Void
+    var onStrategy: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: BulkAITheme.Spacing.sm) {
@@ -24,24 +25,37 @@ struct MoreSection: View {
                     action: onCustomizeDashboard
                 )
 
-                Rectangle()
-                    .fill(.white.opacity(0.06))
-                    .frame(height: 0.5)
-                    // Inset the divider to match list-style rules where the
-                    // hairline sits flush with the label rather than the card edge.
-                    .padding(.leading, BulkAITheme.Spacing.xxl + BulkAITheme.Spacing.xs)
+                divider
 
                 MoreRow(
                     icon: "cylinder.split.1x2.fill",
                     title: "Nutrition Data Manager",
                     action: onNutritionDataManager
                 )
+
+                if let onStrategy {
+                    divider
+                    MoreRow(
+                        icon: "target",
+                        title: "Strategy",
+                        action: onStrategy
+                    )
+                }
             }
             // Use the surface card with zero padding so each row owns its own
             // padding; this matches the visual rhythm of a grouped iOS list
             // sitting inside a single rounded surface.
             .surfaceCard(padding: 0)
         }
+    }
+
+    /// Inset hairline divider between rows. Factored out so the optional
+    /// Strategy row reuses the same insets without copy-pasting the geometry.
+    private var divider: some View {
+        Rectangle()
+            .fill(.white.opacity(0.06))
+            .frame(height: 0.5)
+            .padding(.leading, BulkAITheme.Spacing.xxl + BulkAITheme.Spacing.xs)
     }
 }
 

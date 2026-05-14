@@ -19,6 +19,7 @@ struct DashboardView: View {
     @State private var energyMode: Int = 0          // 0 = Expenditure, 1 = Targets
     @State private var dailyMode: Int = 0           // 0 = Consumed, 1 = Remaining
     @State private var searchQuery: String = ""
+    @State private var showStrategy: Bool = false
 
     private var profile: UserProfile { profileStore.profile }
 
@@ -79,7 +80,8 @@ struct DashboardView: View {
                     )
                     MoreSection(
                         onCustomizeDashboard: { /* TODO Phase G */ },
-                        onNutritionDataManager: { /* TODO Phase G */ }
+                        onNutritionDataManager: { /* TODO Phase G */ },
+                        onStrategy: { showStrategy = true }
                     )
                 }
                 .padding(.horizontal, 16)
@@ -98,6 +100,9 @@ struct DashboardView: View {
         }
         .background(BulkAITheme.Color.background)
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $showStrategy) {
+            StrategyView()
+        }
     }
 
     // MARK: - Pager

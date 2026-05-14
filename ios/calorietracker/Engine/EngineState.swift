@@ -169,6 +169,28 @@ final class EngineState {
         return WeeklyTarget(goal: goal, weeklyRateAsFractionOfBodyweight: fraction)
     }
 
+    // MARK: - Check-in countdown (public surface for Strategy view)
+
+    /// Number of whole days remaining until the next weekly check-in is due.
+    /// Returns 0 when due today or overdue. Anchored to last accepted/skipped
+    /// check-in, or to the onboarding date when the user hasn't checked in yet.
+    var daysUntilCheckIn: Int {
+        let calendar = Calendar.bulkAI
+        let today = CalendarDay(date: .now, calendar: calendar)
+        let anchor = persistedLastCheckInDay() ?? persistedOnboardingDay() ?? today
+        let elapsed = today.daysSince(anchor, in: calendar)
+        let remaining = WeeklyCheckIn.cadenceDays - elapsed
+        return max(0, remaining)
+    }
+
+    /// Fraction of the current 7-day cadence that has elapsed. `1.0` when due
+    /// today (the countdown ring fills the full circle), `0.0` immediately
+    /// after a check-in. Used by the Strategy countdown ring.
+    var checkInProgress: Double {
+        let elapsed = WeeklyCheckIn.cadenceDays - daysUntilCheckIn
+        return min(1.0, max(0.0, Double(elapsed) / Double(WeeklyCheckIn.cadenceDays)))
+    }
+
     // MARK: - Persistence helpers
 
     private func persistedPriorExpenditure() -> Double? {
