@@ -143,6 +143,9 @@ final class BodyFatStore {
               let newest = entries.sorted(by: { $0.date > $1.date }).first else { return }
         if abs((profile.bodyFatPercentage ?? -1) - newest.bodyFatFraction) > 0.0001 {
             profile.bodyFatPercentage = newest.bodyFatFraction
+            // TODO: Migrate to profileStore.save(profile) once BodyFatStore receives
+            // a ProfileStore reference in init(container:profileStore:). See P22 brief,
+            // Option B. Using the deprecated path here until that follow-up ships.
             profile.save()
         }
     }

@@ -1275,11 +1275,18 @@ struct ProfileView: View {
     @Environment(StoreManager.self) private var storeManager
     @Environment(EngineState.self) private var engineState
     private var profile: UserProfile {
+        // Read passes through; writes route through ProfileStore.save(_:)
+        // because the underlying store made `profile` private(set) in P22.
         get { profileStore.profile }
-        nonmutating set { profileStore.profile = newValue }
+        nonmutating set { profileStore.save(newValue) }
     }
     private var profileBinding: Binding<UserProfile> {
-        Binding(get: { profileStore.profile }, set: { profileStore.profile = $0 })
+        // Same routing for the binding — every form-driven mutation lands
+        // in SwiftData via ProfileStore.save(_:) and republishes.
+        Binding(
+            get: { profileStore.profile },
+            set: { profileStore.save($0) }
+        )
     }
     @AppStorage("appearanceMode") private var appearanceMode = "system"
     @AppStorage("useMetric") private var useMetric = false
@@ -2403,7 +2410,7 @@ struct ProfileView: View {
     }
 
     private func saveProfile() {
-        profile.save()
+        profileStore.save(profile)
     }
 
     /// Clear all custom goal overrides so calories + macros recompute from the current

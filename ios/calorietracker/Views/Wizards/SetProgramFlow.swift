@@ -152,11 +152,14 @@ struct SetProgramFlow: View {
             carbsG: rawCarbs,
             preference: selectedPreference
         )
-        profileStore.profile.customCalories = Int(kcal.rounded())
-        profileStore.profile.customProtein = Int(p.rounded())
-        profileStore.profile.customFat = Int(f.rounded())
-        profileStore.profile.customCarbs = Int(c.rounded())
-        profileStore.profile.save()
+        // ProfileStore.profile is private(set) post-P22 — mutate a local
+        // copy and round-trip through save(_:).
+        var draft = profileStore.profile
+        draft.customCalories = Int(kcal.rounded())
+        draft.customProtein = Int(p.rounded())
+        draft.customFat = Int(f.rounded())
+        draft.customCarbs = Int(c.rounded())
+        profileStore.save(draft)
         dismiss()
     }
 

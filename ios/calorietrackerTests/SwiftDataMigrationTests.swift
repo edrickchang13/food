@@ -106,27 +106,19 @@ private enum MigrationTestHelpers {
 ///
 /// Each test uses an in-memory `ModelContainer` via
 /// `SwiftDataContainer.makePreviewContainer()` so no data is written to disk.
-/// The migration reads from `UserDefaults.standard` (matching the production
-/// stores' hardcoded behavior), so tests share that defaults store. Suite is
-/// `.serialized` so concurrent test execution can't have one test's seeded
-/// rows leak into another test's "empty" pre-condition. P22 will inject
-/// `UserDefaults` into the migration for full hermeticity.
+/// The migration reads from `UserDefaults.standard`, so `init()` explicitly
+/// clears all legacy keys before every test — ensuring a hermetic starting
+/// state even when tests run in any order. Suite is `.serialized` to prevent
+/// concurrent writes to `.standard`.
 @Suite(.serialized)
 struct SwiftDataMigrationTests {
 
-    // MARK: - Test 1: Empty-legacy round-trip
+    // MARK: - Per-test setup
 
-    /// With no legacy data in UserDefaults, migration should complete cleanly,
-    /// report zero counts for every store, and mark itself done.
-    @Test("Empty legacy store produces completed result with all-zero counts")
-    @MainActor
-    func emptyLegacyRoundTrip() throws {
-        // Clear ALL legacy keys, not just the migration flag. The test runs
-        // inside the host app's process; UserDefaults.standard may carry real
-        // food / weight / profile rows from the user's actual app usage on
-        // this simulator. Without clearing them the migration would happily
-        // pick them up and report non-zero counts.
-        let keysToClear = [
+    /// Runs before every test in this suite. Clears all keys the migration
+    /// reads or writes so no test inherits state from a predecessor.
+    init() {
+        let keys = [
             MigrationTestHelpers.foodKey,
             MigrationTestHelpers.weightKey,
             MigrationTestHelpers.bodyFatKey,
@@ -134,19 +126,18 @@ struct SwiftDataMigrationTests {
             MigrationTestHelpers.profileKey,
             MigrationTestHelpers.flagKey,
         ]
-        // Snapshot existing values so the test can restore them on exit —
-        // we don't want to wipe the user's real app data permanently.
-        let snapshot = keysToClear.reduce(into: [String: Any?]()) { acc, key in
-            acc[key] = UserDefaults.standard.object(forKey: key)
-        }
-        keysToClear.forEach { UserDefaults.standard.removeObject(forKey: $0) }
-        defer {
-            keysToClear.forEach { UserDefaults.standard.removeObject(forKey: $0) }
-            for (key, value) in snapshot {
-                if let value { UserDefaults.standard.set(value, forKey: key) }
-            }
-        }
+        keys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
+    }
 
+    // MARK: - Test 1: Empty-legacy round-trip
+
+    /// With no legacy data in UserDefaults, migration should complete cleanly,
+    /// report zero counts for every store, and mark itself done.
+    /// All keys are pre-cleared by `init()` so this test starts from a
+    /// guaranteed-empty state regardless of suite execution order.
+    @Test("Empty legacy store produces completed result with all-zero counts")
+    @MainActor
+    func emptyLegacyRoundTrip() throws {
         let container = SwiftDataContainer.makePreviewContainer()
         let result = SwiftDataMigration.runIfNeeded(into: container)
 
