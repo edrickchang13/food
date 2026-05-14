@@ -1404,7 +1404,7 @@ struct ProfileView: View {
                             Text("Gender")
                         } icon: {
                             Image(systemName: profile.gender.icon)
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .pickerStyle(.menu)
@@ -1465,13 +1465,13 @@ struct ProfileView: View {
                                 }
                             } icon: {
                                 Image(systemName: "function")
-                                    .foregroundStyle(AppColors.calorie)
+                                    .foregroundStyle(BulkAITheme.Color.accent)
                             }
                         }
-                        .tint(AppColors.calorie)
+                        .tint(BulkAITheme.Color.accent)
                     }
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
 
                 // Section 2: Goals & Nutrition
                 Section("Goals & Nutrition") {
@@ -1484,7 +1484,7 @@ struct ProfileView: View {
                             Text("Weight Goal")
                         } icon: {
                             Image(systemName: profile.goal.icon)
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .pickerStyle(.menu)
@@ -1519,7 +1519,7 @@ struct ProfileView: View {
                             Text("Activity Level")
                         } icon: {
                             Image(systemName: profile.activityLevel.icon)
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .pickerStyle(.menu)
@@ -1539,7 +1539,7 @@ struct ProfileView: View {
                                 Text("Weekly Change")
                             } icon: {
                                 Image(systemName: "gauge.with.dots.needle.33percent")
-                                    .foregroundStyle(AppColors.calorie)
+                                    .foregroundStyle(BulkAITheme.Color.accent)
                             }
                         }
                         .pickerStyle(.menu)
@@ -1574,7 +1574,7 @@ struct ProfileView: View {
                             }
                         } icon: {
                             Image(systemName: "list.bullet.clipboard")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
 
@@ -1585,7 +1585,7 @@ struct ProfileView: View {
                             Text("Recalculate Goals")
                         } icon: {
                             Image(systemName: "arrow.clockwise")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -1597,7 +1597,7 @@ struct ProfileView: View {
                             Text("Calculation Methods")
                         } icon: {
                             Image(systemName: "book")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -1609,7 +1609,7 @@ struct ProfileView: View {
                             Text("Engine (debug)")
                         } icon: {
                             Image(systemName: "waveform.path.ecg")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -1621,7 +1621,7 @@ struct ProfileView: View {
                             Text("Energy balance")
                         } icon: {
                             Image(systemName: "function")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -1638,7 +1638,7 @@ struct ProfileView: View {
                             Text("Coaching mode")
                         } icon: {
                             Image(systemName: "person.crop.circle.badge.checkmark")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
@@ -1650,12 +1650,12 @@ struct ProfileView: View {
                             Text("Run check-in now")
                         } icon: {
                             Image(systemName: "calendar.badge.checkmark")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
 
                 Section("Body") {
                     NavigationLink {
@@ -1665,7 +1665,7 @@ struct ProfileView: View {
                             Text("Body measurements")
                         } icon: {
                             Image(systemName: "ruler")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
 
@@ -1676,7 +1676,7 @@ struct ProfileView: View {
                             Text("Period tracking")
                         } icon: {
                             Image(systemName: "drop.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
 
@@ -1687,7 +1687,7 @@ struct ProfileView: View {
                             Text("Progress photos")
                         } icon: {
                             Image(systemName: "photo.stack")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
 
@@ -1698,7 +1698,7 @@ struct ProfileView: View {
                             Text("Recipes")
                         } icon: {
                             Image(systemName: "book.closed")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
 
@@ -1709,11 +1709,11 @@ struct ProfileView: View {
                             Text("Food database")
                         } icon: {
                             Image(systemName: "magnifyingglass")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
 
                 Section("Data") {
                     Button {
@@ -1723,12 +1723,12 @@ struct ProfileView: View {
                             Text("Import from MacroFactor (CSV)")
                         } icon: {
                             Image(systemName: "square.and.arrow.down")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
 
                 // Section 3: App Settings
                 Section("App Settings") {
@@ -1741,7 +1741,7 @@ struct ProfileView: View {
                             Text("Appearance")
                         } icon: {
                             Image(systemName: "circle.lefthalf.filled")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .pickerStyle(.menu)
@@ -1762,7 +1762,7 @@ struct ProfileView: View {
                             }
                         } icon: {
                             Image(systemName: "paintpalette.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
 
@@ -1771,10 +1771,10 @@ struct ProfileView: View {
                             Text("Metric Units")
                         } icon: {
                             Image(systemName: "ruler")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
-                    .tint(AppColors.calorie)
+                    .tint(BulkAITheme.Color.accent)
 
                     Picker(selection: $weekStartsOnMonday) {
                         Text("Sunday").tag(false)
@@ -1784,7 +1784,7 @@ struct ProfileView: View {
                             Text("Week Starts On")
                         } icon: {
                             Image(systemName: "calendar")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .pickerStyle(.menu)
@@ -1797,7 +1797,7 @@ struct ProfileView: View {
                             Text("Notifications")
                         } icon: {
                             Image(systemName: "bell")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
 
@@ -1808,12 +1808,12 @@ struct ProfileView: View {
                             Text("Free Signing")
                         } icon: {
                             Image(systemName: "checkmark.shield.fill")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .tint(.primary)
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
 
                 // Section 4: AI. Bulk AI is Gemini-only — users supply a free key
                 // from aistudio.google.com/apikey. Stored in iOS Keychain.
@@ -1826,7 +1826,7 @@ struct ProfileView: View {
                                 Text("Model")
                             } icon: {
                                 Image(systemName: "brain")
-                                    .foregroundStyle(AppColors.calorie)
+                                    .foregroundStyle(BulkAITheme.Color.accent)
                             }
                             Spacer()
                             TextField(
@@ -1852,7 +1852,7 @@ struct ProfileView: View {
                                     }
                                 } label: {
                                     Image(systemName: "list.bullet.circle")
-                                        .foregroundStyle(AppColors.calorie)
+                                        .foregroundStyle(BulkAITheme.Color.accent)
                                 }
                             }
                         }
@@ -1866,7 +1866,7 @@ struct ProfileView: View {
                                 Text("Model")
                             } icon: {
                                 Image(systemName: "brain")
-                                    .foregroundStyle(AppColors.calorie)
+                                    .foregroundStyle(BulkAITheme.Color.accent)
                             }
                         }
                         .pickerStyle(.menu)
@@ -1888,7 +1888,7 @@ struct ProfileView: View {
                                 Text("API Key")
                             } icon: {
                                 Image(systemName: "key.fill")
-                                    .foregroundStyle(AppColors.calorie)
+                                    .foregroundStyle(BulkAITheme.Color.accent)
                             }
                             Spacer()
                             Group {
@@ -1922,7 +1922,7 @@ struct ProfileView: View {
                                 Text(selectedProvider.requiresCustomEndpoint ? "Base URL" : "Server URL")
                             } icon: {
                                 Image(systemName: "link")
-                                    .foregroundStyle(AppColors.calorie)
+                                    .foregroundStyle(BulkAITheme.Color.accent)
                             }
                             Spacer()
                             TextField(
@@ -1942,7 +1942,7 @@ struct ProfileView: View {
                         }
                     }
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
 
                 // Custom AI Instructions (User Context) — prepended to every AI request when non-empty
                 Section {
@@ -1966,7 +1966,7 @@ struct ProfileView: View {
                             Spacer()
                             Label("Save", systemImage: "checkmark.circle.fill")
                                 .font(.system(.body, design: .rounded, weight: .semibold))
-                                .foregroundStyle(customAIInstructions == savedAIInstructions ? .secondary : AppColors.calorie)
+                                .foregroundStyle(customAIInstructions == savedAIInstructions ? .secondary : BulkAITheme.Color.accent)
                             Spacer()
                         }
                     }
@@ -1976,7 +1976,7 @@ struct ProfileView: View {
                 } footer: {
                     Text("Optional context sent with every AI request — region, diet, athletic goals, anything you'd otherwise repeat each time. Leave empty to disable.")
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
 
 
                     // Speech-to-Text Provider — Bulk AI only exposes the free options.
@@ -1990,7 +1990,7 @@ struct ProfileView: View {
                             Text("Provider")
                         } icon: {
                             Image(systemName: selectedSpeechProvider.icon)
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .pickerStyle(.menu)
@@ -2015,7 +2015,7 @@ struct ProfileView: View {
                             Text("Language")
                         } icon: {
                             Image(systemName: "globe")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                     .pickerStyle(.menu)
@@ -2030,7 +2030,7 @@ struct ProfileView: View {
                                 Text("API Key")
                             } icon: {
                                 Image(systemName: "key.fill")
-                                    .foregroundStyle(AppColors.calorie)
+                                    .foregroundStyle(BulkAITheme.Color.accent)
                             }
                             Spacer()
                             Group {
@@ -2062,7 +2062,7 @@ struct ProfileView: View {
                 } footer: {
                     Text("Used when you tap the voice icon to log a meal. Each provider remembers its own language. Provider Auto keeps the provider default; Use iPhone Language sends your current iPhone language when supported.")
                 }
-                    .listRowBackground(AppColors.appCard)
+                    .listRowBackground(BulkAITheme.Color.surface)
 
                 // Section 5: Health & Data
                 Section("Health & Data") {
@@ -2108,7 +2108,7 @@ struct ProfileView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
 
                 // Build info — version + run number get stamped by the CI
                 // workflow before .ipa packaging. Bumps on every push to main.
@@ -2118,7 +2118,7 @@ struct ProfileView: View {
                             Text("Build")
                         } icon: {
                             Image(systemName: "hammer")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                         Spacer()
                         Text(buildVersionString)
@@ -2126,10 +2126,10 @@ struct ProfileView: View {
                             .monospacedDigit()
                     }
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
             }
             .scrollContentBackground(.hidden)
-            .background(AppColors.appBackground)
+            .background(BulkAITheme.Color.background)
             .navigationBarHidden(true)
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
@@ -2157,7 +2157,7 @@ struct ProfileView: View {
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 14)
                                     .background(
-                                        LinearGradient(colors: AppColors.calorieGradient, startPoint: .leading, endPoint: .trailing)
+                                        LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .leading, endPoint: .trailing)
                                     )
                                     .foregroundStyle(.white)
                                     .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -2438,7 +2438,7 @@ struct ProfileView: View {
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .foregroundStyle(AppColors.calorie)
+                    .foregroundStyle(BulkAITheme.Color.accent)
                     .frame(width: 22)
                 Text(label)
                     .foregroundStyle(.primary)
@@ -2447,7 +2447,7 @@ struct ProfileView: View {
                     .foregroundStyle(.secondary)
                 Image(systemName: pinned ? "lock.fill" : "lock.open")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(pinned ? AppColors.calorie : .secondary)
+                    .foregroundStyle(pinned ? BulkAITheme.Color.accent : .secondary)
             }
         }
         .buttonStyle(.plain)
