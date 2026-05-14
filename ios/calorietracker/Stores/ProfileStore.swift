@@ -8,17 +8,11 @@ import SwiftUI
 /// legacy `"userProfile"` UserDefaults JSON blob on first launch by
 /// `SwiftDataMigration.runIfNeeded(into:)`.
 ///
-/// **Transitional bridge (remove in P22 when all `UserProfile.save()` call sites
-/// migrate to a `ProfileStore.save(_:)` API):** the existing app code paths
-/// (Settings, Onboarding, Wizards, HealthKit observer) still call
-/// `UserProfile.save()`, which writes to UserDefaults and posts
-/// `.userProfileDidChange`. This store observes that notification, reads the
-/// freshly-written UserDefaults value, mirrors it back into SwiftData, and
-/// updates `profile` — keeping SwiftData as the living source of truth while the
-/// legacy write path remains intact.
-///
-/// Public API is byte-for-byte identical to the prior UserDefaults
-/// implementation so all callers need zero changes.
+/// **P22 migration:** `ProfileStore.save(_:)` is now the primary write path for
+/// Settings and the HealthKit observer. The notification observer below remains as
+/// a safety net for deferred callers (Onboarding, Wizards, WeightStore, BodyFatStore)
+/// that still call the deprecated `UserProfile.save()` directly. Remove the observer
+/// once all remaining call sites are migrated.
 @Observable
 @MainActor
 final class ProfileStore {
@@ -30,7 +24,7 @@ final class ProfileStore {
 
     // MARK: - Public API
 
-    /// The user's current profile. Updated whenever `.userProfileDidChange` fires.
+    /// The user's current profile. Updated by `save(_:)` and the transitional bridge observer.
     private(set) var profile: UserProfile
 
     // MARK: - Init
@@ -44,10 +38,14 @@ final class ProfileStore {
         }
         self.profile = Self.loadProfile(from: container.mainContext)
 
-        // --- Transitional bridge (see type doc-comment) ---
-        // Legacy `UserProfile.save()` writes to UserDefaults then posts this
-        // notification. We pick up the freshly-saved value, mirror it to
-        // SwiftData, and re-publish `profile` so all observing views update.
+        // --- Transitional bridge ---
+        // Catches deferred callers that still use the deprecated `UserProfile.save()`
+        // path (Onboarding, Wizards, WeightStore, BodyFatStore). Those callers write
+        // to UserDefaults and post this notification; we mirror the value into SwiftData
+        // and re-publish `profile`. Callers that go through `ProfileStore.save(_:)` post
+        // the same notification, which causes a redundant pass through this handler —
+        // that is benign: the values are identical and the SwiftData upsert is idempotent.
+        // Remove this observer once all remaining callers are migrated.
         NotificationCenter.default.addObserver(
             forName: .userProfileDidChange,
             object: nil,
@@ -55,13 +53,13 @@ final class ProfileStore {
         ) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in
-                // 1. Read from UserDefaults — the legacy path wrote there.
+                // Prefer reading from UserDefaults since legacy callers just wrote there.
+                // Fall back to SwiftData when UserDefaults has no value (e.g. after a
+                // --reset-onboarding wipe that cleared the key before migration ran).
                 if let legacy = UserProfile.load() {
-                    // 2. Mirror to SwiftData so it stays the source of truth.
                     Self.writeToSwiftData(legacy, into: self.container.mainContext)
                     self.profile = legacy
                 } else {
-                    // No UserDefaults value — re-pull directly from SwiftData.
                     self.profile = Self.loadProfile(from: self.container.mainContext)
                 }
             }
@@ -71,6 +69,30 @@ final class ProfileStore {
     /// Reload from disk. Called externally after `--reset-onboarding` wipes UserDefaults.
     func reloadFromDisk() {
         profile = UserProfile.load() ?? Self.loadProfile(from: context)
+    }
+
+    /// Persists `profile` as the new source-of-truth.
+    ///
+    /// Writes through to SwiftData, updates the in-memory `profile` so SwiftUI
+    /// views re-render, mirrors to UserDefaults so any read path that still calls
+    /// `UserProfile.load()` sees the update, and posts `.userProfileDidChange` so
+    /// `EngineState` and widget refresh observers fire without code changes.
+    ///
+    /// Safe to call directly on `@MainActor` — no `Task { @MainActor in }` wrapper
+    /// needed at call sites.
+    func save(_ profile: UserProfile) {
+        // 1. Write to SwiftData — the eventual source of truth.
+        Self.writeToSwiftData(profile, into: context)
+
+        // 2. Publish in-memory so @Observable consumers re-render immediately.
+        self.profile = profile
+
+        // 3. Mirror to UserDefaults so background/launch paths that call
+        //    UserProfile.load() before ProfileStore is constructed still see the
+        //    current value. The deprecated `UserProfile.save()` handles this write and
+        //    also posts `.userProfileDidChange`, which triggers the bridge observer and
+        //    notifies EngineState + widget refresh observers — no separate post needed.
+        profile.save()
     }
 
     // MARK: - Private helpers
