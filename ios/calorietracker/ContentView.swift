@@ -124,7 +124,7 @@ struct ContentView: View {
                 DashboardView()
                     .opacity(selectedTab == .home ? 1 : 0)
                     .allowsHitTesting(selectedTab == .home)
-                ProgressTabView()
+                FoodLogView()
                     .opacity(selectedTab == .progress ? 1 : 0)
                     .allowsHitTesting(selectedTab == .progress)
                 ChatView()

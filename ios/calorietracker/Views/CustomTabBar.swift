@@ -13,7 +13,7 @@ struct CustomTabBar: View {
 
     private let visibleTabs: [(Tab, String, String)] = [
         (.home, "house.fill", "Home"),
-        (.progress, "chart.bar.fill", "Progress"),
+        (.progress, "apple.logo", "Food Log"),
         (.coach, "bubble.left.and.bubble.right.fill", "Coach"),
         (.settings, "gearshape.fill", "Settings")
     ]
