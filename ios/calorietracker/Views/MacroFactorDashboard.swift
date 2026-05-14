@@ -282,6 +282,10 @@ struct MacroFactorDashboard: View {
     @Environment(WeightStore.self) private var weightStore
     @AppStorage("useMetric") private var useMetric = false
 
+    /// The day the dashboard reports on. Driven by HomeView's `WeekEnergyStrip`.
+    /// Defaults to today so callers that don't pass a date keep working.
+    var selectedDate: Date = .now
+
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             header
@@ -299,7 +303,7 @@ struct MacroFactorDashboard: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(Date.now.formatted(.dateTime.weekday(.wide).month(.wide).day()).uppercased())
+            Text(selectedDate.formatted(.dateTime.weekday(.wide).month(.wide).day()).uppercased())
                 .font(.system(.caption, design: .rounded, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .tracking(0.8)
@@ -315,11 +319,11 @@ struct MacroFactorDashboard: View {
         let fatTarget = engineState.snapshot.dailyPlan.map { Int($0.macros.fatG) } ?? profile.effectiveFat
         let carbsTarget = engineState.snapshot.dailyPlan.map { Int($0.macros.carbsG) } ?? profile.effectiveCarbs
         return VStack(spacing: 22) {
-            CalorieRingHero(consumed: foodStore.todayCalories, target: kcalTarget)
+            CalorieRingHero(consumed: foodStore.calories(for: selectedDate), target: kcalTarget)
             MacroBarsRow(
-                protein: (foodStore.todayProtein, proteinTarget),
-                fat: (foodStore.todayFat, fatTarget),
-                carbs: (foodStore.todayCarbs, carbsTarget)
+                protein: (foodStore.protein(for: selectedDate), proteinTarget),
+                fat: (foodStore.fat(for: selectedDate), fatTarget),
+                carbs: (foodStore.carbs(for: selectedDate), carbsTarget)
             )
         }
         .padding(20)

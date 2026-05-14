@@ -800,11 +800,11 @@ struct OnboardingView: View {
                 }
 
                 VStack(spacing: 8) {
-                    Text("Choose Your AI")
+                    Text("Connect Gemini")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .multilineTextAlignment(.center)
 
-                    Text("BYOK keeps Bulk AI free. Plus is optional for no API setup and supports development.")
+                    Text("Bulk AI uses Google Gemini for food parsing. A free API key from aistudio.google.com/apikey unlocks photo, voice, and text logging.")
                         .font(.system(.callout, design: .rounded))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -812,54 +812,28 @@ struct OnboardingView: View {
 
                 VStack(spacing: 12) {
                     aiAccessCard(
-                        mode: .fudAIPlus,
-                        title: "Bulk AI Plus",
-                        subtitle: "No setup for non-technical users. Gemini food scans, voice, and Coach with fallback.",
-                        badge: storeManager.isSubscribed ? "Active" : "Default"
-                    )
-
-                    aiAccessCard(
                         mode: .bringYourOwnKey,
                         title: "Bring Your Own Key",
-                        subtitle: "Free app mode. Use your own Gemini key, OpenAI, Groq, or another provider.",
+                        subtitle: "Free. Paste your Gemini API key now or later from Settings → AI. You can still log meals manually without one.",
                         badge: "Free"
                     )
-
-                    if selectedAccessMode == .fudAIPlus && !storeManager.isSubscribed {
-                        Button {
-                            AIAccessSettings.mode = .fudAIPlus
-                            shouldAdvanceAfterPlusPurchase = true
-                            showPaywall = true
-                        } label: {
-                            Text("See Plans")
-                                .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                                .foregroundStyle(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 44)
-                                .background(AppColors.calorie, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        }
-                    }
                 }
                 .padding(.horizontal, 24)
 
-                Text("Calorie tracking should stay accessible: use BYOK freely if you can make an API key, or choose Plus for convenience.")
+                Text("Your key is stored encrypted on this device only. It never leaves the phone.")
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.tertiary)
                     .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
             }
 
             Spacer()
 
             Button {
-                AIAccessSettings.mode = selectedAccessMode
-                if selectedAccessMode == .fudAIPlus && !storeManager.isSubscribed {
-                    shouldAdvanceAfterPlusPurchase = true
-                    showPaywall = true
-                } else {
-                    withAnimation(.snappy) { step += 1 }
-                }
+                AIAccessSettings.mode = .bringYourOwnKey
+                withAnimation(.snappy) { step += 1 }
             } label: {
-                Text(selectedAccessMode == .fudAIPlus && !storeManager.isSubscribed ? "Subscribe to Continue" : "Continue")
+                Text("Continue")
                     .font(.system(.body, design: .rounded, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -960,7 +934,7 @@ struct OnboardingView: View {
                 }
 
                 VStack(spacing: 8) {
-                    Text("Enjoying fud so far?")
+                    Text("Enjoying Bulk AI so far?")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .multilineTextAlignment(.center)
                     Text("A quick rating helps us grow\nand build more features for you!")
@@ -976,7 +950,7 @@ struct OnboardingView: View {
                 requestNativeReview()
                 hasCompletedOnboarding = true
             } label: {
-                Text("Rate fud")
+                Text("Rate Bulk AI")
                     .font(.system(.body, design: .rounded, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)

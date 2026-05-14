@@ -577,7 +577,7 @@ struct HomeView: View {
                 // hero (week strip + giant calorie number + nutrient trio cards)
                 // with the layout from the design reference.
                 Section {
-                    MacroFactorDashboard()
+                    MacroFactorDashboard(selectedDate: selectedDate)
                         .padding(.horizontal, -16)   // counter the List's inset
                 }
                 .listRowBackground(Color.clear)
