@@ -147,7 +147,7 @@ struct ContentView: View {
             await refreshAppUpdateState()
         }
         .sheet(isPresented: $showQuickAdd) {
-            QuickAddSheet()
+            FoodEntrySheet()
         }
     }
 

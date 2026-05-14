@@ -3,9 +3,8 @@ import SwiftUI
 /// MacroFactor-style Food Log: a day-centric timeline view. Top is the day
 /// header + horizontal week strip + 4-pill macro summary. Body is an hourly
 /// timeline (7 AM through 11 PM by default) listing meals with quick-add per
-/// hour. The "+" FAB on the tab bar still presents the global QuickAddSheet;
-/// this view's per-hour "+" buttons present the same sheet pre-filled with
-/// the hour as the initial timestamp.
+/// hour. The "+" FAB on the tab bar presents `FoodEntrySheet`; the per-hour
+/// "+" buttons present the same sheet pre-filled with the tapped hour.
 struct FoodLogView: View {
     @Environment(FoodStore.self) private var foodStore
     @Environment(ProfileStore.self) private var profileStore
@@ -69,8 +68,8 @@ struct FoodLogView: View {
         .sheet(item: Binding(
             get: { quickAddHour.map { IdentifiableDate(date: $0) } },
             set: { quickAddHour = $0?.date }
-        )) { _ in
-            QuickAddSheet()
+        )) { wrapper in
+            FoodEntrySheet(initialTime: wrapper.date)
         }
     }
 
