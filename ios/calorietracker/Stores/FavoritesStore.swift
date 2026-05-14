@@ -42,9 +42,18 @@ final class FavoritesStore {
     /// Creates the store backed by `container`. The default argument constructs
     /// a production CloudKit container — unit tests may pass an in-memory
     /// container via `SwiftDataContainer.makePreviewContainer()`.
-    init(container: ModelContainer = SwiftDataContainer.makeContainer()) {
+    ///
+    /// - Parameter skipMigration: Test-only escape hatch: when `true`, skips the call to
+    ///   `SwiftDataMigration.runIfNeeded` so tests don't race against
+    ///   `SwiftDataMigrationTests` on the global `swiftDataMigrationV1Complete`
+    ///   UserDefaults flag. Production code paths leave this `false` so legacy
+    ///   UserDefaults-backed favorites continue to migrate on first launch.
+    init(
+        container: ModelContainer = SwiftDataContainer.makeContainer(),
+        skipMigration: Bool = false
+    ) {
         self.container = container
-        if SwiftDataMigration.hasMigrated == false {
+        if !skipMigration, SwiftDataMigration.hasMigrated == false {
             _ = SwiftDataMigration.runIfNeeded(into: container)
         }
         rebuild()

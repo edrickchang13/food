@@ -100,27 +100,9 @@ enum AppThemeColor: String, CaseIterable, Identifiable {
     }
 }
 
-enum AppColors {
-    // Calorie: Red → Pink
-    static var calorieGradient: [Color] { AppThemeColor.current.gradientColors }
-    static var calorie: Color { AppThemeColor.current.color }
-
-    // Protein
-    static var proteinGradient: [Color] { calorieGradient }
-    static var protein: Color { calorie }
-
-    // Carbs
-    static var carbsGradient: [Color] { calorieGradient }
-    static var carbs: Color { calorie }
-
-    // Fat
-    static var fatGradient: [Color] { calorieGradient }
-    static var fat: Color { calorie }
-
-    // Background: warm cream in light, system dark in dark
-    static let appBackground = Color("appBackground")
-    static let appCard = Color("appCard")
-}
+// The legacy AppColors enum was removed in this PR. All consumers
+// now use BulkAITheme tokens directly. AppThemeColor remains because
+// it drives the user-pickable accent theme in Settings.
 
 extension Color {
     init(hex: UInt, opacity: Double = 1.0) {

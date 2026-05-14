@@ -26,6 +26,10 @@ struct LibraryView: View {
     var isFavorite: ((FoodDatabaseItem) -> Bool)? = nil
     /// Optional favorite-toggle handler invoked on long-press of a row.
     var onToggleFavorite: ((FoodDatabaseItem) -> Void)? = nil
+    /// Optional search substring forwarded to each FoodSearchRow's
+    /// `highlight:` parameter. When non-empty, the matched substring in
+    /// each row's name highlights in coral semibold with an underline.
+    var highlight: String? = nil
 
     @State private var favoritesOnly: Bool = false
     @State private var sortOption: SortOption = .created
@@ -161,6 +165,7 @@ struct LibraryView: View {
                             macroLine: macroLine(for: item),
                             onTap: { onTapItem(item) },
                             onAdd: { onAddItem(item) },
+                            highlight: highlight,
                             isFavorite: isFavorite?(item),
                             onToggleFavorite: { onToggleFavorite?(item) }
                         )

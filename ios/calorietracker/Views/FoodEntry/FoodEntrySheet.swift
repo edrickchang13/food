@@ -238,7 +238,8 @@ struct FoodEntrySheet: View {
                 onTapItem: { portionItem = $0 },
                 onAddItem: { stageDefaultPortion(of: $0) },
                 isFavorite: { favoritesStore.contains($0.id) },
-                onToggleFavorite: { favoritesStore.toggle($0.id) }
+                onToggleFavorite: { favoritesStore.toggle($0.id) },
+                highlight: filterQuery
             )
         case 1:
             VoiceView(onTranscript: { transcript in
@@ -302,7 +303,8 @@ struct FoodEntrySheet: View {
                 onTapItem: { portionItem = $0 },
                 onAddItem: { stageDefaultPortion(of: $0) },
                 isFavorite: { favoritesStore.contains($0.id) },
-                onToggleFavorite: { favoritesStore.toggle($0.id) }
+                onToggleFavorite: { favoritesStore.toggle($0.id) },
+                highlight: filterQuery
             )
         default:
             EmptyView()
