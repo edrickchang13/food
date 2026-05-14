@@ -1711,6 +1711,13 @@ struct ProfileView: View {
     @State private var showCalculationMethods = false
     @State private var showEngineDebug = false
     @State private var showManualCheckIn = false
+    @State private var showCSVImporter = false
+    @State private var pendingImport: [FoodEntry] = []
+    @State private var showImportConfirm = false
+    @State private var importErrorMessage: String?
+    @State private var showImportError = false
+    @State private var importSuccessCount: Int?
+    @State private var showImportSuccess = false
     @State private var showAutoMacroEditAlert = false
     @State private var showMaxPinnedAlert = false
     @State private var showInvalidGoalWeightAlert = false
@@ -2096,6 +2103,21 @@ struct ProfileView: View {
                                 .foregroundStyle(AppColors.calorie)
                         }
                     }
+                }
+                .listRowBackground(AppColors.appCard)
+
+                Section("Data") {
+                    Button {
+                        showCSVImporter = true
+                    } label: {
+                        Label {
+                            Text("Import from MacroFactor (CSV)")
+                        } icon: {
+                            Image(systemName: "square.and.arrow.down")
+                                .foregroundStyle(AppColors.calorie)
+                        }
+                    }
+                    .tint(.primary)
                 }
                 .listRowBackground(AppColors.appCard)
 
@@ -2665,6 +2687,49 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $showManualCheckIn) {
                 CheckInReviewView()
+            }
+            .fileImporter(
+                isPresented: $showCSVImporter,
+                allowedContentTypes: [.commaSeparatedText, .plainText, .data]
+            ) { result in
+                switch result {
+                case .success(let url):
+                    do {
+                        let entries = try MacroFactorCSVImporter.parse(url: url)
+                        pendingImport = entries
+                        showImportConfirm = true
+                    } catch {
+                        importErrorMessage = error.localizedDescription
+                        showImportError = true
+                    }
+                case .failure(let error):
+                    importErrorMessage = error.localizedDescription
+                    showImportError = true
+                }
+            }
+            .alert("Import \(pendingImport.count) entries?", isPresented: $showImportConfirm) {
+                Button("Import") {
+                    let count = pendingImport.count
+                    foodStore.addEntries(pendingImport)
+                    pendingImport = []
+                    importSuccessCount = count
+                    showImportSuccess = true
+                }
+                Button("Cancel", role: .cancel) {
+                    pendingImport = []
+                }
+            } message: {
+                Text("This adds \(pendingImport.count) food log entries from your MacroFactor CSV. Existing entries are not touched and duplicates aren't detected — only import once.")
+            }
+            .alert("Imported \(importSuccessCount ?? 0) entries", isPresented: $showImportSuccess) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Your MacroFactor history is now in Bulk AI's food log. The engine will start factoring it in on the next refresh.")
+            }
+            .alert("Import failed", isPresented: $showImportError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(importErrorMessage ?? "Unknown error.")
             }
             .alert("Auto-balanced", isPresented: $showAutoMacroEditAlert) {
                 Button("OK", role: .cancel) { }

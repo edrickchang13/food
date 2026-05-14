@@ -269,6 +269,19 @@ class FoodStore {
         onEntryAdded?(entry)
     }
 
+    /// Bulk-append many entries with a single save at the end. Used by the
+    /// MacroFactor CSV importer — calling `addEntry` 3,806 times would do
+    /// 3,806 JSON encodes + UserDefaults writes, which freezes the UI for
+    /// several seconds. This version pays the encode/write cost once.
+    func addEntries(_ newEntries: [FoodEntry]) {
+        guard !newEntries.isEmpty else { return }
+        entries.append(contentsOf: newEntries)
+        saveEntries()
+        onEntriesChanged?()
+        // Skip onEntryAdded callbacks for bulk; engine refreshes once via
+        // onEntriesChanged anyway.
+    }
+
     func updateEntry(_ entry: FoodEntry) {
         guard let index = entries.firstIndex(where: { $0.id == entry.id }) else { return }
         var entry = entry
