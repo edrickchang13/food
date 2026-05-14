@@ -41,10 +41,21 @@ final class FoodDatabaseService {
 
     // MARK: - Public API
 
+    /// Full curated-seed pool: the generic-staple seed (chicken breast, oats,
+    /// olive oil, etc.) plus the restaurant-chain + big-box-store seed
+    /// (In-N-Out, Chick-fil-A, Chipotle, Starbucks, McDonald's, Costco,
+    /// Trader Joe's, Subway, Sweetgreen). Both have the same trust level —
+    /// hand-curated from each source's published nutrition facts. The chain
+    /// seed lives in a separate file so the staple seed stays focused on
+    /// USDA-style entries.
+    private var curatedSeed: [FoodDatabaseItem] {
+        FoodDatabaseSeed.items + FoodDatabaseChainSeed.items
+    }
+
     /// All known items: hand-curated seed + bundled USDA + AI cache, sorted
     /// by name. Used by browse UI when no search is active.
     var allItems: [FoodDatabaseItem] {
-        (FoodDatabaseSeed.items + loadUSDAIfNeeded() + aiCache).sorted {
+        (curatedSeed + loadUSDAIfNeeded() + aiCache).sorted {
             $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
         }
     }
@@ -63,21 +74,22 @@ final class FoodDatabaseService {
     /// For 0–1 character queries the index is bypassed entirely.
     func search(_ query: String, limit: Int = 25) -> [FoodDatabaseItem] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return Array(FoodDatabaseSeed.items.prefix(limit)) }
+        guard !trimmed.isEmpty else { return Array(curatedSeed.prefix(limit)) }
 
         let lower = trimmed.lowercased()
 
         // Short queries: index overhead not worthwhile; linear scan all sources.
         guard lower.count >= 2 else {
             return Array(
-                (FoodDatabaseSeed.items + loadUSDAIfNeeded() + aiCache)
+                (curatedSeed + loadUSDAIfNeeded() + aiCache)
                     .filter { $0.name.localizedCaseInsensitiveContains(trimmed) }
                     .prefix(limit)
             )
         }
 
-        // Step 1: collect every seed match (the seed is tiny; this is negligible).
-        let seedHits = FoodDatabaseSeed.items.filter {
+        // Step 1: collect every seed match (staples + chain items — still
+        // tiny vs the USDA corpus, so this stays effectively O(1)).
+        let seedHits = curatedSeed.filter {
             $0.name.localizedCaseInsensitiveContains(trimmed)
         }
 

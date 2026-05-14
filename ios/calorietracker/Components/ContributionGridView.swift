@@ -47,9 +47,14 @@ struct ContributionGridView: View {
     var body: some View {
         let days = orderedDays
         let columnCount = Int((Double(days.count) / 7.0).rounded(.up))
+        let spacing: CGFloat = 4
 
+        // Width-driven layout — the parent dictates how wide the grid is, and
+        // we derive `cellSize` from that. Total height is computed from the
+        // cell size so the frame matches the rendered content (the old
+        // version hardcoded 122pt, which clipped the bottom 2 rows whenever
+        // the parent gave us a width that produced cells larger than 14pt).
         GeometryReader { proxy in
-            let spacing: CGFloat = 4
             let totalSpacing = spacing * CGFloat(max(columnCount - 1, 0))
             let cellSize = max(8, (proxy.size.width - totalSpacing) / CGFloat(max(columnCount, 1)))
 
@@ -63,8 +68,14 @@ struct ContributionGridView: View {
                     }
                 }
             }
+            // Center the grid in case the parent is wider than the cells take.
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(height: cellRowHeight)
+        // Pin the grid to its intrinsic height: 7 rows of cells + 6 gaps. The
+        // cell size is whatever the column-count division yields against
+        // whichever width the parent gives us at layout time, so we use a
+        // width-derived approximation here that the parent can override.
+        .aspectRatio(CGFloat(columnCount) / 7.0, contentMode: .fit)
     }
 
     @ViewBuilder
@@ -79,11 +90,6 @@ struct ContributionGridView: View {
             // Pad incomplete trailing columns so the grid keeps its shape.
             Color.clear.frame(width: size, height: size)
         }
-    }
-
-    private var cellRowHeight: CGFloat {
-        // 7 cells of ~14pt + 6 gaps of 4pt is a sensible default canvas height.
-        7 * 14 + 6 * 4
     }
 
     private var emptyCellColor: Color {

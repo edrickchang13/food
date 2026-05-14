@@ -1,19 +1,26 @@
 import SwiftUI
 
-/// The five-pill header row at the top of MacroFactor's Food Entry sheet.
+/// The pill header row at the top of MacroFactor's Food Entry sheet.
 ///
-/// Reference: `~/Downloads/macrofactor-screens/IMG_6466.PNG`.
+/// Reference: `~/Downloads/macrofactor-screens/IMG_6466.PNG` plus the
+/// `~/Downloads/macrofactor-screens/staged-progress.png` variant.
 ///
 /// Layout, left to right:
 ///   1. Circular X close button
 ///   2. Time pill ("9 AM"-style label, tappable to pick a different hour)
-///   3. Calorie progress pill (small ring around a "consumed / target" label)
-///   4. Utensils pill (toggles the active meal type; tinted when one is set)
+///   3. Calorie progress pill — `consumed + staged / target` with a thin
+///      progress bar drawn along the top edge of the capsule. The bar
+///      colors the *staged* portion in coral so the user can see how
+///      much they're about to commit; the *already-logged* portion sits
+///      underneath in white.
+///   4. Either the utensils pill (when nothing is staged) OR a horizontal
+///      strip of emoji bubbles representing each staged entry, capped at
+///      the first 4 so the row doesn't overflow on small phones.
 ///   5. Down-chevron pill (collapse the sheet)
 ///
-/// Each pill sits on `BulkAITheme.Color.surface` and shares the same height so
-/// the row reads as a single segmented control. Tap targets are at least 44pt
-/// so the row stays comfortable to thumb-press from the bottom sheet.
+/// Each pill sits on `BulkAITheme.Color.surface` and shares the same height
+/// so the row reads as a single segmented control. Tap targets are at least
+/// 44pt so the row stays comfortable to thumb-press from the bottom sheet.
 struct HeaderPillRow: View {
 
     // MARK: State
@@ -21,6 +28,13 @@ struct HeaderPillRow: View {
     @Binding var time: Date
     let consumed: Int
     let target: Int
+    /// Kcal queued in the parent's staging buffer. Surfaces additively in
+    /// the calorie pill so the user knows the cost of the staged batch
+    /// before they hit "Log Foods".
+    let stagedKcal: Int
+    /// One emoji per staged entry. Renders as a horizontal bubble strip in
+    /// place of the utensils pill. Empty → utensils pill renders normally.
+    let stagedEmojis: [String]
     @Binding var mealType: MealType?
     let onClose: () -> Void
     let onCollapse: () -> Void
@@ -32,6 +46,12 @@ struct HeaderPillRow: View {
 
     private static let pillHeight: CGFloat = 44
     private static let circleSize: CGFloat = 44
+    private static let progressBarHeight: CGFloat = 3
+    /// Cap on how many emoji bubbles we render in the strip. Beyond this we
+    /// show a "+N" overflow bubble so the row stays the same width on
+    /// every phone size.
+    private static let maxVisibleEmojis: Int = 4
+    private static let emojiBubbleSize: CGFloat = 28
 
     // MARK: Body
 
@@ -40,7 +60,11 @@ struct HeaderPillRow: View {
             closeButton
             timePill
             caloriePill
-            utensilsPill
+            if stagedEmojis.isEmpty {
+                utensilsPill
+            } else {
+                stagedItemsStrip
+            }
             collapseButton
         }
         .padding(.horizontal, BulkAITheme.Spacing.md)
@@ -91,23 +115,61 @@ struct HeaderPillRow: View {
         .accessibilityLabel("Change time, currently \(timeLabel)")
     }
 
+    /// Calorie pill with a top-edge progress bar. Total + staged numerator
+    /// updates live as the user stages more items; the staged portion of
+    /// the bar is tinted with the accent so the delta reads as "what
+    /// you're about to log" rather than "what's already there."
     private var caloriePill: some View {
-        HStack(spacing: BulkAITheme.Spacing.xs) {
-            ProgressRing(progress: progressFraction)
-                .frame(width: 16, height: 16)
+        let total = consumed + max(stagedKcal, 0)
 
-            Text("\(consumed) / \(target)")
+        return ZStack(alignment: .top) {
+            // Track + pill body.
+            Capsule()
+                .fill(BulkAITheme.Color.surface)
+                .frame(height: Self.pillHeight)
+
+            // Top-edge progress fill, drawn over the pill's top edge so
+            // the bar bleeds visually into the pill. GeometryReader pins
+            // the bar width to the pill width and lets us split it into
+            // a logged portion and a staged portion.
+            GeometryReader { geo in
+                let totalWidth = geo.size.width
+                let loggedFraction = target > 0 ? min(Double(consumed) / Double(target), 1) : 0
+                let totalFraction = target > 0 ? min(Double(total) / Double(target), 1) : 0
+                let stagedFraction = max(0, totalFraction - loggedFraction)
+
+                HStack(spacing: 0) {
+                    // White: already-logged portion.
+                    Capsule()
+                        .fill(Color.white)
+                        .frame(width: totalWidth * CGFloat(loggedFraction))
+                    // Coral accent: staged-but-not-yet-logged portion.
+                    Capsule()
+                        .fill(BulkAITheme.Color.accent)
+                        .frame(width: totalWidth * CGFloat(stagedFraction))
+                }
+                .frame(height: Self.progressBarHeight)
+                .clipShape(Capsule())
+                .padding(.horizontal, 2)
+                .animation(.easeOut(duration: 0.2), value: stagedKcal)
+            }
+            .frame(height: Self.progressBarHeight)
+
+            // Label centered in the pill.
+            Text("\(total) / \(target)")
                 .font(BulkAITheme.Typography.caption)
                 .foregroundStyle(.white)
                 .monospacedDigit()
+                .padding(.horizontal, BulkAITheme.Spacing.md)
+                .frame(height: Self.pillHeight)
         }
-        .padding(.horizontal, BulkAITheme.Spacing.md)
         .frame(height: Self.pillHeight)
-        .background(
-            Capsule().fill(BulkAITheme.Color.surface)
-        )
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Calories consumed \(consumed) of \(target)")
+        .accessibilityLabel(
+            stagedKcal > 0
+                ? "Calories: \(consumed) logged plus \(stagedKcal) staged, of \(target) target"
+                : "Calories \(consumed) of \(target)"
+        )
     }
 
     private var utensilsPill: some View {
@@ -126,6 +188,79 @@ struct HeaderPillRow: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(mealType.map { "Meal type, \($0.displayName)" } ?? "Choose meal type")
+    }
+
+    /// Horizontal strip of staged-item emoji bubbles. Tapping the strip
+    /// also opens the meal-type picker so the user keeps that affordance
+    /// even when staged items push the utensils pill out.
+    private var stagedItemsStrip: some View {
+        Button {
+            isPickingMealType = true
+        } label: {
+            HStack(spacing: -8) {
+                ForEach(Array(visibleEmojis.enumerated()), id: \.offset) { _, emoji in
+                    emojiBubble(emoji)
+                }
+                if overflowCount > 0 {
+                    overflowBubble(count: overflowCount)
+                }
+            }
+            .padding(.horizontal, BulkAITheme.Spacing.xs)
+            .frame(height: Self.pillHeight)
+            .background(
+                Capsule().fill(BulkAITheme.Color.surface)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(stagedAccessibilityLabel)
+    }
+
+    private var visibleEmojis: [String] {
+        Array(stagedEmojis.prefix(Self.maxVisibleEmojis))
+    }
+
+    private var overflowCount: Int {
+        max(0, stagedEmojis.count - Self.maxVisibleEmojis)
+    }
+
+    private var stagedAccessibilityLabel: String {
+        let count = stagedEmojis.count
+        let suffix = count == 1 ? "" : "s"
+        let mealSuffix = mealType.map { ", meal type \($0.displayName)" } ?? ""
+        return "\(count) staged item\(suffix)\(mealSuffix). Tap to change meal type."
+    }
+
+    @ViewBuilder
+    private func emojiBubble(_ emoji: String) -> some View {
+        ZStack {
+            Circle()
+                .fill(BulkAITheme.Color.surfaceElevated)
+                .frame(width: Self.emojiBubbleSize, height: Self.emojiBubbleSize)
+                .overlay(
+                    Circle()
+                        .stroke(BulkAITheme.Color.surface, lineWidth: 2)
+                )
+            Text(emoji)
+                .font(.system(size: 15))
+        }
+    }
+
+    @ViewBuilder
+    private func overflowBubble(count: Int) -> some View {
+        ZStack {
+            Circle()
+                .fill(BulkAITheme.Color.surfaceElevated)
+                .frame(width: Self.emojiBubbleSize, height: Self.emojiBubbleSize)
+                .overlay(
+                    Circle()
+                        .stroke(BulkAITheme.Color.surface, lineWidth: 2)
+                )
+            Text("+\(count)")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white)
+                .monospacedDigit()
+        }
     }
 
     private var collapseButton: some View {
@@ -187,37 +322,6 @@ struct HeaderPillRow: View {
         formatter.dateFormat = "h a"
         return formatter.string(from: time)
     }
-
-    private var progressFraction: Double {
-        guard target > 0 else { return 0 }
-        let raw = Double(consumed) / Double(target)
-        return min(max(raw, 0), 1)
-    }
-}
-
-// MARK: - ProgressRing
-
-/// Tiny circular progress ring used inside the calorie pill. Drawn by hand so
-/// it composes inline with the text without dragging in a heavier component.
-private struct ProgressRing: View {
-
-    let progress: Double
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .stroke(Color.white.opacity(0.18), lineWidth: 2)
-
-            Circle()
-                .trim(from: 0, to: CGFloat(progress))
-                .stroke(
-                    BulkAITheme.Color.accent,
-                    style: StrokeStyle(lineWidth: 2, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-                .animation(.easeOut(duration: 0.2), value: progress)
-        }
-    }
 }
 
 // MARK: - Preview
@@ -225,34 +329,67 @@ private struct ProgressRing: View {
 #Preview("HeaderPillRow") {
     struct PreviewHost: View {
         @State private var time = Calendar.current.date(
-            bySettingHour: 9, minute: 0, second: 0, of: .now
+            bySettingHour: 10, minute: 0, second: 0, of: .now
         ) ?? .now
         @State private var mealType: MealType? = nil
 
         var body: some View {
             VStack(spacing: BulkAITheme.Spacing.lg) {
+                Text("Empty staged list").font(.caption).foregroundStyle(.white.opacity(0.5))
                 HeaderPillRow(
                     time: $time,
                     consumed: 0,
-                    target: 3415,
+                    target: 3414,
+                    stagedKcal: 0,
+                    stagedEmojis: [],
                     mealType: $mealType,
                     onClose: { },
                     onCollapse: { }
                 )
 
+                Text("Mid-day, no staged").font(.caption).foregroundStyle(.white.opacity(0.5))
                 HeaderPillRow(
                     time: $time,
                     consumed: 1240,
-                    target: 3415,
+                    target: 3414,
+                    stagedKcal: 0,
+                    stagedEmojis: [],
                     mealType: .constant(.breakfast),
                     onClose: { },
                     onCollapse: { }
                 )
 
+                Text("Mid-day, 3 staged").font(.caption).foregroundStyle(.white.opacity(0.5))
                 HeaderPillRow(
                     time: $time,
-                    consumed: 3415,
-                    target: 3415,
+                    consumed: 240,
+                    target: 3414,
+                    stagedKcal: 300,
+                    stagedEmojis: ["\u{1F36B}", "\u{1F34B}", "\u{1F964}"],
+                    mealType: .constant(.breakfast),
+                    onClose: { },
+                    onCollapse: { }
+                )
+
+                Text("Many staged → overflow").font(.caption).foregroundStyle(.white.opacity(0.5))
+                HeaderPillRow(
+                    time: $time,
+                    consumed: 240,
+                    target: 3414,
+                    stagedKcal: 980,
+                    stagedEmojis: ["\u{1F36B}", "\u{1F34B}", "\u{1F964}", "\u{1F357}", "\u{1F35E}", "\u{1F35B}"],
+                    mealType: .constant(.lunch),
+                    onClose: { },
+                    onCollapse: { }
+                )
+
+                Text("Full target").font(.caption).foregroundStyle(.white.opacity(0.5))
+                HeaderPillRow(
+                    time: $time,
+                    consumed: 3414,
+                    target: 3414,
+                    stagedKcal: 0,
+                    stagedEmojis: [],
                     mealType: .constant(.dinner),
                     onClose: { },
                     onCollapse: { }

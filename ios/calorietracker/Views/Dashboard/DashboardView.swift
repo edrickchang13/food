@@ -316,7 +316,11 @@ struct DashboardView: View {
         let avgIntake = intake.isEmpty ? 0 : intake.reduce(0, +) / max(intake.count, 1)
         let exp = Int(engineState.snapshot.expenditure?.kcalPerDay ?? 0)
         let delta = avgIntake - exp
-        let label = delta >= 0 ? "+\(delta) kcal surplus" : "\(delta) kcal deficit"
+        // Compact label so the tile's bottom row stays single-line and the
+        // 2x2 grid keeps consistent row baselines. The sign already carries
+        // surplus / deficit meaning; tapping opens DynamicTDEEExplainer for
+        // the long-form interpretation.
+        let label = delta >= 0 ? "+\(delta) kcal" : "\(delta) kcal"
         return InsightsAnalyticsGrid.Insight(
             title: "Energy Balance",
             subtitle: "Last 7 Days",
