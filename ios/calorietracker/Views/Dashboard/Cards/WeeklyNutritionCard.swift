@@ -20,6 +20,12 @@ struct WeeklyNutritionCard: View {
     @Binding var selectedIndex: Int
     @Binding var consumedVsRemaining: Int
     var isLoading: Bool = false
+    /// Fires when the user taps a specific day column. Carries the
+    /// `dayIndex` (0..<7, where 6 is "today" and 0 is six days ago) so
+    /// the parent can route to a per-day calorie chart / food log.
+    /// Optional so consumers that just want the in-card highlight (no
+    /// deep-link) can omit it.
+    var onSelectDay: ((Int) -> Void)? = nil
 
     // MARK: Layout constants
 
@@ -122,6 +128,37 @@ struct WeeklyNutritionCard: View {
             }
             .allowsHitTesting(false)
         }
+        // Per-column tap layer — each column is a full-height transparent
+        // button that selects that day and fires `onSelectDay`. Sits on
+        // top of the bars (which are decorative). Without this, the bars
+        // looked tappable but did nothing — the user couldn't drill into
+        // a specific day's intake. The selection-outline overlay above
+        // disables hit testing so this layer reliably catches taps.
+        .overlay(alignment: .topLeading) {
+            HStack(spacing: columnSpacing) {
+                ForEach(0..<7, id: \.self) { dayIndex in
+                    Button {
+                        selectedIndex = dayIndex
+                        onSelectDay?(dayIndex)
+                    } label: {
+                        Color.clear
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(accessibilityLabelForColumn(dayIndex: dayIndex))
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .frame(height: (rowHeight * 4) + (rowSpacing * 3))
+        }
+    }
+
+    /// Spoken summary for VoiceOver — combines the weekday letter and the
+    /// kcal total so the user knows what they're about to drill into.
+    private func accessibilityLabelForColumn(dayIndex: Int) -> String {
+        let day = week[safe: dayIndex]
+        let kcal = day.map(\.kcal) ?? 0
+        return "\(weekdayLetter(at: dayIndex)), \(kcal) calories. Open day"
     }
 
     @ViewBuilder

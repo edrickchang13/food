@@ -13,6 +13,12 @@ struct DashboardView: View {
     @Environment(EngineState.self) private var engineState
     @Environment(ProfileStore.self) private var profileStore
 
+    /// Optional callback fired when a Weekly Nutrition day column is
+    /// tapped. ContentView wires this to switch the global tab to Food
+    /// Log and update its selected date so users can drill into a
+    /// specific day's chart from the Dashboard.
+    var onSelectFoodLogDay: ((Date) -> Void)? = nil
+
     @State private var pagerIndex: Int = 2          // start on Daily Nutrition (today)
     @State private var weeklySelectedIndex: Int = 6 // today (rightmost of 7 days)
     @State private var weeklyMode: Int = 0          // 0 = Consumed, 1 = Remaining
@@ -264,7 +270,20 @@ struct DashboardView: View {
                 targets: dailyTargets(),
                 selectedIndex: $weeklySelectedIndex,
                 consumedVsRemaining: $weeklyMode,
-                isLoading: isHydrating
+                isLoading: isHydrating,
+                onSelectDay: { dayIndex in
+                    // Map column index (0..<7, 6 = today) to a calendar
+                    // date and forward to the parent so it can switch to
+                    // the Food Log tab on that day. Routes via a shared
+                    // notification because Dashboard and FoodLogView are
+                    // sibling tabs in ContentView's tab-switching ZStack
+                    // and don't share a binding.
+                    let calendar = Calendar.current
+                    let today = calendar.startOfDay(for: .now)
+                    let offset = -(6 - dayIndex)
+                    let target = calendar.date(byAdding: .day, value: offset, to: today) ?? today
+                    onSelectFoodLogDay?(target)
+                }
             )
             .tag(0)
 

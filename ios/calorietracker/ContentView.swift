@@ -121,9 +121,20 @@ struct ContentView: View {
             // partially-typed forms and scroll positions persist like a real
             // TabView would.
             ZStack {
-                DashboardView()
-                    .opacity(selectedTab == .home ? 1 : 0)
-                    .allowsHitTesting(selectedTab == .home)
+                DashboardView(onSelectFoodLogDay: { date in
+                    // Drill into a specific day's Food Log when the user
+                    // taps a Weekly Nutrition column. Switch tabs first;
+                    // FoodLogView observes `.foodLogShouldShowDate` and
+                    // updates its `selectedDate` accordingly.
+                    selectedTab = .progress
+                    NotificationCenter.default.post(
+                        name: .foodLogShouldShowDate,
+                        object: nil,
+                        userInfo: ["date": date]
+                    )
+                })
+                .opacity(selectedTab == .home ? 1 : 0)
+                .allowsHitTesting(selectedTab == .home)
                 FoodLogView()
                     .opacity(selectedTab == .progress ? 1 : 0)
                     .allowsHitTesting(selectedTab == .progress)
