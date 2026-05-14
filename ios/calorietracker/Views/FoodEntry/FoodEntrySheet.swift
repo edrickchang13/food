@@ -92,7 +92,7 @@ struct FoodEntrySheet: View {
 
     @State private var errorMessage: String?
 
-    private enum EntryFlow: String, Identifiable {
+    private enum EntryFlow: String, Identifiable, Equatable {
         case analyzing
         case servingSize
         case foodResult
@@ -145,15 +145,33 @@ struct FoodEntrySheet: View {
                 placeholder: bottomBarPlaceholder
             )
             .padding(.bottom, BulkAITheme.Spacing.sm)
+
+            // Inline analyzing overlay — replaces the previous full-screen
+            // sheet so the loading state stays compact on the current tab
+            // (Describe / Snap / Scan) instead of taking the user away
+            // from where they were typing or shooting from. The overlay
+            // dims the underlying tab to make focus unambiguous.
+            if activeFlow == .analyzing {
+                analyzingOverlay
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
+            }
         }
         .background(BulkAITheme.Color.background.ignoresSafeArea())
         .preferredColorScheme(.dark)
+        .animation(.easeOut(duration: 0.18), value: activeFlow)
         .sheet(item: $portionItem) { item in
             QuickAddPortionSheet(item: item) { entry in
                 stage(entry)
             }
         }
-        .sheet(item: $activeFlow) { flow in
+        // The sheet only presents for `.servingSize` and `.foodResult`.
+        // `.analyzing` renders inline via `analyzingOverlay`, so we filter
+        // it out of the binding here to keep the sheet from popping an
+        // empty container next to the overlay.
+        .sheet(item: Binding(
+            get: { activeFlow == .analyzing ? nil : activeFlow },
+            set: { activeFlow = $0 }
+        )) { flow in
             flowContent(for: flow)
         }
         .sheet(isPresented: $showAIConsent) {
@@ -293,14 +311,68 @@ struct FoodEntrySheet: View {
 
     // MARK: - Flow content (Analyze / FoodResult / ServingSize)
 
+    /// Compact loading panel shown over the current Food Entry tab while
+    /// Gemini analyzes a description / image / nutrition label. Replaces
+    /// the previous full-screen `AnalyzingView` sheet so the user doesn't
+    /// get bounced out of the tab they were typing in. Designed as a
+    /// rounded surface card centered horizontally with a thumbnail (when
+    /// we have an image), a spinner, and a short status line.
+    private var analyzingOverlay: some View {
+        ZStack {
+            // Dim the underlying tab content so the overlay reads as the
+            // primary focus without fully hiding the page.
+            Color.black.opacity(0.55)
+                .ignoresSafeArea()
+                .transition(.opacity)
+
+            VStack(spacing: BulkAITheme.Spacing.md) {
+                if let image = foodResultImage {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 96, height: 96)
+                        .clipShape(RoundedRectangle(cornerRadius: BulkAITheme.Radius.md, style: .continuous))
+                } else {
+                    Image(systemName: "text.magnifyingglass")
+                        .font(.system(size: 36, weight: .semibold))
+                        .foregroundStyle(BulkAITheme.Color.accent)
+                        .frame(width: 64, height: 64)
+                }
+
+                ProgressView()
+                    .controlSize(.regular)
+                    .tint(BulkAITheme.Color.accent)
+
+                Text(foodResultImage == nil ? "Looking up nutrition..." : "Analyzing your food...")
+                    .font(BulkAITheme.Typography.body)
+                    .foregroundStyle(.white)
+            }
+            .padding(BulkAITheme.Spacing.lg)
+            .frame(maxWidth: 260)
+            .background(
+                RoundedRectangle(cornerRadius: BulkAITheme.Radius.lg, style: .continuous)
+                    .fill(BulkAITheme.Color.surfaceElevated)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: BulkAITheme.Radius.lg, style: .continuous)
+                    .stroke(.white.opacity(0.06), lineWidth: 0.5)
+            )
+            .shadow(color: .black.opacity(0.4), radius: 24, y: 8)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(foodResultImage == nil ? "Looking up nutrition" : "Analyzing your food")
+    }
+
     @ViewBuilder
     private func flowContent(for flow: EntryFlow) -> some View {
         switch flow {
         case .analyzing:
-            AnalyzingView(
-                image: foodResultImage,
-                message: foodResultImage == nil ? "Looking up nutrition..." : "Analyzing your food..."
-            )
+            // Now rendered as an inline overlay (see `analyzingOverlay`
+            // above). The sheet path keeps a no-op so any code path that
+            // happens to set activeFlow = .analyzing while the sheet is
+            // still presented for some other reason doesn't crash on a
+            // missing case branch.
+            EmptyView()
         case .servingSize:
             if let image = pendingLabelImage, let label = pendingLabelAnalysis {
                 ServingSizeInputView(image: image, labelAnalysis: label) { analysis in
