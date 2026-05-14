@@ -143,28 +143,28 @@ struct HeaderPillRow: View {
             // staged, so this stroke ends where the staged delta ends.
             // When stagedKcal == 0 the totalFraction equals loggedFraction
             // and this stroke is fully covered by the white one above.
+            //
+            // No `rotationEffect`: capsules aren't rotationally symmetric
+            // like circles. Rotating the stroked capsule 90 degrees warps
+            // the shape into a vertical pill that gets clipped to the
+            // wide horizontal bounds, leaving only the left and right
+            // arcs visible. Trim from 0 traces the perimeter from
+            // Capsule's native path origin (the top edge) clockwise.
             Capsule()
                 .trim(from: 0, to: CGFloat(totalFraction))
                 .stroke(
                     BulkAITheme.Color.accent,
                     style: StrokeStyle(lineWidth: Self.ringStroke, lineCap: .round)
                 )
-                .rotationEffect(.degrees(-90))
                 .animation(.easeOut(duration: 0.25), value: totalFraction)
 
-            // White logged-progress ring on top — traces the perimeter
-            // from the 12 o'clock equivalent (top-center of the capsule
-            // path origin) clockwise to `loggedFraction`. Capsule's path
-            // origin starts on the top-left arc; rotating -90° puts the
-            // visual start at top-center so it reads like a clock-style
-            // progress ring rather than starting on the side.
+            // White logged-progress ring on top.
             Capsule()
                 .trim(from: 0, to: CGFloat(loggedFraction))
                 .stroke(
                     Color.white,
                     style: StrokeStyle(lineWidth: Self.ringStroke, lineCap: .round)
                 )
-                .rotationEffect(.degrees(-90))
                 .animation(.easeOut(duration: 0.25), value: loggedFraction)
 
             // Label centered in the pill.
