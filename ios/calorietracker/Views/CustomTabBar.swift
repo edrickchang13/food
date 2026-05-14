@@ -53,7 +53,11 @@ struct CustomTabBar: View {
                     .shadow(color: AppColors.calorie.opacity(0.35), radius: 8, y: 3)
             }
             .buttonStyle(.plain)
-            .offset(y: -6)
+            // Drop the FAB into the tab strip so it sits centered vertically
+            // inside the bar rather than floating above it. Previous value
+            // (-6) lifted it above the row; +8 sinks it so the bottom curve
+            // aligns with the rest of the tab labels' baseline.
+            .offset(y: 8)
             .accessibilityLabel("Add food")
         }
     }

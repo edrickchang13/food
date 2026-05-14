@@ -57,7 +57,11 @@ struct InsightCard: View {
                 bottomRow
             }
             .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            // Lock a minimum height so all four tiles in the 2x2 grid match,
+            // even when one tile has a longer subtitle or value (e.g. the
+            // Energy Balance tile's '-2654 kcal deficit' that otherwise
+            // wrapped to 3 lines and stretched its row).
+            .frame(maxWidth: .infinity, minHeight: 168, alignment: .leading)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(title)\(subtitle.map { ", \($0)" } ?? ""), \(valueText)")
@@ -91,6 +95,12 @@ struct InsightCard: View {
             Text(valueText)
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
+                // Cap to a single line with shrink so long values like
+                // "-2654 kcal deficit" stay one row tall instead of wrapping
+                // into the chevron and breaking the 2x2 grid's row baselines.
+                .lineLimit(1)
+                .minimumScaleFactor(0.55)
+                .allowsTightening(true)
             Spacer(minLength: 0)
             Image(systemName: "chevron.right")
                 .font(.system(size: 13, weight: .semibold))

@@ -110,6 +110,8 @@ struct FoodEntrySheet: View {
                     time: $time,
                     consumed: foodStore.todayCalories,
                     target: profileStore.profile.effectiveCalories,
+                    stagedKcal: stagedKcal,
+                    stagedEmojis: stagedEmojis,
                     mealType: $mealType,
                     onClose: { dismiss() },
                     onCollapse: { dismiss() }
@@ -366,6 +368,40 @@ struct FoodEntrySheet: View {
         } catch {
             activeFlow = nil
             errorMessage = error.localizedDescription
+        }
+    }
+
+    // MARK: - Staging-derived header state
+
+    /// Sum of calories across staged entries. Surfaces in the header pill so
+    /// the user sees the running total of what they're about to log.
+    private var stagedKcal: Int {
+        stagedEntries.reduce(0) { $0 + $1.calories }
+    }
+
+    /// One emoji per staged entry for the header's icon strip. Entries
+    /// without a Gemini-supplied emoji fall back to a meal-type glyph so
+    /// the strip never breaks. Order matches insertion order so the most
+    /// recently staged item appears last (closest to the chevron-down).
+    private var stagedEmojis: [String] {
+        stagedEntries.map { entry in
+            if let emoji = entry.emoji, !emoji.isEmpty {
+                return emoji
+            }
+            return fallbackEmoji(for: entry)
+        }
+    }
+
+    /// Heuristic fallback when a staged entry doesn't carry its own emoji:
+    /// use the source (snap / nutrition label / text / manual) to pick a
+    /// representative glyph so the strip stays expressive even for
+    /// Quick-Add or barcode entries.
+    private func fallbackEmoji(for entry: FoodEntry) -> String {
+        switch entry.source {
+        case .snapFood: return "\u{1F4F8}"        // camera
+        case .nutritionLabel: return "\u{1F516}"  // bookmark tab (label)
+        case .textInput: return "\u{1F4DD}"       // memo
+        case .manual: return "\u{1F37D}"          // fork + knife with plate
         }
     }
 
