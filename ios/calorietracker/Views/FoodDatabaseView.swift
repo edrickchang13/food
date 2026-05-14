@@ -8,9 +8,15 @@ struct FoodDatabaseView: View {
     @State private var searchText = ""
     @State private var categoryFilter: FoodDatabaseCategory?
     @State private var loggingItem: FoodDatabaseItem?
+    @State private var remoteResults: [FoodDatabaseItem] = []
+    @State private var isSearchingRemote = false
+    @State private var searchTask: Task<Void, Never>?
 
     private var filteredItems: [FoodDatabaseItem] {
-        let base = foodDatabase.search(searchText, limit: 200)
+        let local = foodDatabase.search(searchText, limit: 200)
+        let remoteIDs = Set(local.map { $0.id })
+        let remoteOnly = remoteResults.filter { !remoteIDs.contains($0.id) }
+        let base = local + remoteOnly
         guard let categoryFilter else { return base }
         return base.filter { $0.category == categoryFilter }
     }
@@ -35,8 +41,8 @@ struct FoodDatabaseView: View {
             }
 
             Section {
-                if filteredItems.isEmpty {
-                    Text("No matches. Use the AI food log entry to add new items; they'll be cached here for next time.")
+                if filteredItems.isEmpty && !isSearchingRemote {
+                    Text("No matches. Try a different search — Bulk AI also queries Open Food Facts for branded products as you type.")
                         .foregroundStyle(.secondary)
                         .font(.system(.subheadline, design: .rounded))
                 } else {
@@ -47,12 +53,41 @@ struct FoodDatabaseView: View {
                             row(for: item)
                         }
                     }
+                    if isSearchingRemote {
+                        HStack {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Searching Open Food Facts…")
+                                .font(.system(.subheadline, design: .rounded))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
             }
         }
         .navigationTitle("Food database")
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
+        .onChange(of: searchText) { _, newValue in
+            // Cancel any in-flight remote search, debounce 300ms before firing
+            // a new one so we don't hammer OFF on every keystroke.
+            searchTask?.cancel()
+            let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard trimmed.count >= 3 else {
+                remoteResults = []
+                isSearchingRemote = false
+                return
+            }
+            searchTask = Task {
+                try? await Task.sleep(for: .milliseconds(300))
+                if Task.isCancelled { return }
+                isSearchingRemote = true
+                defer { isSearchingRemote = false }
+                let results = await foodDatabase.searchIncludingRemote(trimmed, limit: 30)
+                if Task.isCancelled { return }
+                remoteResults = results
+            }
+        }
         .sheet(item: $loggingItem) { item in
             LogFoodDatabaseItemSheet(item: item)
         }

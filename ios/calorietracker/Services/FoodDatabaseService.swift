@@ -46,6 +46,35 @@ final class FoodDatabaseService {
         saveCache()
     }
 
+    /// Searches the local seed + AI cache, then merges Open Food Facts results
+    /// over the network. Returns local matches synchronously and OFF matches
+    /// after they arrive. Caller is expected to render incrementally — when
+    /// the local set is empty and OFF is loading, show a spinner.
+    ///
+    /// OFF results are appended to the AI cache on success so they show up
+    /// locally on the next launch and don't require a network round-trip.
+    func searchIncludingRemote(_ query: String, limit: Int = 30) async -> [FoodDatabaseItem] {
+        let local = search(query, limit: limit)
+        let remote: [FoodDatabaseItem]
+        do {
+            remote = try await OpenFoodFactsService.search(query, limit: limit)
+        } catch {
+            return local
+        }
+        // Cache remote hits so future searches don't repeat the network call.
+        for item in remote {
+            record(item)
+        }
+        // Dedupe by id; local wins on collision since verified ranks above OFF.
+        var seenIDs = Set(local.map { $0.id })
+        var combined = local
+        for item in remote where !seenIDs.contains(item.id) {
+            combined.append(item)
+            seenIDs.insert(item.id)
+        }
+        return Array(combined.prefix(limit))
+    }
+
     /// Caches a Gemini-derived analysis as an AI-estimated database entry. Only
     /// caches when the analysis names a single recognizable item with a known
     /// serving size, so we don't pollute the cache with complex multi-item
