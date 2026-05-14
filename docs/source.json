@@ -15,6 +15,13 @@
       "screenshotURLs": [],
       "versions": [
         {
+          "version": "1.0.33",
+          "date": "2026-05-14T17:55:30+00:00",
+          "localizedDescription": "Latest build from main.\n\nCommit 3b89bea.",
+          "downloadURL": "https://github.com/edrickchang13/food/releases/download/v1.0.33/BulkAI.ipa",
+          "size": 11581513
+        },
+        {
           "version": "1.0.32",
           "date": "2026-05-14T16:58:05+00:00",
           "localizedDescription": "Latest build from main.\n\nCommit 6c26ba4.",
