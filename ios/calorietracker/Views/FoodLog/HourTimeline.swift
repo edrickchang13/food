@@ -67,8 +67,12 @@ struct HourTimeline: View {
 
     @ViewBuilder
     private func hourRow(hour: Int, entries hourEntries: [FoodEntry], hourStart: Date) -> some View {
+        // Match the MacroFactor reference: the time pill and the small "+"
+        // sit side-by-side on the same row, with entry cards filling the
+        // remaining width to the right. Previously stacked vertically; the
+        // horizontal layout reads as one continuous timeline row.
         HStack(alignment: .top, spacing: BulkAITheme.Spacing.sm) {
-            VStack(spacing: BulkAITheme.Spacing.xs) {
+            HStack(spacing: BulkAITheme.Spacing.xs) {
                 timePill(hour: hour)
                 addButton(hourStart: hourStart)
             }
@@ -101,17 +105,21 @@ struct HourTimeline: View {
             .frame(minWidth: 64)
     }
 
+    /// Small, dim "+" affordance sitting beside the time pill. Matches the
+    /// MacroFactor reference: surface-tinted circle (same as the time pill)
+    /// with a thin white plus glyph, not the loud coral FAB we had before.
+    /// Hit area stays 44pt for accessibility; only the visual is smaller.
     private func addButton(hourStart: Date) -> some View {
         Button {
             onAdd(hourStart)
         } label: {
             ZStack {
                 Circle()
-                    .fill(BulkAITheme.Color.accent)
-                    .frame(width: 28, height: 28)
+                    .fill(BulkAITheme.Color.surface)
+                    .frame(width: 22, height: 22)
                 Image(systemName: "plus")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.75))
                     .accessibilityHidden(true)
             }
             // Expand the hit area to 44pt without affecting the visual circle size.
