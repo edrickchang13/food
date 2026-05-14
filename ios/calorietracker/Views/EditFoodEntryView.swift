@@ -46,6 +46,7 @@ struct EditFoodEntryView: View {
     @State private var editedCholesterol: Double?
     @State private var editedSodium: Double?
     @State private var editedPotassium: Double?
+    @State private var micronutrientsExpanded: Bool
 
     private var scale: Double {
         guard baseServingSizeGrams > 0 else { return 1 }
@@ -116,6 +117,12 @@ struct EditFoodEntryView: View {
         self._editedCholesterol = State(initialValue: entry.cholesterol)
         self._editedSodium = State(initialValue: entry.sodium)
         self._editedPotassium = State(initialValue: entry.potassium)
+        // Auto-expand when any micronutrient value is already populated.
+        let hasAnyMicro = entry.sugar != nil || entry.addedSugar != nil ||
+            entry.fiber != nil || entry.saturatedFat != nil ||
+            entry.monounsaturatedFat != nil || entry.polyunsaturatedFat != nil ||
+            entry.cholesterol != nil || entry.sodium != nil || entry.potassium != nil
+        self._micronutrientsExpanded = State(initialValue: hasAnyMicro)
     }
 
     private static func formatGrams(_ value: Double) -> String {
@@ -123,6 +130,14 @@ struct EditFoodEntryView: View {
             return String(Int(value))
         }
         return String(format: "%.1f", value)
+    }
+
+    private var populatedMicronutrientCount: Int {
+        [
+            editedSugar, editedAddedSugar, editedFiber, editedSaturatedFat,
+            editedMonounsaturatedFat, editedPolyunsaturatedFat,
+            editedCholesterol, editedSodium, editedPotassium
+        ].compactMap { $0 }.count
     }
 
     var body: some View {
@@ -201,7 +216,7 @@ struct EditFoodEntryView: View {
                     }
 
                     Section {
-                        DisclosureGroup("More Nutrition") {
+                        DisclosureGroup(isExpanded: $micronutrientsExpanded) {
                             OptionalNutritionEditRow(label: "Sugar", value: $editedSugar, unit: "g")
                             OptionalNutritionEditRow(label: "Added Sugar", value: $editedAddedSugar, unit: "g")
                             OptionalNutritionEditRow(label: "Fiber", value: $editedFiber, unit: "g")
@@ -211,6 +226,19 @@ struct EditFoodEntryView: View {
                             OptionalNutritionEditRow(label: "Cholesterol", value: $editedCholesterol, unit: "mg")
                             OptionalNutritionEditRow(label: "Sodium", value: $editedSodium, unit: "mg")
                             OptionalNutritionEditRow(label: "Potassium", value: $editedPotassium, unit: "mg")
+                        } label: {
+                            HStack {
+                                Text("Micronutrients")
+                                Spacer()
+                                if populatedMicronutrientCount > 0 {
+                                    Text("\(populatedMicronutrientCount)")
+                                        .font(.caption.monospacedDigit())
+                                        .foregroundStyle(.secondary)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Capsule().fill(Color.secondary.opacity(0.18)))
+                                }
+                            }
                         }
                         .tint(AppColors.calorie)
                     }

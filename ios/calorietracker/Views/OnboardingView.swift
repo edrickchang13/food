@@ -91,12 +91,12 @@ struct OnboardingView: View {
     var body: some View {
         VStack(spacing: 0) {
                 if step > 0 && step < totalSteps - 1 {
-                    HStack(spacing: 16) {
+                    HStack(spacing: BulkAITheme.Spacing.md) {
                         Button {
                             withAnimation(.snappy) { step -= 1 }
                         } label: {
                             Image(systemName: "chevron.left")
-                                .font(.system(size: 18, weight: .semibold))
+                                .font(BulkAITheme.Typography.headline)
                                 .foregroundStyle(.primary)
                         }
 
@@ -112,9 +112,9 @@ struct OnboardingView: View {
                         }
                         .frame(height: 4)
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 12)
-                    .padding(.bottom, 8)
+                    .padding(.horizontal, BulkAITheme.Spacing.xl)
+                    .padding(.top, BulkAITheme.Spacing.sm)
+                    .padding(.bottom, BulkAITheme.Spacing.xs)
                 }
 
                 ZStack {
@@ -127,10 +127,10 @@ struct OnboardingView: View {
                     case 5: activityStep
                     case 6: goalStep
                     case 7: desiredWeightStep
-                    case 8: goalSpeedStep
-                    case 9: notificationsStep
-                    case 10: appleHealthStep
-                    case 11: aiProviderStep
+                    case 8: aiProviderStep
+                    case 9: goalSpeedStep
+                    case 10: notificationsStep
+                    case 11: appleHealthStep
                     case 12: buildingPlanStep
                     case 13: planReadyStep
                     case 14: reviewStep
@@ -170,12 +170,12 @@ struct OnboardingView: View {
                 .frame(height: 54)
                 .background(Color.primary, in: Capsule())
         }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 36)
+        .padding(.horizontal, BulkAITheme.Spacing.xl)
+        .padding(.bottom, BulkAITheme.Spacing.xxl + BulkAITheme.Spacing.xxs)
     }
 
     private func advanceAfterPlusPurchaseIfNeeded() {
-        guard shouldAdvanceAfterPlusPurchase, step == 11 else { return }
+        guard shouldAdvanceAfterPlusPurchase, step == 8 else { return }
         shouldAdvanceAfterPlusPurchase = false
         showPaywall = false
         AIAccessSettings.mode = .fudAIPlus
@@ -187,19 +187,19 @@ struct OnboardingView: View {
     private var welcomeStep: some View {
         VStack(spacing: 0) {
             Spacer()
-            VStack(spacing: 20) {
+            VStack(spacing: BulkAITheme.Spacing.lg) {
                 Image("onboardingLogo")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 120, height: 120)
 
-                VStack(spacing: 8) {
+                VStack(spacing: BulkAITheme.Spacing.xs) {
                     Text("Eat Smart,")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .font(BulkAITheme.Typography.title)
                     Text("Live Better")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .font(BulkAITheme.Typography.title)
                         .foregroundStyle(
-                            LinearGradient(colors: AppColors.calorieGradient, startPoint: .leading, endPoint: .trailing)
+                            LinearGradient(colors: [BulkAITheme.Color.accent], startPoint: .leading, endPoint: .trailing)
                         )
                 }
                 Text("Just snap, track, and thrive.\nYour nutrition, simplified.")
@@ -215,15 +215,15 @@ struct OnboardingView: View {
                 Text("Get Started")
                     .font(.system(.headline, design: .rounded, weight: .semibold))
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
+                    .padding(.vertical, BulkAITheme.Spacing.md)
                     .background(
-                        LinearGradient(colors: AppColors.calorieGradient, startPoint: .leading, endPoint: .trailing)
+                        LinearGradient(colors: [BulkAITheme.Color.accent], startPoint: .leading, endPoint: .trailing)
                     )
                     .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: BulkAITheme.Radius.md))
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 36)
+            .padding(.horizontal, BulkAITheme.Spacing.xl)
+            .padding(.bottom, BulkAITheme.Spacing.xxl + BulkAITheme.Spacing.xxs)
         }
     }
 
@@ -233,14 +233,14 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 0) {
             stepHeader(title: "What's your gender?", subtitle: "This helps us calculate your metabolism")
             Spacer()
-            VStack(spacing: 12) {
+            VStack(spacing: BulkAITheme.Spacing.sm) {
                 ForEach(Gender.allCases, id: \.self) { g in
                     selectionCard(icon: g.icon, title: g.displayName, isSelected: gender == g) {
                         withAnimation(.spring(response: 0.3)) { gender = g }
                     }
                 }
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, BulkAITheme.Spacing.xl)
             Spacer()
             continueButton()
         }
@@ -255,7 +255,7 @@ struct OnboardingView: View {
             DatePicker("Birthday", selection: $birthday, in: ...Date(), displayedComponents: .date)
                 .datePickerStyle(.wheel)
                 .labelsHidden()
-                .padding(.horizontal, 24)
+                .padding(.horizontal, BulkAITheme.Spacing.xl)
             Spacer()
             continueButton()
         }
@@ -271,8 +271,8 @@ struct OnboardingView: View {
                 Text("Metric").tag(true)
             }
             .pickerStyle(.segmented)
-            .padding(.horizontal, 24)
-            .padding(.top, 16)
+            .padding(.horizontal, BulkAITheme.Spacing.xl)
+            .padding(.top, BulkAITheme.Spacing.md)
             .onChange(of: isMetric) { _, newValue in useMetric = newValue }
             Spacer()
             // Stack height + weight as two rows so the weight picker (whole +
@@ -282,41 +282,41 @@ struct OnboardingView: View {
             // wheel as "..." because there wasn't enough width for 3-digit
             // values like 152 alongside the decimal column.
             if isMetric {
-                VStack(spacing: 8) {
-                    VStack(spacing: 4) {
+                VStack(spacing: BulkAITheme.Spacing.xs) {
+                    VStack(spacing: BulkAITheme.Spacing.xxs) {
                         Text("Height").font(.system(.caption, design: .rounded, weight: .medium)).foregroundStyle(.secondary)
                         Picker("cm", selection: $heightCm) {
                             ForEach(100...250, id: \.self) { cm in Text("\(cm) cm").tag(cm) }
                         }.pickerStyle(.wheel).frame(height: 130)
                     }
-                    VStack(spacing: 4) {
+                    VStack(spacing: BulkAITheme.Spacing.xxs) {
                         Text("Weight").font(.system(.caption, design: .rounded, weight: .medium)).foregroundStyle(.secondary)
                         decimalWeightWheel(whole: $weightKgWhole, tenth: $weightKgTenth, range: 30...250, unit: "kg")
                             .frame(height: 130)
                     }
-                }.padding(.horizontal, 24)
+                }.padding(.horizontal, BulkAITheme.Spacing.xl)
             } else {
-                VStack(spacing: 8) {
-                    HStack(spacing: 8) {
-                        VStack(spacing: 4) {
+                VStack(spacing: BulkAITheme.Spacing.xs) {
+                    HStack(spacing: BulkAITheme.Spacing.xs) {
+                        VStack(spacing: BulkAITheme.Spacing.xxs) {
                             Text("Feet").font(.system(.caption, design: .rounded, weight: .medium)).foregroundStyle(.secondary)
                             Picker("ft", selection: $heightFeet) {
                                 ForEach(3...8, id: \.self) { ft in Text("\(ft) ft").tag(ft) }
                             }.pickerStyle(.wheel).frame(height: 130)
                         }
-                        VStack(spacing: 4) {
+                        VStack(spacing: BulkAITheme.Spacing.xxs) {
                             Text("Inches").font(.system(.caption, design: .rounded, weight: .medium)).foregroundStyle(.secondary)
                             Picker("in", selection: $heightInches) {
                                 ForEach(0...11, id: \.self) { inch in Text("\(inch) in").tag(inch) }
                             }.pickerStyle(.wheel).frame(height: 130)
                         }
                     }
-                    VStack(spacing: 4) {
+                    VStack(spacing: BulkAITheme.Spacing.xxs) {
                         Text("Weight").font(.system(.caption, design: .rounded, weight: .medium)).foregroundStyle(.secondary)
                         decimalWeightWheel(whole: $weightLbsWhole, tenth: $weightLbsTenth, range: 60...500, unit: "lbs")
                             .frame(height: 130)
                     }
-                }.padding(.horizontal, 24)
+                }.padding(.horizontal, BulkAITheme.Spacing.xl)
             }
             Spacer()
             continueButton()
@@ -329,7 +329,7 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 0) {
             stepHeader(title: "Do you know your\nbody fat %?", subtitle: "Helps us calculate your metabolism more accurately")
             Spacer()
-            VStack(spacing: 12) {
+            VStack(spacing: BulkAITheme.Spacing.sm) {
                 selectionCard(icon: "checkmark.circle", title: "Yes", isSelected: knowsBodyFat) {
                     withAnimation(.spring(response: 0.3)) { knowsBodyFat = true }
                 }
@@ -337,22 +337,22 @@ struct OnboardingView: View {
                     withAnimation(.spring(response: 0.3)) { knowsBodyFat = false }
                 }
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, BulkAITheme.Spacing.xl)
             if knowsBodyFat {
                 ScrollView {
-                    VStack(spacing: 16) {
-                        VStack(spacing: 4) {
+                    VStack(spacing: BulkAITheme.Spacing.md) {
+                        VStack(spacing: BulkAITheme.Spacing.xxs) {
                             Text("Current")
                                 .font(.system(.subheadline, design: .rounded, weight: .semibold))
                                 .foregroundStyle(.secondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 24)
+                                .padding(.horizontal, BulkAITheme.Spacing.xl)
                             Picker("Body Fat %", selection: $bodyFatPercentage) {
                                 ForEach(3...60, id: \.self) { pct in Text("\(pct)%").tag(pct) }
                             }
                             .pickerStyle(.wheel)
                             .frame(height: 130)
-                            .padding(.horizontal, 24)
+                            .padding(.horizontal, BulkAITheme.Spacing.xl)
                             Text("Common ranges: Men 10–25%, Women 18–35%")
                                 .font(.system(.caption, design: .rounded))
                                 .foregroundStyle(.secondary)
@@ -364,7 +364,7 @@ struct OnboardingView: View {
                         // body-recomp goal in mind. Goal body fat % is display-only
                         // (drives the Progress tab chart line) — it does NOT
                         // participate in BMR / TDEE / macro math.
-                        VStack(spacing: 4) {
+                        VStack(spacing: BulkAITheme.Spacing.xxs) {
                             HStack {
                                 Text("Goal (optional)")
                                     .font(.system(.subheadline, design: .rounded, weight: .semibold))
@@ -380,9 +380,9 @@ struct OnboardingView: View {
                                     }
                                 ))
                                 .labelsHidden()
-                                .tint(AppColors.calorie)
+                                .tint(BulkAITheme.Color.accent)
                             }
-                            .padding(.horizontal, 24)
+                            .padding(.horizontal, BulkAITheme.Spacing.xl)
 
                             if let _ = goalBodyFatPercentInt {
                                 Picker("Goal Body Fat %", selection: Binding(
@@ -393,21 +393,21 @@ struct OnboardingView: View {
                                 }
                                 .pickerStyle(.wheel)
                                 .frame(height: 110)
-                                .padding(.horizontal, 24)
+                                .padding(.horizontal, BulkAITheme.Spacing.xl)
                             } else {
                                 Text("You can set this later in Settings.")
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundStyle(.tertiary)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal, 24)
-                                    .padding(.top, 4)
+                                    .padding(.horizontal, BulkAITheme.Spacing.xl)
+                                    .padding(.top, BulkAITheme.Spacing.xxs)
                             }
                         }
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, BulkAITheme.Spacing.xs)
                 }
             } else {
-                VStack(spacing: 8) {
+                VStack(spacing: BulkAITheme.Spacing.xs) {
                     Image(systemName: "function")
                         .font(.system(size: 28))
                         .foregroundStyle(.secondary)
@@ -416,7 +416,7 @@ struct OnboardingView: View {
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
-                .padding(.top, 24)
+                .padding(.top, BulkAITheme.Spacing.xl)
                 .frame(maxWidth: .infinity)
             }
             Spacer()
@@ -430,15 +430,15 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 0) {
             stepHeader(title: "How active are you?", subtitle: "Your typical week")
             ScrollView {
-                VStack(spacing: 12) {
+                VStack(spacing: BulkAITheme.Spacing.sm) {
                     ForEach(ActivityLevel.allCases, id: \.self) { level in
                         selectionCard(icon: level.icon, title: level.displayName, subtitle: level.subtitle, isSelected: activityLevel == level) {
                             withAnimation(.spring(response: 0.3)) { activityLevel = level }
                         }
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 16)
+                .padding(.horizontal, BulkAITheme.Spacing.xl)
+                .padding(.vertical, BulkAITheme.Spacing.md)
             }
             continueButton()
         }
@@ -450,14 +450,14 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 0) {
             stepHeader(title: "What's your goal?", subtitle: "You can change this anytime")
             Spacer()
-            VStack(spacing: 12) {
+            VStack(spacing: BulkAITheme.Spacing.sm) {
                 ForEach(WeightGoal.allCases, id: \.self) { g in
                     selectionCard(icon: g.icon, title: g.displayName, isSelected: goal == g) {
                         withAnimation(.spring(response: 0.3)) { goal = g }
                     }
                 }
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, BulkAITheme.Spacing.xl)
             Spacer()
             continueButton {
                 // Seed the desired-weight wheels from the current weight + a
@@ -491,10 +491,10 @@ struct OnboardingView: View {
             Spacer()
             if isMetric {
                 decimalWeightWheel(whole: $targetWeightKgWhole, tenth: $targetWeightKgTenth, range: 30...250, unit: "kg")
-                    .frame(height: 150).padding(.horizontal, 24)
+                    .frame(height: 150).padding(.horizontal, BulkAITheme.Spacing.xl)
             } else {
                 decimalWeightWheel(whole: $targetWeightLbsWhole, tenth: $targetWeightLbsTenth, range: 60...500, unit: "lbs")
-                    .frame(height: 150).padding(.horizontal, 24)
+                    .frame(height: 150).padding(.horizontal, BulkAITheme.Spacing.xl)
             }
             Spacer()
             continueButton()
@@ -515,7 +515,7 @@ struct OnboardingView: View {
             .clipped()
 
             Text(".")
-                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .font(BulkAITheme.Typography.title3)
                 .offset(y: -1)
                 .foregroundStyle(.secondary)
 
@@ -552,9 +552,9 @@ struct OnboardingView: View {
             )
             if goal == .maintain {
                 Spacer()
-                VStack(spacing: 12) {
+                VStack(spacing: BulkAITheme.Spacing.sm) {
                     Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 48)).foregroundStyle(AppColors.protein)
+                        .font(.system(size: 48)).foregroundStyle(BulkAITheme.Color.macroProtein)
                     Text("Balanced pace set")
                         .font(.system(.title3, design: .rounded, weight: .semibold))
                     Text("We'll keep your calories steady\nto maintain your current weight.")
@@ -563,53 +563,53 @@ struct OnboardingView: View {
                 Spacer()
             } else {
                 Spacer()
-                VStack(spacing: 24) {
-                    VStack(spacing: 4) {
+                VStack(spacing: BulkAITheme.Spacing.xl) {
+                    VStack(spacing: BulkAITheme.Spacing.xxs) {
                         Text(String(format: "%.1f %@", weeklyChangeKg * (isMetric ? 1 : 2.205), weightUnit))
-                            .font(.system(size: 40, weight: .bold, design: .rounded))
+                            .font(BulkAITheme.Typography.display)
                             .contentTransition(.numericText()).animation(.snappy, value: goalSpeed)
                         Text("per week").font(.system(.callout, design: .rounded)).foregroundStyle(.secondary)
                     }
                     HStack(spacing: 0) {
-                        VStack(spacing: 6) {
+                        VStack(spacing: BulkAITheme.Spacing.xxs + BulkAITheme.Spacing.xxs) {
                             Image(systemName: "tortoise.fill").font(.system(size: 24))
-                                .foregroundStyle(goalSpeed == 0 ? AppColors.calorie : Color.secondary.opacity(0.4))
+                                .foregroundStyle(goalSpeed == 0 ? BulkAITheme.Color.accent : Color.secondary.opacity(0.4))
                             Text("Slow").font(.system(.caption, design: .rounded, weight: .medium))
-                                .foregroundStyle(goalSpeed == 0 ? AppColors.calorie : .secondary)
+                                .foregroundStyle(goalSpeed == 0 ? BulkAITheme.Color.accent : .secondary)
                         }.frame(maxWidth: .infinity)
-                        VStack(spacing: 6) {
+                        VStack(spacing: BulkAITheme.Spacing.xxs + BulkAITheme.Spacing.xxs) {
                             Image(systemName: "hare.fill").font(.system(size: 24))
-                                .foregroundStyle(goalSpeed == 1 ? AppColors.calorie : Color.secondary.opacity(0.4))
+                                .foregroundStyle(goalSpeed == 1 ? BulkAITheme.Color.accent : Color.secondary.opacity(0.4))
                             Text("Recommended").font(.system(.caption, design: .rounded, weight: .medium))
-                                .foregroundStyle(goalSpeed == 1 ? AppColors.calorie : .secondary)
+                                .foregroundStyle(goalSpeed == 1 ? BulkAITheme.Color.accent : .secondary)
                         }.frame(maxWidth: .infinity)
-                        VStack(spacing: 6) {
+                        VStack(spacing: BulkAITheme.Spacing.xxs + BulkAITheme.Spacing.xxs) {
                             Image(systemName: "bolt.fill").font(.system(size: 24))
-                                .foregroundStyle(goalSpeed == 2 ? AppColors.calorie : Color.secondary.opacity(0.4))
+                                .foregroundStyle(goalSpeed == 2 ? BulkAITheme.Color.accent : Color.secondary.opacity(0.4))
                             Text("Fast").font(.system(.caption, design: .rounded, weight: .medium))
-                                .foregroundStyle(goalSpeed == 2 ? AppColors.calorie : .secondary)
+                                .foregroundStyle(goalSpeed == 2 ? BulkAITheme.Color.accent : .secondary)
                         }.frame(maxWidth: .infinity)
-                    }.padding(.horizontal, 24)
+                    }.padding(.horizontal, BulkAITheme.Spacing.xl)
                     Slider(value: Binding(
                         get: { Double(goalSpeed) },
                         set: { goalSpeed = Int($0.rounded()) }
-                    ), in: 0...2, step: 1).tint(AppColors.calorie).padding(.horizontal, 40)
+                    ), in: 0...2, step: 1).tint(BulkAITheme.Color.accent).padding(.horizontal, BulkAITheme.Spacing.xxl + BulkAITheme.Spacing.xs)
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(spacing: 0) {
                             Text("You'll reach your goal in ")
                                 .font(.system(.subheadline, design: .rounded, weight: .medium))
                             Text("\(estimatedDays) days")
                                 .font(.system(.subheadline, design: .rounded, weight: .bold))
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                         Text(goalSpeed == 1 ? "The most balanced pace, motivating and sustainable."
                              : goalSpeed == 0 ? "Gentle and sustainable. Great for long-term habits."
                              : "Aggressive but doable. Requires strong discipline.")
                             .font(.system(.caption, design: .rounded)).foregroundStyle(.secondary)
                     }
-                    .padding(16).frame(maxWidth: .infinity, alignment: .leading)
-                    .background(AppColors.appCard, in: RoundedRectangle(cornerRadius: 14))
-                    .padding(.horizontal, 24)
+                    .padding(BulkAITheme.Spacing.md).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(BulkAITheme.Color.surface, in: RoundedRectangle(cornerRadius: BulkAITheme.Radius.md))
+                    .padding(.horizontal, BulkAITheme.Spacing.xl)
                 }
                 Spacer()
             }
@@ -625,13 +625,13 @@ struct OnboardingView: View {
         VStack(spacing: 0) {
             Spacer()
 
-            VStack(spacing: 24) {
+            VStack(spacing: BulkAITheme.Spacing.xl) {
                 Image(systemName: "bell.badge.fill")
                     .font(.system(size: 56))
-                    .foregroundStyle(AppColors.calorie)
+                    .foregroundStyle(BulkAITheme.Color.accent)
 
                 Text("Be reminded to\nlog meals")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(BulkAITheme.Typography.title)
                     .multilineTextAlignment(.center)
 
                 Text("Get gentle reminders at meal times\nso you never forget to track.")
@@ -639,7 +639,7 @@ struct OnboardingView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
 
-                VStack(spacing: 12) {
+                VStack(spacing: BulkAITheme.Spacing.sm) {
                     Text("Bulk AI would like to send you Notifications")
                         .font(.system(.subheadline, design: .rounded, weight: .medium))
                         .multilineTextAlignment(.center)
@@ -676,9 +676,9 @@ struct OnboardingView: View {
                         }
                     }
                 }
-                .padding(16)
-                .background(AppColors.appCard, in: RoundedRectangle(cornerRadius: 16))
-                .padding(.horizontal, 24)
+                .padding(BulkAITheme.Spacing.md)
+                .background(BulkAITheme.Color.surface, in: RoundedRectangle(cornerRadius: BulkAITheme.Radius.lg - 2))
+                .padding(.horizontal, BulkAITheme.Spacing.xl)
             }
 
             Spacer()
@@ -691,7 +691,7 @@ struct OnboardingView: View {
                     .font(.system(.body, design: .rounded, weight: .medium))
                     .foregroundStyle(.secondary)
             }
-            .padding(.bottom, 36)
+            .padding(.bottom, BulkAITheme.Spacing.xxl + BulkAITheme.Spacing.xxs)
         }
     }
 
@@ -701,7 +701,7 @@ struct OnboardingView: View {
         VStack(spacing: 0) {
             Spacer()
 
-            VStack(spacing: 20) {
+            VStack(spacing: BulkAITheme.Spacing.lg) {
                 ZStack {
                     Circle()
                         .fill(Color.secondary.opacity(0.06))
@@ -714,9 +714,9 @@ struct OnboardingView: View {
                         )
                 }
 
-                VStack(spacing: 8) {
+                VStack(spacing: BulkAITheme.Spacing.xs) {
                     Text("Connect to\nApple Health")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(BulkAITheme.Typography.title)
                         .multilineTextAlignment(.center)
 
                     Text("Keep your nutrition and body\nmeasurements in sync automatically.")
@@ -731,12 +731,12 @@ struct OnboardingView: View {
                     healthFeatureRow(icon: "scalemass.fill", label: "Weight Sync")
                     healthFeatureRow(icon: "figure.stand", label: "Body Measurements")
                 }
-                .padding(.horizontal, 40)
+                .padding(.horizontal, BulkAITheme.Spacing.xxl + BulkAITheme.Spacing.xs)
             }
 
             Spacer()
 
-            VStack(spacing: 12) {
+            VStack(spacing: BulkAITheme.Spacing.sm) {
                 Button {
                     Task {
                         let authorized = await healthKitManager.requestAuthorization()
@@ -772,10 +772,10 @@ struct OnboardingView: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 54)
-                        .background(AppColors.calorie, in: RoundedRectangle(cornerRadius: 16))
+                        .background(BulkAITheme.Color.accent, in: RoundedRectangle(cornerRadius: BulkAITheme.Radius.lg - 2))
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 20)
+                .padding(.horizontal, BulkAITheme.Spacing.xl)
+                .padding(.bottom, BulkAITheme.Spacing.lg)
             }
         }
     }
@@ -786,7 +786,7 @@ struct OnboardingView: View {
         VStack(spacing: 0) {
             Spacer()
 
-            VStack(spacing: 20) {
+            VStack(spacing: BulkAITheme.Spacing.lg) {
                 ZStack {
                     Circle()
                         .fill(.ultraThinMaterial)
@@ -795,13 +795,13 @@ struct OnboardingView: View {
                     Image(systemName: "sparkles")
                         .font(.system(size: 48))
                         .foregroundStyle(
-                            LinearGradient(colors: AppColors.calorieGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+                            LinearGradient(colors: [BulkAITheme.Color.accent], startPoint: .topLeading, endPoint: .bottomTrailing)
                         )
                 }
 
-                VStack(spacing: 8) {
+                VStack(spacing: BulkAITheme.Spacing.xs) {
                     Text("Connect Gemini")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(BulkAITheme.Typography.title)
                         .multilineTextAlignment(.center)
 
                     Text("Bulk AI uses Google Gemini for food parsing. A free API key from aistudio.google.com/apikey unlocks photo, voice, and text logging.")
@@ -810,7 +810,7 @@ struct OnboardingView: View {
                         .multilineTextAlignment(.center)
                 }
 
-                VStack(spacing: 12) {
+                VStack(spacing: BulkAITheme.Spacing.sm) {
                     aiAccessCard(
                         mode: .bringYourOwnKey,
                         title: "Bring Your Own Key",
@@ -818,13 +818,13 @@ struct OnboardingView: View {
                         badge: "Free"
                     )
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, BulkAITheme.Spacing.xl)
 
                 Text("Your key is stored encrypted on this device only. It never leaves the phone.")
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.tertiary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, BulkAITheme.Spacing.xl)
             }
 
             Spacer()
@@ -839,23 +839,23 @@ struct OnboardingView: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
                     .background(
-                        LinearGradient(colors: AppColors.calorieGradient, startPoint: .leading, endPoint: .trailing),
-                        in: RoundedRectangle(cornerRadius: 16)
+                        LinearGradient(colors: [BulkAITheme.Color.accent], startPoint: .leading, endPoint: .trailing),
+                        in: RoundedRectangle(cornerRadius: BulkAITheme.Radius.lg - 2)
                     )
-                    .shadow(color: AppColors.calorie.opacity(0.3), radius: 8, y: 4)
+                    .shadow(color: BulkAITheme.Color.accent.opacity(0.3), radius: 8, y: 4)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 36)
+            .padding(.horizontal, BulkAITheme.Spacing.xl)
+            .padding(.bottom, BulkAITheme.Spacing.xxl + BulkAITheme.Spacing.xxs)
         }
     }
 
     private func aiSetupRow(number: String, text: String) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: BulkAITheme.Spacing.sm) {
             Text(number)
                 .font(.system(.caption, design: .rounded, weight: .bold))
                 .foregroundStyle(.white)
                 .frame(width: 22, height: 22)
-                .background(AppColors.calorie, in: Circle())
+                .background(BulkAITheme.Color.accent, in: Circle())
             Text(text)
                 .font(.system(.subheadline, design: .rounded))
                 .foregroundStyle(.primary)
@@ -868,18 +868,18 @@ struct OnboardingView: View {
             selectedAccessMode = mode
             AIAccessSettings.mode = mode
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: BulkAITheme.Spacing.sm) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(.ultraThinMaterial)
                         .frame(width: 44, height: 44)
                     Image(systemName: mode.icon)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(AppColors.calorie)
+                        .font(BulkAITheme.Typography.headline)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: BulkAITheme.Spacing.xs) {
                         Text(title)
                             .font(.system(.subheadline, design: .rounded, weight: .semibold))
                             .foregroundStyle(.primary)
@@ -888,7 +888,7 @@ struct OnboardingView: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 7)
                             .padding(.vertical, 2)
-                            .background(AppColors.calorie, in: Capsule())
+                            .background(BulkAITheme.Color.accent, in: Capsule())
                     }
                     Text(subtitle)
                         .font(.system(.caption, design: .rounded))
@@ -900,16 +900,16 @@ struct OnboardingView: View {
 
                 Image(systemName: selectedAccessMode == mode ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 22))
-                    .foregroundStyle(selectedAccessMode == mode ? AppColors.calorie : .secondary.opacity(0.35))
+                    .foregroundStyle(selectedAccessMode == mode ? BulkAITheme.Color.accent : .secondary.opacity(0.35))
             }
-            .padding(14)
+            .padding(BulkAITheme.Spacing.sm + BulkAITheme.Spacing.xxs)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(.ultraThinMaterial)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(selectedAccessMode == mode ? AppColors.calorie.opacity(0.45) : Color.white.opacity(0.10), lineWidth: 1)
+                    .strokeBorder(selectedAccessMode == mode ? BulkAITheme.Color.accent.opacity(0.45) : Color.white.opacity(0.10), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -921,7 +921,7 @@ struct OnboardingView: View {
         VStack(spacing: 0) {
             Spacer()
 
-            VStack(spacing: 24) {
+            VStack(spacing: BulkAITheme.Spacing.xl) {
                 ZStack {
                     Circle()
                         .fill(
@@ -930,12 +930,12 @@ struct OnboardingView: View {
                         .frame(width: 160, height: 160)
                     Image(systemName: "star.fill")
                         .font(.system(size: 64))
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                 }
 
-                VStack(spacing: 8) {
+                VStack(spacing: BulkAITheme.Spacing.xs) {
                     Text("Enjoying Bulk AI so far?")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(BulkAITheme.Typography.title)
                         .multilineTextAlignment(.center)
                     Text("A quick rating helps us grow\nand build more features for you!")
                         .font(.system(.callout, design: .rounded))
@@ -956,12 +956,12 @@ struct OnboardingView: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
                     .background(
-                        LinearGradient(colors: AppColors.calorieGradient, startPoint: .leading, endPoint: .trailing),
-                        in: RoundedRectangle(cornerRadius: 16)
+                        LinearGradient(colors: [BulkAITheme.Color.accent], startPoint: .leading, endPoint: .trailing),
+                        in: RoundedRectangle(cornerRadius: BulkAITheme.Radius.lg - 2)
                     )
-                    .shadow(color: AppColors.calorie.opacity(0.3), radius: 8, y: 4)
+                    .shadow(color: BulkAITheme.Color.accent.opacity(0.3), radius: 8, y: 4)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, BulkAITheme.Spacing.xl)
 
             Button {
                 hasCompletedOnboarding = true
@@ -970,8 +970,8 @@ struct OnboardingView: View {
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundStyle(.secondary)
             }
-            .padding(.top, 12)
-            .padding(.bottom, 36)
+            .padding(.top, BulkAITheme.Spacing.sm)
+            .padding(.bottom, BulkAITheme.Spacing.xxl + BulkAITheme.Spacing.xxs)
         }
     }
 
@@ -1004,22 +1004,22 @@ struct OnboardingView: View {
             stepHeader(title: "Your Plan", subtitle: "Tap any value to adjust")
 
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: BulkAITheme.Spacing.lg) {
                     // Calorie display - tappable
                     Button {
                         withAnimation(.snappy) {
                             editingField = editingField == .calories ? nil : .calories
                         }
                     } label: {
-                        VStack(spacing: 4) {
+                        VStack(spacing: BulkAITheme.Spacing.xxs) {
                             Text("\(planCalories)")
-                                .font(.system(size: 64, weight: .bold, design: .rounded))
+                                .font(.system(size: 64, weight: .bold, design: .rounded)) // TODO: BulkAITheme token
                                 .foregroundStyle(
-                                    LinearGradient(colors: AppColors.calorieGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+                                    LinearGradient(colors: [BulkAITheme.Color.accent], startPoint: .topLeading, endPoint: .bottomTrailing)
                                 )
                                 .contentTransition(.numericText())
                                 .animation(.snappy, value: planCalories)
-                            HStack(spacing: 4) {
+                            HStack(spacing: BulkAITheme.Spacing.xxs) {
                                 Text("daily calories")
                                     .font(.system(.callout, design: .rounded, weight: .medium))
                                     .foregroundStyle(.secondary)
@@ -1045,17 +1045,17 @@ struct OnboardingView: View {
                         }
                         .pickerStyle(.wheel)
                         .frame(height: 150)
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, BulkAITheme.Spacing.xl)
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     }
 
                     // Macro cards - tappable
-                    HStack(spacing: 12) {
-                        editableMacroCard(label: "Protein", value: planProtein, unit: "g", gradientColors: AppColors.proteinGradient, field: .protein)
-                        editableMacroCard(label: "Carbs", value: planCarbs, unit: "g", gradientColors: AppColors.carbsGradient, field: .carbs)
-                        editableMacroCard(label: "Fat", value: planFat, unit: "g", gradientColors: AppColors.fatGradient, field: .fat)
+                    HStack(spacing: BulkAITheme.Spacing.sm) {
+                        editableMacroCard(label: "Protein", value: planProtein, unit: "g", gradientColors: [BulkAITheme.Color.macroProtein], field: .protein)
+                        editableMacroCard(label: "Carbs", value: planCarbs, unit: "g", gradientColors: [BulkAITheme.Color.macroCarbs], field: .carbs)
+                        editableMacroCard(label: "Fat", value: planFat, unit: "g", gradientColors: [BulkAITheme.Color.macroFat], field: .fat)
                     }
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, BulkAITheme.Spacing.xl)
 
                     if editingField == .protein {
                         Picker("Protein", selection: Binding(
@@ -1069,7 +1069,7 @@ struct OnboardingView: View {
                         }
                         .pickerStyle(.wheel)
                         .frame(height: 150)
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, BulkAITheme.Spacing.xl)
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     }
 
@@ -1085,7 +1085,7 @@ struct OnboardingView: View {
                         }
                         .pickerStyle(.wheel)
                         .frame(height: 150)
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, BulkAITheme.Spacing.xl)
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     }
 
@@ -1101,12 +1101,12 @@ struct OnboardingView: View {
                         }
                         .pickerStyle(.wheel)
                         .frame(height: 150)
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, BulkAITheme.Spacing.xl)
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     }
 
                     if planCalories < 1200 {
-                        HStack(spacing: 10) {
+                        HStack(spacing: BulkAITheme.Spacing.xs + BulkAITheme.Spacing.xxs) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundStyle(.orange)
                             VStack(alignment: .leading, spacing: 2) {
@@ -1117,16 +1117,16 @@ struct OnboardingView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .padding(14)
+                        .padding(BulkAITheme.Spacing.sm + BulkAITheme.Spacing.xxs)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
-                        .padding(.horizontal, 24)
+                        .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: BulkAITheme.Radius.sm + BulkAITheme.Spacing.xxs))
+                        .padding(.horizontal, BulkAITheme.Spacing.xl)
                     }
                     // Citations link (Apple Guideline 1.4.1 — medical info needs sources)
                     Button {
                         showCalculationSources = true
                     } label: {
-                        HStack(spacing: 6) {
+                        HStack(spacing: BulkAITheme.Spacing.xxs + BulkAITheme.Spacing.xxs) {
                             Image(systemName: "book.fill")
                                 .font(.system(size: 11))
                             Text("How is this calculated?")
@@ -1134,12 +1134,12 @@ struct OnboardingView: View {
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 10, weight: .semibold))
                         }
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                     }
-                    .padding(.top, 8)
-                    .padding(.horizontal, 24)
+                    .padding(.top, BulkAITheme.Spacing.xs)
+                    .padding(.horizontal, BulkAITheme.Spacing.xl)
                 }
-                .padding(.top, 16)
+                .padding(.top, BulkAITheme.Spacing.md)
                 .padding(.bottom, 100)
             }
 
@@ -1165,11 +1165,11 @@ struct OnboardingView: View {
                 editingField = editingField == field ? nil : field
             }
         } label: {
-            VStack(spacing: 6) {
+            VStack(spacing: BulkAITheme.Spacing.xxs + BulkAITheme.Spacing.xxs) {
                 Text(label)
                     .font(.system(.caption, design: .rounded, weight: .medium))
                     .foregroundStyle(.secondary)
-                HStack(spacing: 2) {
+                HStack(spacing: BulkAITheme.Spacing.xxs / 2) {
                     Text("\(value)")
                         .font(.system(.title2, design: .rounded, weight: .bold))
                         .foregroundStyle(
@@ -1186,10 +1186,10 @@ struct OnboardingView: View {
                     .foregroundStyle(.tertiary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(AppColors.appCard, in: RoundedRectangle(cornerRadius: 14))
+            .padding(.vertical, BulkAITheme.Spacing.sm)
+            .background(BulkAITheme.Color.surface, in: RoundedRectangle(cornerRadius: BulkAITheme.Radius.md))
             .overlay(
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: BulkAITheme.Radius.md)
                     .strokeBorder(editingField == field ? gradientColors.first ?? .clear : .clear, lineWidth: 2)
             )
         }
@@ -1198,18 +1198,18 @@ struct OnboardingView: View {
 
     private func stepHeader(title: String, subtitle: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.system(size: 28, weight: .bold, design: .rounded))
+            Text(title).font(BulkAITheme.Typography.title)
             if !subtitle.isEmpty {
                 Text(subtitle).font(.system(.callout, design: .rounded)).foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 24).padding(.top, 24)
+        .padding(.horizontal, BulkAITheme.Spacing.xl).padding(.top, BulkAITheme.Spacing.xl)
     }
 
     private func selectionCard(icon: String, title: String, subtitle: String? = nil, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 16) {
+            HStack(spacing: BulkAITheme.Spacing.md) {
                 Image(systemName: icon).font(.system(size: 22))
                     .foregroundStyle(isSelected ? Color.primary : .secondary).frame(width: 40)
                 VStack(alignment: .leading, spacing: 2) {
@@ -1222,14 +1222,14 @@ struct OnboardingView: View {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle").font(.system(size: 22))
                     .foregroundStyle(isSelected ? Color.primary : Color.secondary.opacity(0.3))
             }
-            .padding(16)
-            .background(AppColors.appCard, in: RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(isSelected ? Color.primary : Color.clear, lineWidth: 2))
+            .padding(BulkAITheme.Spacing.md)
+            .background(BulkAITheme.Color.surface, in: RoundedRectangle(cornerRadius: BulkAITheme.Radius.lg - 2))
+            .overlay(RoundedRectangle(cornerRadius: BulkAITheme.Radius.lg - 2).strokeBorder(isSelected ? Color.primary : Color.clear, lineWidth: 2))
         }.buttonStyle(.plain)
     }
 
     private func healthFeatureRow(icon: String, label: String) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: BulkAITheme.Spacing.sm + BulkAITheme.Spacing.xxs) {
             Image(systemName: icon).font(.system(size: 18)).foregroundStyle(.secondary).frame(width: 28)
             Text(label).font(.system(.body, design: .rounded)).foregroundStyle(.primary)
         }
@@ -1262,17 +1262,17 @@ struct BuildingPlanStepView: View {
     ]
 
     var body: some View {
-        VStack(spacing: 32) {
+        VStack(spacing: BulkAITheme.Spacing.xxl) {
             Spacer()
 
-            VStack(spacing: 8) {
+            VStack(spacing: BulkAITheme.Spacing.xs) {
                 Text("\(percent)%")
-                    .font(.system(size: 56, weight: .bold, design: .rounded))
+                    .font(.system(size: 56, weight: .bold, design: .rounded)) // TODO: BulkAITheme token
                     .contentTransition(.numericText())
                     .animation(.easeInOut(duration: 0.3), value: percent)
 
                 Text("We're setting everything\nup for you")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(BulkAITheme.Typography.title3)
                     .multilineTextAlignment(.center)
             }
 
@@ -1287,14 +1287,14 @@ struct BuildingPlanStepView: View {
                             // number) — earlier 3-stop gradient ended in blue
                             // and read as off-brand against the otherwise
                             // pink-only palette.
-                            LinearGradient(colors: AppColors.calorieGradient, startPoint: .leading, endPoint: .trailing)
+                            LinearGradient(colors: [BulkAITheme.Color.accent], startPoint: .leading, endPoint: .trailing)
                         )
                         .frame(width: geo.size.width * progress)
                         .animation(.easeInOut(duration: 0.4), value: progress)
                 }
             }
             .frame(height: 10)
-            .padding(.horizontal, 40)
+            .padding(.horizontal, BulkAITheme.Spacing.xxl + BulkAITheme.Spacing.xs)
 
             Text("Finalizing results...")
                 .font(.system(.subheadline, design: .rounded))
@@ -1305,7 +1305,7 @@ struct BuildingPlanStepView: View {
                 Text("Daily recommendation for")
                     .font(.system(.subheadline, design: .rounded, weight: .semibold))
                 ForEach(0..<items.count, id: \.self) { index in
-                    HStack(spacing: 10) {
+                    HStack(spacing: BulkAITheme.Spacing.xs + BulkAITheme.Spacing.xxs) {
                         Text("\u{2022}")
                             .foregroundStyle(.secondary)
                         Text(items[index].0)
@@ -1321,7 +1321,7 @@ struct BuildingPlanStepView: View {
                     .animation(.spring(response: 0.4), value: checkItem)
                 }
             }
-            .padding(.horizontal, 40)
+            .padding(.horizontal, BulkAITheme.Spacing.xxl + BulkAITheme.Spacing.xs)
 
             Spacer()
         }

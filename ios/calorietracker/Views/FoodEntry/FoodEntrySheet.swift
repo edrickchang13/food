@@ -84,6 +84,12 @@ struct FoodEntrySheet: View {
     @State private var showAIConsent: Bool = false
     @State private var pendingConsentAction: (() -> Void)?
 
+    // Scan tab state — scanMode is hoisted here so BarcodeUnavailableSheet's
+    // "Try label scan" CTA can reset the segment without ScanView needing a
+    // callback that mutates its own private @State (structs can't do that).
+    @State private var scanMode: ScanMode = .barcode
+    @State private var showBarcodeUnavailable: Bool = false
+
     @State private var errorMessage: String?
 
     private enum EntryFlow: String, Identifiable {
@@ -165,6 +171,21 @@ struct FoodEntrySheet: View {
                 }
             )
         }
+        .sheet(isPresented: $showBarcodeUnavailable) {
+            BarcodeUnavailableSheet(
+                onSearchManually: {
+                    showBarcodeUnavailable = false
+                    selectedTab = 0
+                },
+                onTryLabel: {
+                    showBarcodeUnavailable = false
+                    scanMode = .label
+                },
+                onClose: {
+                    showBarcodeUnavailable = false
+                }
+            )
+        }
         .interactiveDismissDisabled(activeFlow == .analyzing)
         .onAppear { recomputeSearchResults() }
         .onChange(of: filterQuery) { recomputeSearchResults() }
@@ -223,17 +244,14 @@ struct FoodEntrySheet: View {
                 onDescribe: { /* AIView owns the buffer; Describe tab is the typed path. */ }
             )
         case 3:
-            ScanView { image, mode in
-                runWithConsent {
-                    Task {
-                        try? await Task.sleep(for: .milliseconds(150))
-                        switch mode {
-                        case .barcode:
-                            // Barcode pipeline isn't wired yet — feed it to the
-                            // generic image analyzer for now so users still get a
-                            // useful result instead of a dead end.
-                            await analyzeAuto(image: image)
-                        case .label:
+            ScanView(scanMode: $scanMode) { result in
+                switch result {
+                case .barcodeUnavailable:
+                    showBarcodeUnavailable = true
+                case .label(let image):
+                    runWithConsent {
+                        Task {
+                            try? await Task.sleep(for: .milliseconds(150))
                             await analyzeLabel(image: image)
                         }
                     }
@@ -414,6 +432,12 @@ struct FoodEntrySheet: View {
     private func stageDefaultPortion(of item: FoodDatabaseItem) {
         // Default portion is 100 g, mirroring `QuickAddPortionSheet`'s initial
         // state. Users who need a custom amount tap the row instead of the "+".
+        //
+        // Pass through every per-100g micronutrient the seed carries so the
+        // Food Detail view (which already supports sodium / sugar / saturated
+        // fat editing) lights up with real values for branded chain items —
+        // e.g. tapping the "+" on an In-N-Out Cheeseburger stages an entry
+        // with its published sodium load instead of stripping that detail.
         let grams: Double = 100
         let entry = FoodEntry(
             name: "\(Int(grams))g \(item.name.lowercased())",
@@ -424,7 +448,10 @@ struct FoodEntrySheet: View {
             timestamp: time,
             source: .manual,
             mealType: mealType ?? .currentMeal,
+            sugar: item.sugarPer100g,
             fiber: item.fiberPer100g,
+            saturatedFat: item.saturatedFatPer100g,
+            sodium: item.sodiumPer100g,
             servingSizeGrams: grams
         )
         stage(entry)
