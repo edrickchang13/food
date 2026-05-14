@@ -39,9 +39,9 @@ struct CustomTabBar: View {
 
             Button(action: onAddTapped) {
                 Image(systemName: "plus")
-                    .font(.system(size: 26, weight: .semibold))
+                    .font(.system(size: 24, weight: .semibold))
                     .foregroundStyle(.white)
-                    .frame(width: 60, height: 60)
+                    .frame(width: 56, height: 56)
                     .background(
                         Circle()
                             .fill(AppColors.calorie)
@@ -50,10 +50,10 @@ struct CustomTabBar: View {
                         Circle()
                             .stroke(AppColors.appBackground, lineWidth: 3)
                     )
-                    .shadow(color: AppColors.calorie.opacity(0.35), radius: 10, y: 4)
+                    .shadow(color: AppColors.calorie.opacity(0.35), radius: 8, y: 3)
             }
             .buttonStyle(.plain)
-            .offset(y: -24)
+            .offset(y: -6)
             .accessibilityLabel("Add food")
         }
     }
