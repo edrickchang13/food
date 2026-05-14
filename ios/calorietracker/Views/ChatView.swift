@@ -290,7 +290,13 @@ struct ChatView: View {
         )
         .shadow(color: Color.black.opacity(0.18), radius: 14, x: 0, y: 6)
         .padding(.horizontal, 12)
-        .padding(.bottom, 10)
+        // Lift the input bar above the CustomTabBar's FAB. The tab bar
+        // itself is ~56pt and ContentView pads each tab view by 56pt to
+        // make room, but the + FAB now sits inside the tab strip with
+        // an `.offset(y: 8)` that pushes its lower edge below the strip.
+        // Without this clearance the "Ask Coach…" field hides under the
+        // FAB / strip on phones where the safe area doesn't compensate.
+        .padding(.bottom, 36)
         .padding(.top, 4)
     }
 
