@@ -46,7 +46,10 @@ struct HeaderPillRow: View {
 
     private static let pillHeight: CGFloat = 44
     private static let circleSize: CGFloat = 44
-    private static let progressBarHeight: CGFloat = 3
+    /// Stroke width of the calorie-pill perimeter progress ring. 3 pt
+    /// reads clearly without crowding the centered "consumed / target"
+    /// label inside the pill.
+    private static let ringStroke: CGFloat = 3
     /// Cap on how many emoji bubbles we render in the strip. Beyond this we
     /// show a "+N" overflow bubble so the row stays the same width on
     /// every phone size.
@@ -127,39 +130,42 @@ struct HeaderPillRow: View {
     /// you're about to log" rather than "what's already there."
     private var caloriePill: some View {
         let total = consumed + max(stagedKcal, 0)
+        let loggedFraction = target > 0 ? min(Double(consumed) / Double(target), 1) : 0
+        let totalFraction = target > 0 ? min(Double(total) / Double(target), 1) : 0
 
-        return ZStack(alignment: .top) {
-            // Track + pill body.
+        return ZStack {
+            // Pill body — the surface the ring traces around.
             Capsule()
                 .fill(BulkAITheme.Color.surface)
-                .frame(height: Self.pillHeight)
 
-            // Top-edge progress fill, drawn over the pill's top edge so
-            // the bar bleeds visually into the pill. GeometryReader pins
-            // the bar width to the pill width and lets us split it into
-            // a logged portion and a staged portion.
-            GeometryReader { geo in
-                let totalWidth = geo.size.width
-                let loggedFraction = target > 0 ? min(Double(consumed) / Double(target), 1) : 0
-                let totalFraction = target > 0 ? min(Double(total) / Double(target), 1) : 0
-                let stagedFraction = max(0, totalFraction - loggedFraction)
+            // Coral staged-fill ring sits underneath the white logged ring
+            // so the white portion overlays it cleanly. Total = logged +
+            // staged, so this stroke ends where the staged delta ends.
+            // When stagedKcal == 0 the totalFraction equals loggedFraction
+            // and this stroke is fully covered by the white one above.
+            Capsule()
+                .trim(from: 0, to: CGFloat(totalFraction))
+                .stroke(
+                    BulkAITheme.Color.accent,
+                    style: StrokeStyle(lineWidth: Self.ringStroke, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+                .animation(.easeOut(duration: 0.25), value: totalFraction)
 
-                HStack(spacing: 0) {
-                    // White: already-logged portion.
-                    Capsule()
-                        .fill(Color.white)
-                        .frame(width: totalWidth * CGFloat(loggedFraction))
-                    // Coral accent: staged-but-not-yet-logged portion.
-                    Capsule()
-                        .fill(BulkAITheme.Color.accent)
-                        .frame(width: totalWidth * CGFloat(stagedFraction))
-                }
-                .frame(height: Self.progressBarHeight)
-                .clipShape(Capsule())
-                .padding(.horizontal, 2)
-                .animation(.easeOut(duration: 0.2), value: stagedKcal)
-            }
-            .frame(height: Self.progressBarHeight)
+            // White logged-progress ring on top — traces the perimeter
+            // from the 12 o'clock equivalent (top-center of the capsule
+            // path origin) clockwise to `loggedFraction`. Capsule's path
+            // origin starts on the top-left arc; rotating -90° puts the
+            // visual start at top-center so it reads like a clock-style
+            // progress ring rather than starting on the side.
+            Capsule()
+                .trim(from: 0, to: CGFloat(loggedFraction))
+                .stroke(
+                    Color.white,
+                    style: StrokeStyle(lineWidth: Self.ringStroke, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+                .animation(.easeOut(duration: 0.25), value: loggedFraction)
 
             // Label centered in the pill.
             Text("\(total) / \(target)")
@@ -167,7 +173,6 @@ struct HeaderPillRow: View {
                 .foregroundStyle(.white)
                 .monospacedDigit()
                 .padding(.horizontal, BulkAITheme.Spacing.md)
-                .frame(height: Self.pillHeight)
         }
         .frame(height: Self.pillHeight)
         .accessibilityElement(children: .combine)
