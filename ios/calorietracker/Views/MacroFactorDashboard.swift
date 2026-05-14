@@ -279,7 +279,9 @@ struct MacroFactorDashboard: View {
         VStack(alignment: .leading, spacing: 22) {
             header
             nutritionCard
+            WeeklyNutritionView()
             insightsRow
+            EnergyBalanceChartView()
             habitsRow
         }
         .padding(.horizontal, 16)
