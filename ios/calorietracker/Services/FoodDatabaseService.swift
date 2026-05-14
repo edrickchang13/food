@@ -9,20 +9,26 @@ final class FoodDatabaseService {
     private(set) var aiCache: [FoodDatabaseItem] = []
     private let cacheKey = "foodDatabaseAICache"
 
+    /// Bundled USDA FoodData Central subset (~6,900 verified items). Loaded
+    /// lazily on first search so app launch isn't blocked decoding ~1.7 MB JSON.
+    private var bundledUSDA: [FoodDatabaseItem]? = nil
+
     init() {
         loadCache()
     }
 
-    /// All known items, seed + AI cache, sorted by name. Used by browse UI.
+    /// All known items: hand-curated seed + bundled USDA + AI cache, sorted
+    /// by name. Used by browse UI when no search is active.
     var allItems: [FoodDatabaseItem] {
-        (FoodDatabaseSeed.items + aiCache).sorted {
+        (FoodDatabaseSeed.items + loadUSDAIfNeeded() + aiCache).sorted {
             $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
         }
     }
 
-    /// Returns matches across both seed and cache. Case-insensitive substring
-    /// search on the name field. Verified seed results rank ahead of AI ones
-    /// since they're trustworthier.
+    /// Returns matches across the curated seed, the bundled USDA dataset, and
+    /// the AI cache. Case-insensitive substring on name. Curated seed ranks
+    /// first (highest trust), USDA second (verified but plain names), AI cache
+    /// last (LLM-derived, lowest trust).
     func search(_ query: String, limit: Int = 25) -> [FoodDatabaseItem] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return Array(FoodDatabaseSeed.items.prefix(limit)) }
@@ -30,10 +36,29 @@ final class FoodDatabaseService {
         let seedHits = FoodDatabaseSeed.items.filter {
             $0.name.localizedCaseInsensitiveContains(trimmed)
         }
+        let usdaHits = loadUSDAIfNeeded().filter {
+            $0.name.localizedCaseInsensitiveContains(trimmed)
+        }
         let cacheHits = aiCache.filter {
             $0.name.localizedCaseInsensitiveContains(trimmed)
         }
-        return Array((seedHits + cacheHits).prefix(limit))
+        return Array((seedHits + usdaHits + cacheHits).prefix(limit))
+    }
+
+    /// One-shot lazy decode of the bundled USDA JSON. Subsequent calls return
+    /// the cached array. Decoding 1.7 MB of simple structs takes ~150 ms on a
+    /// recent iPhone; doing it on first-search keeps cold launch snappy.
+    private func loadUSDAIfNeeded() -> [FoodDatabaseItem] {
+        if let bundledUSDA { return bundledUSDA }
+        guard let url = Bundle.main.url(forResource: "usda-seed", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let decoded = try? JSONDecoder().decode([FoodDatabaseItem].self, from: data)
+        else {
+            bundledUSDA = []
+            return []
+        }
+        bundledUSDA = decoded
+        return decoded
     }
 
     /// Persists an AI-derived nutrition lookup so it shows up on next search.
