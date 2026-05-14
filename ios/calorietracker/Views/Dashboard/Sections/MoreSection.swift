@@ -11,6 +11,8 @@ struct MoreSection: View {
     let onCustomizeDashboard: () -> Void
     let onNutritionDataManager: () -> Void
     var onStrategy: (() -> Void)? = nil
+    var onEditGoal: (() -> Void)? = nil
+    var onSetProgram: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: BulkAITheme.Spacing.sm) {
@@ -41,6 +43,14 @@ struct MoreSection: View {
                         action: onStrategy
                     )
                 }
+                if let onEditGoal {
+                    divider
+                    MoreRow(icon: "scope", title: "Edit Goal", action: onEditGoal)
+                }
+                if let onSetProgram {
+                    divider
+                    MoreRow(icon: "slider.horizontal.3", title: "Set New Program", action: onSetProgram)
+                }
             }
             // Use the surface card with zero padding so each row owns its own
             // padding; this matches the visual rhythm of a grouped iOS list
@@ -50,7 +60,8 @@ struct MoreSection: View {
     }
 
     /// Inset hairline divider between rows. Factored out so the optional
-    /// Strategy row reuses the same insets without copy-pasting the geometry.
+    /// Strategy / Edit Goal / Set Program rows reuse the same insets
+    /// without copy-pasting the geometry.
     private var divider: some View {
         Rectangle()
             .fill(.white.opacity(0.06))

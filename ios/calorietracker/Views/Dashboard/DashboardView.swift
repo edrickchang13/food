@@ -20,6 +20,8 @@ struct DashboardView: View {
     @State private var dailyMode: Int = 0           // 0 = Consumed, 1 = Remaining
     @State private var searchQuery: String = ""
     @State private var showStrategy: Bool = false
+    @State private var showEditGoal: Bool = false
+    @State private var showSetProgram: Bool = false
 
     private var profile: UserProfile { profileStore.profile }
 
@@ -81,7 +83,9 @@ struct DashboardView: View {
                     MoreSection(
                         onCustomizeDashboard: { /* TODO Phase G */ },
                         onNutritionDataManager: { /* TODO Phase G */ },
-                        onStrategy: { showStrategy = true }
+                        onStrategy: { showStrategy = true },
+                        onEditGoal: { showEditGoal = true },
+                        onSetProgram: { showSetProgram = true }
                     )
                 }
                 .padding(.horizontal, 16)
@@ -102,6 +106,12 @@ struct DashboardView: View {
         .preferredColorScheme(.dark)
         .sheet(isPresented: $showStrategy) {
             StrategyView()
+        }
+        .sheet(isPresented: $showEditGoal) {
+            EditGoalFlow()
+        }
+        .sheet(isPresented: $showSetProgram) {
+            SetProgramFlow()
         }
     }
 
