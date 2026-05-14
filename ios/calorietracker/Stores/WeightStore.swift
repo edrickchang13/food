@@ -1,30 +1,59 @@
 import Foundation
+import SwiftData
 import SwiftUI
 
+// MARK: - Model ↔ Value-type converters (file-private)
+
+private extension WeightEntryModel {
+    convenience init(from entry: WeightEntry) {
+        self.init(id: entry.id, date: entry.date, weightKg: entry.weightKg)
+    }
+}
+
+private extension WeightEntry {
+    init(from model: WeightEntryModel) {
+        self.init(id: model.id, date: model.date, weightKg: model.weightKg)
+    }
+}
+
+// MARK: - WeightStore
+
+/// Persistent store for the user's weight history.
+///
+/// Backend: SwiftData (`WeightEntryModel` via `BulkAISchemaV1`). Migrated
+/// from the legacy `"weightEntries"` UserDefaults blob on first launch by
+/// `SwiftDataMigration.runIfNeeded(into:)`.
+///
+/// Public API is byte-for-byte identical to the prior UserDefaults
+/// implementation so all callers — views, `EngineState`, `HealthKitManager` —
+/// need zero changes.
 @Observable
-class WeightStore {
+@MainActor
+final class WeightStore {
+
+    // MARK: - Public API
+
     private(set) var entries: [WeightEntry] = []
-    var onEntryAdded: ((WeightEntry) -> Void)?
+
+    var onEntryAdded:   ((WeightEntry) -> Void)?
     var onEntryDeleted: ((UUID) -> Void)?
 
-    private let storageKey = "weightEntries"
+    // MARK: - Private state
 
-    init() {
-        loadEntries()
-        // No default seed — WeightStore.init runs before onboarding finishes on a fresh
-        // install, so `UserProfile.load()` is nil and the old seed fell back to .default
-        // (70 kg), dropping a phantom 70 kg entry onto every new user's chart even if
-        // their real weight was different. Onboarding now seeds the first WeightEntry
-        // via `seedInitialWeightFromProfileIfEmpty(_:)` once the profile is real.
+    private let container: ModelContainer
+    private var context: ModelContext { container.mainContext }
+
+    // MARK: - Init
+
+    init(container: ModelContainer = SwiftDataContainer.makeContainer()) {
+        self.container = container
+        if !SwiftDataMigration.hasMigrated {
+            _ = SwiftDataMigration.runIfNeeded(into: container)
+        }
+        rebuild()
     }
 
-    /// Add the first WeightEntry from the user's onboarding-set profile weight.
-    /// Safe to call multiple times — no-op if any entries already exist, so subsequent
-    /// scene-active firings or re-onboarding paths can't duplicate.
-    func seedInitialWeightFromProfileIfEmpty(_ weightKg: Double) {
-        guard entries.isEmpty else { return }
-        addEntry(WeightEntry(date: .now, weightKg: weightKg))
-    }
+    // MARK: - Derived
 
     var latestEntry: WeightEntry? {
         entries.sorted { $0.date > $1.date }.first
@@ -36,10 +65,22 @@ class WeightStore {
             .sorted { $0.date < $1.date }
     }
 
+    // MARK: - Mutations
+
+    /// Add the first WeightEntry from the user's onboarding-set profile weight.
+    /// Safe to call multiple times — no-op if any entries already exist, so subsequent
+    /// scene-active firings or re-onboarding paths can't duplicate.
+    func seedInitialWeightFromProfileIfEmpty(_ weightKg: Double) {
+        guard entries.isEmpty else { return }
+        addEntry(WeightEntry(date: .now, weightKg: weightKg))
+    }
+
     func addEntry(_ entry: WeightEntry) {
         let previousLatest = entries.sorted { $0.date > $1.date }.first
-        entries.append(entry)
-        saveEntries()
+        let model = WeightEntryModel(from: entry)
+        context.insert(model)
+        try? context.save()
+        rebuild()
         onEntryAdded?(entry)
 
         syncProfileWeightToLatest()
@@ -48,8 +89,8 @@ class WeightStore {
         if let profile = UserProfile.load(), let goalKg = profile.goalWeightKg, let previous = previousLatest {
             let crossed: Bool
             switch profile.goal {
-            case .lose:    crossed = previous.weightKg > goalKg && entry.weightKg <= goalKg
-            case .gain:    crossed = previous.weightKg < goalKg && entry.weightKg >= goalKg
+            case .lose:     crossed = previous.weightKg > goalKg && entry.weightKg <= goalKg
+            case .gain:     crossed = previous.weightKg < goalKg && entry.weightKg >= goalKg
             case .maintain: crossed = false
             }
             if crossed {
@@ -60,27 +101,22 @@ class WeightStore {
 
     func deleteEntry(_ entry: WeightEntry) {
         let id = entry.id
-        entries.removeAll { $0.id == id }
-        saveEntries()
-        onEntryDeleted?(id)
-        syncProfileWeightToLatest()
-    }
-
-    /// Keep UserProfile.weightKg aligned with the most recent weight entry so Settings (Weight row)
-    /// and Progress (Current badge) never disagree. If the store is empty, leave the profile as-is
-    /// — we still need some weightKg for BMR/TDEE math; user can log a new one.
-    private func syncProfileWeightToLatest() {
-        guard var profile = UserProfile.load(),
-              let newest = entries.sorted(by: { $0.date > $1.date }).first else { return }
-        if abs(profile.weightKg - newest.weightKg) > 0.01 {
-            profile.weightKg = newest.weightKg
-            profile.save()
+        let descriptor = FetchDescriptor<WeightEntryModel>(predicate: #Predicate { $0.id == id })
+        if let model = try? context.fetch(descriptor).first {
+            context.delete(model)
+            try? context.save()
+            rebuild()
+            onEntryDeleted?(id)
+            syncProfileWeightToLatest()
         }
     }
 
     func replaceAllEntries(_ newEntries: [WeightEntry]) {
-        entries = newEntries
-        saveEntries()
+        let existing = (try? context.fetch(FetchDescriptor<WeightEntryModel>())) ?? []
+        existing.forEach { context.delete($0) }
+        newEntries.forEach { context.insert(WeightEntryModel(from: $0)) }
+        try? context.save()
+        rebuild()
     }
 
     /// Bulk-import weight samples discovered from HealthKit (e.g. years of
@@ -89,8 +125,9 @@ class WeightStore {
     /// samples already exist there. Saves + syncs profile once at the end.
     func importExternalEntries(_ external: [WeightEntry]) {
         guard !external.isEmpty else { return }
-        entries.append(contentsOf: external)
-        saveEntries()
+        external.forEach { context.insert(WeightEntryModel(from: $0)) }
+        try? context.save()
+        rebuild()
         syncProfileWeightToLatest()
     }
 
@@ -99,20 +136,26 @@ class WeightStore {
         for cloudEntry in cloudEntries {
             merged[cloudEntry.id] = cloudEntry
         }
-        entries = Array(merged.values)
-        saveEntries()
+        replaceAllEntries(Array(merged.values))
     }
 
-    private func saveEntries() {
-        if let data = try? JSONEncoder().encode(entries) {
-            UserDefaults.standard.set(data, forKey: storageKey)
+    // MARK: - Private helpers
+
+    private func rebuild() {
+        let models = (try? context.fetch(FetchDescriptor<WeightEntryModel>())) ?? []
+        entries = models.map { WeightEntry(from: $0) }
+    }
+
+    /// Keep UserProfile.weightKg aligned with the most recent weight entry so
+    /// Settings (Weight row) and Progress (Current badge) never disagree. If the
+    /// store is empty, leave the profile as-is — we still need some weightKg for
+    /// BMR/TDEE math; user can log a new one.
+    private func syncProfileWeightToLatest() {
+        guard var profile = UserProfile.load(),
+              let newest = entries.sorted(by: { $0.date > $1.date }).first else { return }
+        if abs(profile.weightKg - newest.weightKg) > 0.01 {
+            profile.weightKg = newest.weightKg
+            profile.save()
         }
-    }
-
-    private func loadEntries() {
-        guard let data = UserDefaults.standard.data(forKey: storageKey),
-              let decoded = try? JSONDecoder().decode([WeightEntry].self, from: data)
-        else { return }
-        entries = decoded
     }
 }

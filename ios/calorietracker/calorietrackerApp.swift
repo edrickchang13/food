@@ -22,7 +22,7 @@ struct calorietrackerApp: App {
 
     @State private var foodStore: FoodStore
     @State private var weightStore: WeightStore
-    @State private var bodyFatStore = BodyFatStore()
+    @State private var bodyFatStore: BodyFatStore
     @State private var notificationManager = NotificationManager()
     @State private var healthKitManager = HealthKitManager()
     @State private var profileStore = ProfileStore()
@@ -73,9 +73,11 @@ struct calorietrackerApp: App {
         APIKeyManager.migrateIfNeeded()
 
         let food = FoodStore()
-        let weight = WeightStore()
+        let weight = WeightStore(container: modelContainer)
         _foodStore = State(wrappedValue: food)
         _weightStore = State(wrappedValue: weight)
+        let bodyFat = BodyFatStore(container: modelContainer)
+        _bodyFatStore = State(wrappedValue: bodyFat)
         _engineState = State(wrappedValue: EngineState(weightStore: weight, foodStore: food))
 
         // One-shot migration of legacy UserDefaults+JSON rows into the new

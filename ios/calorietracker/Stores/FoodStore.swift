@@ -1,5 +1,8 @@
 import Foundation
 import SwiftUI
+import SwiftData
+
+// MARK: - FoodLogSortOrder
 
 enum FoodLogSortOrder: String, CaseIterable, Identifiable {
     case standard
@@ -22,97 +25,69 @@ enum FoodLogSortOrder: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - FoodLogMealGroup
+
 struct FoodLogMealGroup: Identifiable {
     let id: String
     let meal: MealType
     let entries: [FoodEntry]
 }
 
+// MARK: - FoodStore
+
+/// Observable store for food log entries. Backed by SwiftData (`FoodEntryModel`
+/// via `ModelContainer.mainContext`). Favorites remain in UserDefaults JSON.
+/// Public API matches the legacy UserDefaults version — callers are unaffected
+/// by the backend change. A `[Date: [FoodEntry]]` day-index keeps per-day
+/// queries at O(1) for large imports.
+@MainActor
 @Observable
 class FoodStore {
+
+    // MARK: - Public API
+
     private(set) var entries: [FoodEntry] = []
     var onEntriesChanged: (() -> Void)?
     var onEntryAdded: ((FoodEntry) -> Void)?
     var onEntryDeleted: ((UUID) -> Void)?
     var onEntryUpdated: ((FoodEntry) -> Void)?
 
-    /// Per-day index, populated lazily on first read and maintained
-    /// incrementally by add/update/delete. Keyed by the user-calendar's
-    /// startOfDay for the entry's timestamp. Avoids the O(N) full-array
-    /// scan per `entries(for:date)` call — critical at 3,806 imported
-    /// entries where ProgressTabView would otherwise burn ~1.4M filter
-    /// comparisons per render at the 1Y range and trip the iOS watchdog.
-    @ObservationIgnored private var dayIndex: [Date: [FoodEntry]]? = nil
+    // MARK: - Favorites (remain in UserDefaults)
 
-    /// Shared start-of-day reducer.
-    private func dayKey(for date: Date) -> Date {
-        Calendar.current.startOfDay(for: date)
-    }
-
-    private func rebuildDayIndex() {
-        dayIndex = Dictionary(grouping: entries) { dayKey(for: $0.timestamp) }
-    }
-
-    private func dayIndexEnsured() -> [Date: [FoodEntry]] {
-        if let dayIndex { return dayIndex }
-        rebuildDayIndex()
-        return dayIndex ?? [:]
-    }
-
-    private func indexInsert(_ entry: FoodEntry) {
-        guard dayIndex != nil else { return }   // lazy: skip if never read yet
-        let key = dayKey(for: entry.timestamp)
-        dayIndex?[key, default: []].append(entry)
-    }
-
-    private func indexRemove(_ entry: FoodEntry) {
-        guard dayIndex != nil else { return }
-        let key = dayKey(for: entry.timestamp)
-        dayIndex?[key]?.removeAll { $0.id == entry.id }
-        if dayIndex?[key]?.isEmpty == true {
-            dayIndex?.removeValue(forKey: key)
-        }
-    }
-
-    private func indexReplace(old: FoodEntry, new: FoodEntry) {
-        indexRemove(old)
-        indexInsert(new)
-    }
-
-    private let storageKey = "foodEntries"
     private let favoritesKey = "favoriteFoodEntries"
     private(set) var favorites: [FoodEntry] = []
 
-    init() {
+    // MARK: - SwiftData
+
+    @ObservationIgnored private let container: ModelContainer
+
+    private var context: ModelContext { container.mainContext }
+
+    // MARK: - Day-index
+
+    /// Lazily built, incrementally maintained; keyed by startOfDay.
+    @ObservationIgnored private var dayIndex: [Date: [FoodEntry]]? = nil
+
+    // MARK: - Init
+
+    /// Creates a store backed by `container`. The migration guard is idempotent.
+    init(container: ModelContainer = SwiftDataContainer.makeContainer()) {
+        self.container = container
+        if !SwiftDataMigration.hasMigrated {
+            _ = SwiftDataMigration.runIfNeeded(into: container)
+        }
         loadEntries()
         loadFavorites()
     }
 
-    var todayEntries: [FoodEntry] {
-        // Route through the O(1) day index instead of scanning the full array.
-        entries(for: .now)
-    }
+    // MARK: - Today aggregations
 
-    var todayEntriesByMeal: [FoodLogMealGroup] {
-        groupedEntries(todayEntries, order: .standard)
-    }
-
-    var todayCalories: Int {
-        // Use the index-keyed path so we pay one dict lookup, not a full filter.
-        calories(for: .now)
-    }
-
-    var todayProtein: Int {
-        protein(for: .now)
-    }
-
-    var todayCarbs: Int {
-        carbs(for: .now)
-    }
-
-    var todayFat: Int {
-        fat(for: .now)
-    }
+    var todayEntries: [FoodEntry] { entries(for: .now) }
+    var todayEntriesByMeal: [FoodLogMealGroup] { groupedEntries(todayEntries, order: .standard) }
+    var todayCalories: Int { calories(for: .now) }
+    var todayProtein: Int { protein(for: .now) }
+    var todayCarbs: Int { carbs(for: .now) }
+    var todayFat: Int { fat(for: .now) }
 
     // MARK: - Date-parameterized queries
 
@@ -124,48 +99,6 @@ class FoodStore {
     func entriesByMeal(for date: Date, order: FoodLogSortOrder = .standard) -> [FoodLogMealGroup] {
         let dayEntries = entries(for: date)
         return groupedEntries(dayEntries, order: order)
-    }
-
-    private func groupedEntries(_ dayEntries: [FoodEntry], order: FoodLogSortOrder) -> [FoodLogMealGroup] {
-        switch order {
-        case .standard:
-            return MealType.allCases.compactMap { meal in
-                let mealEntries = dayEntries.filter { $0.mealType == meal }
-                guard !mealEntries.isEmpty else { return nil }
-                return FoodLogMealGroup(id: "standard-\(meal.rawValue)", meal: meal, entries: mealEntries)
-            }
-        case .latestMealsFirst:
-            return latestMealRuns(dayEntries)
-        }
-    }
-
-    private func latestMealRuns(_ dayEntries: [FoodEntry]) -> [FoodLogMealGroup] {
-        var groups: [FoodLogMealGroup] = []
-        var currentMeal: MealType?
-        var currentEntries: [FoodEntry] = []
-
-        func appendCurrentGroup() {
-            guard let meal = currentMeal, !currentEntries.isEmpty else { return }
-            let firstEntryID = currentEntries.first?.id.uuidString ?? UUID().uuidString
-            groups.append(FoodLogMealGroup(
-                id: "latest-\(groups.count)-\(meal.rawValue)-\(firstEntryID)",
-                meal: meal,
-                entries: currentEntries
-            ))
-        }
-
-        for entry in dayEntries {
-            if entry.mealType == currentMeal {
-                currentEntries.append(entry)
-            } else {
-                appendCurrentGroup()
-                currentMeal = entry.mealType
-                currentEntries = [entry]
-            }
-        }
-
-        appendCurrentGroup()
-        return groups
     }
 
     func calories(for date: Date) -> Int {
@@ -272,14 +205,8 @@ class FoodStore {
         if let index = favorites.firstIndex(where: { $0.favoriteKey == entry.favoriteKey }) {
             favorites.remove(at: index)
         } else {
-            // Remove any existing entry with same id to prevent duplicates
             favorites.removeAll { $0.id == entry.id }
-            // Make sure the favorite has its own on-disk JPEG before persisting.
-            // Without this, favoriting an entry that hasn't been through
-            // addEntry() yet (e.g. straight from the Food Result review screen)
-            // would persist with imageData = bytes-in-memory-only — and since
-            // FoodEntry.encode drops raw bytes by design, the favorite would
-            // come back image-less on the next launch.
+            // Ensure on-disk JPEG exists before persisting; in-memory bytes aren't encoded.
             var favorite = entry
             offloadImageToDiskIfNeeded(&favorite)
             favorites.append(favorite)
@@ -291,6 +218,256 @@ class FoodStore {
         favorites.move(fromOffsets: source, toOffset: destination)
         saveFavorites()
     }
+
+    // MARK: - CRUD
+
+    func addEntry(_ entry: FoodEntry) {
+        var entry = entry
+        offloadImageToDiskIfNeeded(&entry)
+        let model = makeModel(from: entry)
+        context.insert(model)
+        persistContext()
+        entries.append(entry)
+        indexInsert(entry)
+        onEntriesChanged?()
+        onEntryAdded?(entry)
+    }
+
+    /// Bulk-append many entries with a single SwiftData save. Skips per-entry
+    /// callbacks; engine refreshes once via `onEntriesChanged`.
+    func addEntries(_ newEntries: [FoodEntry]) {
+        guard !newEntries.isEmpty else { return }
+        for var entry in newEntries {
+            offloadImageToDiskIfNeeded(&entry)
+            context.insert(makeModel(from: entry))
+        }
+        persistContext()
+        loadEntries()
+        onEntriesChanged?()
+    }
+
+    func updateEntry(_ entry: FoodEntry) {
+        guard let index = entries.firstIndex(where: { $0.id == entry.id }) else { return }
+        let old = entries[index]
+        var entry = entry
+        offloadImageToDiskIfNeeded(&entry)
+
+        // Update the SwiftData model in place.
+        if let model = fetchModel(id: entry.id) {
+            applyEntry(entry, to: model)
+        } else {
+            context.insert(makeModel(from: entry))
+        }
+        persistContext()
+
+        entries[index] = entry
+        indexReplace(old: old, new: entry)
+        onEntriesChanged?()
+        // Single callback so HealthKit can serialize delete-then-write atomically.
+        onEntryUpdated?(entry)
+    }
+
+    func deleteEntry(_ entry: FoodEntry) {
+        let id = entry.id
+        // Skip disk-delete when another entry or favorite still references this file.
+        if let filename = entry.imageFilename,
+           !isImageStillReferenced(filename: filename, excludingEntryID: id) {
+            FoodImageStore.shared.delete(filename: filename)
+        }
+
+        if let model = fetchModel(id: id) {
+            context.delete(model)
+            persistContext()
+        }
+
+        entries.removeAll { $0.id == id }
+        indexRemove(entry)
+        onEntriesChanged?()
+        onEntryDeleted?(id)
+    }
+
+    func replaceAllEntries(_ newEntries: [FoodEntry]) {
+        // Delete orphaned JPEGs; skip files still referenced by survivors or favorites.
+        let surviving = Set(newEntries.map(\.id))
+        let survivingFilenames = Set(newEntries.compactMap(\.imageFilename))
+        let favoriteFilenames = Set(favorites.compactMap(\.imageFilename))
+        for old in entries where !surviving.contains(old.id) {
+            guard let filename = old.imageFilename else { continue }
+            if survivingFilenames.contains(filename) || favoriteFilenames.contains(filename) { continue }
+            FoodImageStore.shared.delete(filename: filename)
+        }
+
+        let descriptor = FetchDescriptor<FoodEntryModel>()
+        if let existing = try? context.fetch(descriptor) {
+            for model in existing { context.delete(model) }
+        }
+
+        var prepared: [FoodEntry] = []
+        for var e in newEntries {
+            offloadImageToDiskIfNeeded(&e)
+            context.insert(makeModel(from: e))
+            prepared.append(e)
+        }
+        persistContext()
+
+        entries = prepared
+        dayIndex = nil
+        onEntriesChanged?()
+    }
+
+    func mergeWithCloudEntries(_ cloudEntries: [FoodEntry]) {
+        var merged = Dictionary(uniqueKeysWithValues: entries.map { ($0.id, $0) })
+        for cloudEntry in cloudEntries {
+            merged[cloudEntry.id] = cloudEntry
+        }
+        let mergedEntries = Array(merged.values)
+
+        // Upsert each merged entry into SwiftData.
+        for entry in mergedEntries {
+            if let model = fetchModel(id: entry.id) {
+                applyEntry(entry, to: model)
+            } else {
+                context.insert(makeModel(from: entry))
+            }
+        }
+        persistContext()
+
+        entries = mergedEntries
+        dayIndex = nil
+        onEntriesChanged?()
+    }
+
+    // MARK: - Private: SwiftData I/O
+
+    /// Fetches all rows from SwiftData and rebuilds `entries` + day-index.
+    private func loadEntries() {
+        let descriptor = FetchDescriptor<FoodEntryModel>(
+            sortBy: [SortDescriptor(\.timestamp, order: .forward)]
+        )
+        guard let models = try? context.fetch(descriptor) else { return }
+        entries = models.map(makeEntry(from:))
+        // Day-index is invalidated; first reader rebuilds it lazily.
+        dayIndex = nil
+    }
+
+    /// Saves the context; logs in DEBUG on failure instead of crashing.
+    private func persistContext() {
+        do {
+            try context.save()
+        } catch {
+            #if DEBUG
+            print("[FoodStore] SwiftData save failed: \(error)")
+            #endif
+        }
+    }
+
+    /// Fetch the `FoodEntryModel` for a given UUID, or nil if not found.
+    private func fetchModel(id: UUID) -> FoodEntryModel? {
+        var descriptor = FetchDescriptor<FoodEntryModel>(
+            predicate: #Predicate { $0.id == id }
+        )
+        descriptor.fetchLimit = 1
+        return try? context.fetch(descriptor).first
+    }
+
+    /// Maps a `FoodEntry` to a new `FoodEntryModel`; stores filename, not bytes.
+    private func makeModel(from entry: FoodEntry) -> FoodEntryModel {
+        FoodEntryModel(
+            id: entry.id,
+            name: entry.name,
+            calories: entry.calories,
+            protein: entry.protein,
+            carbs: entry.carbs,
+            fat: entry.fat,
+            timestamp: entry.timestamp,
+            imageFilename: entry.imageFilename,
+            emoji: entry.emoji,
+            sourceRaw: entry.source.rawValue,
+            mealTypeRaw: entry.mealType.rawValue,
+            sugar: entry.sugar,
+            addedSugar: entry.addedSugar,
+            fiber: entry.fiber,
+            saturatedFat: entry.saturatedFat,
+            monounsaturatedFat: entry.monounsaturatedFat,
+            polyunsaturatedFat: entry.polyunsaturatedFat,
+            cholesterol: entry.cholesterol,
+            sodium: entry.sodium,
+            potassium: entry.potassium,
+            servingSizeGrams: entry.servingSizeGrams,
+            servingUnitOptionsJSON: encodeServingUnits(entry.servingUnitOptions),
+            selectedServingUnit: entry.selectedServingUnit,
+            selectedServingQuantity: entry.selectedServingQuantity
+        )
+    }
+
+    /// Mutates an existing model in place; avoids delete+insert churn.
+    private func applyEntry(_ entry: FoodEntry, to model: FoodEntryModel) {
+        model.name = entry.name
+        model.calories = entry.calories
+        model.protein = entry.protein
+        model.carbs = entry.carbs
+        model.fat = entry.fat
+        model.timestamp = entry.timestamp
+        model.imageFilename = entry.imageFilename
+        model.emoji = entry.emoji
+        model.sourceRaw = entry.source.rawValue
+        model.mealTypeRaw = entry.mealType.rawValue
+        model.sugar = entry.sugar
+        model.addedSugar = entry.addedSugar
+        model.fiber = entry.fiber
+        model.saturatedFat = entry.saturatedFat
+        model.monounsaturatedFat = entry.monounsaturatedFat
+        model.polyunsaturatedFat = entry.polyunsaturatedFat
+        model.cholesterol = entry.cholesterol
+        model.sodium = entry.sodium
+        model.potassium = entry.potassium
+        model.servingSizeGrams = entry.servingSizeGrams
+        model.servingUnitOptionsJSON = encodeServingUnits(entry.servingUnitOptions)
+        model.selectedServingUnit = entry.selectedServingUnit
+        model.selectedServingQuantity = entry.selectedServingQuantity
+    }
+
+    /// Maps a `FoodEntryModel` to a `FoodEntry`; loads image bytes from sidecar.
+    private func makeEntry(from model: FoodEntryModel) -> FoodEntry {
+        let imageData = model.imageFilename.flatMap { FoodImageStore.shared.load(filename: $0) }
+        return FoodEntry(
+            id: model.id,
+            name: model.name,
+            calories: model.calories,
+            protein: model.protein,
+            carbs: model.carbs,
+            fat: model.fat,
+            timestamp: model.timestamp,
+            imageData: imageData,
+            imageFilename: model.imageFilename,
+            emoji: model.emoji,
+            source: model.source,
+            mealType: model.mealType,
+            sugar: model.sugar,
+            addedSugar: model.addedSugar,
+            fiber: model.fiber,
+            saturatedFat: model.saturatedFat,
+            monounsaturatedFat: model.monounsaturatedFat,
+            polyunsaturatedFat: model.polyunsaturatedFat,
+            cholesterol: model.cholesterol,
+            sodium: model.sodium,
+            potassium: model.potassium,
+            servingSizeGrams: model.servingSizeGrams,
+            servingUnitOptions: model.servingUnitOptions,
+            selectedServingUnit: model.selectedServingUnit,
+            selectedServingQuantity: model.selectedServingQuantity
+        )
+    }
+
+    /// JSON-encodes serving unit options; returns nil when empty.
+    private func encodeServingUnits(_ options: [ServingUnitOption]) -> String? {
+        guard !options.isEmpty,
+              let data = try? JSONEncoder().encode(options)
+        else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    // MARK: - Private: Favorites persistence (UserDefaults)
 
     private func saveFavorites() {
         if let data = try? JSONEncoder().encode(favorites) {
@@ -306,94 +483,9 @@ class FoodStore {
         favorites = decoded
     }
 
-    // MARK: - CRUD
+    // MARK: - Private: Image sidecar
 
-    func addEntry(_ entry: FoodEntry) {
-        var entry = entry
-        offloadImageToDiskIfNeeded(&entry)
-        entries.append(entry)
-        indexInsert(entry)
-        saveEntries()
-        onEntriesChanged?()
-        onEntryAdded?(entry)
-    }
-
-    /// Bulk-append many entries with a single save at the end. Used by the
-    /// MacroFactor CSV importer — calling `addEntry` 3,806 times would do
-    /// 3,806 JSON encodes + UserDefaults writes, which freezes the UI for
-    /// several seconds. This version pays the encode/write cost once.
-    func addEntries(_ newEntries: [FoodEntry]) {
-        guard !newEntries.isEmpty else { return }
-        entries.append(contentsOf: newEntries)
-        // Rebuild rather than N inserts; faster at thousands of entries.
-        if dayIndex != nil { rebuildDayIndex() }
-        saveEntries()
-        onEntriesChanged?()
-        // Skip onEntryAdded callbacks for bulk; engine refreshes once via
-        // onEntriesChanged anyway.
-    }
-
-    func updateEntry(_ entry: FoodEntry) {
-        guard let index = entries.firstIndex(where: { $0.id == entry.id }) else { return }
-        let old = entries[index]
-        var entry = entry
-        offloadImageToDiskIfNeeded(&entry)
-        entries[index] = entry
-        indexReplace(old: old, new: entry)
-        saveEntries()
-        onEntriesChanged?()
-        // Single callback so HealthKit can serialize delete-then-write atomically.
-        onEntryUpdated?(entry)
-    }
-
-    func deleteEntry(_ entry: FoodEntry) {
-        let id = entry.id
-        // Skip the disk-delete when a favorite (or another entry) still
-        // references this filename. Without this guard, favoriting a meal,
-        // deleting the log entry, and relaunching wipes the favorite's image
-        // because both rows share the same fudai-image-<uuid>.jpg.
-        if let filename = entry.imageFilename, !isImageStillReferenced(filename: filename, excludingEntryID: id) {
-            FoodImageStore.shared.delete(filename: filename)
-        }
-        entries.removeAll { $0.id == id }
-        indexRemove(entry)
-        saveEntries()
-        onEntriesChanged?()
-        onEntryDeleted?(id)
-    }
-
-    func replaceAllEntries(_ newEntries: [FoodEntry]) {
-        // Delete on-disk JPEGs for any entry that's about to be removed —
-        // otherwise Clear Food Log / Delete All Data orphan files in
-        // Application Support forever. Skip files that a favorite or a
-        // surviving entry still references (same filename, different id).
-        let surviving = Set(newEntries.map(\.id))
-        let survivingFilenames = Set(newEntries.compactMap(\.imageFilename))
-        let favoriteFilenames = Set(favorites.compactMap(\.imageFilename))
-        for old in entries where !surviving.contains(old.id) {
-            guard let filename = old.imageFilename else { continue }
-            if survivingFilenames.contains(filename) || favoriteFilenames.contains(filename) { continue }
-            FoodImageStore.shared.delete(filename: filename)
-        }
-        entries = newEntries.map { var e = $0; offloadImageToDiskIfNeeded(&e); return e }
-        saveEntries()
-        onEntriesChanged?()
-    }
-
-    func mergeWithCloudEntries(_ cloudEntries: [FoodEntry]) {
-        var merged = Dictionary(uniqueKeysWithValues: entries.map { ($0.id, $0) })
-        for cloudEntry in cloudEntries {
-            merged[cloudEntry.id] = cloudEntry
-        }
-        entries = Array(merged.values)
-        saveEntries()
-        onEntriesChanged?()
-    }
-
-    /// If `entry` carries in-memory `imageData` but no `imageFilename`, write
-    /// the bytes to disk and stamp the filename onto the entry. No-op when
-    /// there are no bytes, or when a filename is already set (idempotent).
-    /// The 4 MiB UserDefaults cap demands we never persist raw bytes.
+    /// Writes in-memory image bytes to disk and stamps the filename. No-op if already on disk.
     private func offloadImageToDiskIfNeeded(_ entry: inout FoodEntry) {
         guard entry.imageFilename == nil, let data = entry.imageData else { return }
         if let filename = FoodImageStore.shared.store(data: data, for: entry.id) {
@@ -401,51 +493,94 @@ class FoodStore {
         }
     }
 
-    /// Used by deleteEntry / replaceAllEntries to decide whether the on-disk
-    /// JPEG can safely be removed. A filename can be shared by a logged entry
-    /// + a favorite (same `id`, same generated `fudai-image-<uuid>.jpg`), or
-    /// by two logged entries that came from the same favorite re-log.
+    /// Returns `true` when another entry or a favorite still references `filename`.
     private func isImageStillReferenced(filename: String, excludingEntryID: UUID) -> Bool {
-        if entries.contains(where: { $0.id != excludingEntryID && $0.imageFilename == filename }) {
-            return true
-        }
-        return favorites.contains { $0.imageFilename == filename }
+        entries.contains(where: { $0.id != excludingEntryID && $0.imageFilename == filename })
+            || favorites.contains { $0.imageFilename == filename }
     }
 
-    private func saveEntries() {
-        if let data = try? JSONEncoder().encode(entries) {
-            UserDefaults.standard.set(data, forKey: storageKey)
-            UserDefaults.standard.synchronize()
+    // MARK: - Private: Day-index helpers
+
+    private func dayKey(for date: Date) -> Date {
+        Calendar.current.startOfDay(for: date)
+    }
+
+    private func rebuildDayIndex() {
+        dayIndex = Dictionary(grouping: entries) { dayKey(for: $0.timestamp) }
+    }
+
+    private func dayIndexEnsured() -> [Date: [FoodEntry]] {
+        if let dayIndex { return dayIndex }
+        rebuildDayIndex()
+        return dayIndex ?? [:]
+    }
+
+    private func indexInsert(_ entry: FoodEntry) {
+        guard dayIndex != nil else { return }   // lazy: skip if never read yet
+        let key = dayKey(for: entry.timestamp)
+        dayIndex?[key, default: []].append(entry)
+    }
+
+    private func indexRemove(_ entry: FoodEntry) {
+        guard dayIndex != nil else { return }
+        let key = dayKey(for: entry.timestamp)
+        dayIndex?[key]?.removeAll { $0.id == entry.id }
+        if dayIndex?[key]?.isEmpty == true {
+            dayIndex?.removeValue(forKey: key)
         }
     }
 
-    private func loadEntries() {
-        guard let data = UserDefaults.standard.data(forKey: storageKey),
-              let decoded = try? JSONDecoder().decode([FoodEntry].self, from: data)
-        else { return }
-        entries = decoded
-        // Invalidate any stale per-day cache; first reader rebuilds lazily.
-        dayIndex = nil
+    private func indexReplace(old: FoodEntry, new: FoodEntry) {
+        indexRemove(old)
+        indexInsert(new)
+    }
 
-        // Legacy migration: rows written by pre-FoodImageStore builds embedded
-        // JPEG bytes in the JSON blob. Offload any such rows to disk, stamp
-        // the filename, and rewrite the UserDefaults blob — shrinking it from
-        // multi-MB to ~a few KB so the 4 MiB cap stops silently swallowing
-        // adds/deletes. Idempotent: runs only on entries that need it.
-        var migrated = false
-        for i in entries.indices {
-            if entries[i].imageFilename == nil, let data = entries[i].imageData {
-                if let filename = FoodImageStore.shared.store(data: data, for: entries[i].id) {
-                    entries[i].imageFilename = filename
-                    migrated = true
-                }
+    // MARK: - Meal grouping helpers
+
+    private func groupedEntries(_ dayEntries: [FoodEntry], order: FoodLogSortOrder) -> [FoodLogMealGroup] {
+        switch order {
+        case .standard:
+            return MealType.allCases.compactMap { meal in
+                let mealEntries = dayEntries.filter { $0.mealType == meal }
+                guard !mealEntries.isEmpty else { return nil }
+                return FoodLogMealGroup(id: "standard-\(meal.rawValue)", meal: meal, entries: mealEntries)
+            }
+        case .latestMealsFirst:
+            return latestMealRuns(dayEntries)
+        }
+    }
+
+    private func latestMealRuns(_ dayEntries: [FoodEntry]) -> [FoodLogMealGroup] {
+        var groups: [FoodLogMealGroup] = []
+        var currentMeal: MealType?
+        var currentEntries: [FoodEntry] = []
+
+        func appendCurrentGroup() {
+            guard let meal = currentMeal, !currentEntries.isEmpty else { return }
+            let firstEntryID = currentEntries.first?.id.uuidString ?? UUID().uuidString
+            groups.append(FoodLogMealGroup(
+                id: "latest-\(groups.count)-\(meal.rawValue)-\(firstEntryID)",
+                meal: meal,
+                entries: currentEntries
+            ))
+        }
+
+        for entry in dayEntries {
+            if entry.mealType == currentMeal {
+                currentEntries.append(entry)
+            } else {
+                appendCurrentGroup()
+                currentMeal = entry.mealType
+                currentEntries = [entry]
             }
         }
-        if migrated {
-            saveEntries()
-        }
+
+        appendCurrentGroup()
+        return groups
     }
 }
+
+// MARK: - FrequentFoodGroup
 
 struct FrequentFoodGroup: Identifiable {
     let id: String
