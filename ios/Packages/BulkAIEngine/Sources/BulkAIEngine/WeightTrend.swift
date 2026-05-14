@@ -116,3 +116,89 @@ public enum WeightTrend {
         return lowVal + (highVal - lowVal) * fraction
     }
 }
+
+// MARK: - WeightTrendSlope
+
+/// The result of a least-squares linear regression over a smoothed weight trend series.
+///
+/// Use `WeightTrend.slope(trend:minPoints:)` to derive this from a `[TrendPoint]` array.
+/// The slope is expressed in kg per week so callers don't need to reason about per-day
+/// denominators. `rSquared` and `standardError` feed directly into P23-B's confidence
+/// interval calculations.
+public struct WeightTrendSlope: Equatable, Sendable, Codable {
+    /// Slope in kg per week. Positive = trending up, negative = trending down.
+    public let kgPerWeek: Double
+    /// Coefficient of determination (R²) — how well the linear fit explains
+    /// the smoothed series. 0 = no relationship, 1 = perfect line. UI can
+    /// use this to badge "high confidence" vs "noisy trend".
+    public let rSquared: Double
+    /// Standard error of the slope estimate, in kg/week. Used by P23-B
+    /// (Projection) to build confidence intervals around the projected end date.
+    public let standardError: Double
+    /// Number of trend points used in the fit.
+    public let sampleSize: Int
+
+    public init(kgPerWeek: Double, rSquared: Double, standardError: Double, sampleSize: Int) {
+        self.kgPerWeek = kgPerWeek
+        self.rSquared = rSquared
+        self.standardError = standardError
+        self.sampleSize = sampleSize
+    }
+}
+
+// MARK: - Slope derivation
+
+extension WeightTrend {
+    /// Computes the linear regression slope over the smoothed trend via ordinary
+    /// least squares (OLS).
+    ///
+    /// The x axis is integer day indices (0, 1, 2, …) so the fit is independent of
+    /// any calendar details. The resulting slope is scaled from per-day to per-week
+    /// before it is stored in `WeightTrendSlope.kgPerWeek`.
+    ///
+    /// Returns `nil` when fewer than `minPoints` trend points are available; the
+    /// caller is expected to surface a "not enough data" state in that case.
+    ///
+    /// - Parameters:
+    ///   - trend: Smoothed trend series produced by `WeightTrend.compute(logs:)`.
+    ///   - minPoints: Minimum number of points required to attempt a fit. Defaults
+    ///     to 7 (one week of daily smoothing). Must be ≥ 3 because residual variance
+    ///     divides by `n - 2`.
+    /// - Returns: A `WeightTrendSlope` on success, `nil` when there is insufficient data.
+    public static func slope(
+        trend: [TrendPoint],
+        minPoints: Int = 7
+    ) -> WeightTrendSlope? {
+        let n = trend.count
+        guard n >= max(minPoints, 3) else { return nil }
+
+        let xs = trend.indices.map { Double($0) }
+        let ys = trend.map(\.kg)
+
+        let xMean = xs.reduce(0.0, +) / Double(n)
+        let yMean = ys.reduce(0.0, +) / Double(n)
+
+        let ssxy = zip(xs, ys).reduce(0.0) { $0 + ($1.0 - xMean) * ($1.1 - yMean) }
+        let ssxx = xs.reduce(0.0) { $0 + ($1 - xMean) * ($1 - xMean) }
+
+        guard ssxx > 0 else { return nil }
+
+        let slopePerDay = ssxy / ssxx
+        let intercept = yMean - slopePerDay * xMean
+
+        let residuals = zip(xs, ys).map { $1 - (intercept + slopePerDay * $0) }
+        let sse = residuals.reduce(0.0) { $0 + $1 * $1 }
+        let sst = ys.reduce(0.0) { $0 + ($1 - yMean) * ($1 - yMean) }
+
+        let rSquared = sst > 0 ? max(0.0, 1.0 - sse / sst) : 0.0
+        let residualVariance = sse / Double(n - 2)
+        let standardErrorPerDay = (residualVariance / ssxx).squareRoot()
+
+        return WeightTrendSlope(
+            kgPerWeek: slopePerDay * 7,
+            rSquared: rSquared,
+            standardError: standardErrorPerDay * 7,
+            sampleSize: n
+        )
+    }
+}
