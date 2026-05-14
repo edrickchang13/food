@@ -64,6 +64,18 @@
           {
             "name": "NSHealthUpdateUsageDescription",
             "usageDescription": "Write your nutrition and body measurements so all your health data stays in one place."
+          },
+          {
+            "name": "NSCameraUsageDescription",
+            "usageDescription": "Bulk AI uses the camera to scan food photos and read nutrition labels for fast logging."
+          },
+          {
+            "name": "NSMicrophoneUsageDescription",
+            "usageDescription": "Bulk AI uses the microphone so you can log food by voice."
+          },
+          {
+            "name": "NSSpeechRecognitionUsageDescription",
+            "usageDescription": "Bulk AI uses speech recognition to convert your voice into text for food logging."
           }
         ]
       }
