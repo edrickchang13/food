@@ -116,6 +116,14 @@ final class EngineState {
             dailyPlan: plan,
             checkInDue: due
         )
+
+        // Mirror the countdown into the App Group so CheckInCountdownWidget
+        // can render the same numbers as the Strategy tab. Computed values
+        // use the same anchor logic as `daysUntilCheckIn` / `checkInProgress`.
+        CountdownSnapshotWriter.write(
+            daysUntilCheckIn: daysUntilCheckIn,
+            progress: checkInProgress
+        )
     }
 
     /// User accepted (or adjusted) the proposal: advance the cadence AND update the

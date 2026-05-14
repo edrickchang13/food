@@ -22,6 +22,10 @@ struct LibraryView: View {
     let items: [FoodDatabaseItem]
     let onTapItem: (FoodDatabaseItem) -> Void
     let onAddItem: (FoodDatabaseItem) -> Void
+    /// Optional favorite-state lookup. nil → row hides the heart badge.
+    var isFavorite: ((FoodDatabaseItem) -> Bool)? = nil
+    /// Optional favorite-toggle handler invoked on long-press of a row.
+    var onToggleFavorite: ((FoodDatabaseItem) -> Void)? = nil
 
     @State private var favoritesOnly: Bool = false
     @State private var sortOption: SortOption = .created
@@ -156,7 +160,9 @@ struct LibraryView: View {
                             tint: tint(for: item),
                             macroLine: macroLine(for: item),
                             onTap: { onTapItem(item) },
-                            onAdd: { onAddItem(item) }
+                            onAdd: { onAddItem(item) },
+                            isFavorite: isFavorite?(item),
+                            onToggleFavorite: { onToggleFavorite?(item) }
                         )
                         if index < items.count - 1 {
                             Divider().background(.white.opacity(0.06))

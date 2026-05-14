@@ -25,6 +25,7 @@ struct calorietrackerApp: App {
     @State private var progressPhotoStore = ProgressPhotoStore()
     @State private var recipeStore = RecipeStore()
     @State private var foodDatabase = FoodDatabaseService()
+    @State private var favoritesStore = FavoritesStore()
     @State private var engineState: EngineState
     @State private var showCheckIn = false
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
@@ -88,6 +89,7 @@ struct calorietrackerApp: App {
                         .environment(progressPhotoStore)
                         .environment(recipeStore)
                         .environment(foodDatabase)
+                        .environment(favoritesStore)
                         .environment(engineState)
                 } else {
                     OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
@@ -104,6 +106,7 @@ struct calorietrackerApp: App {
                         .environment(progressPhotoStore)
                         .environment(recipeStore)
                         .environment(foodDatabase)
+                        .environment(favoritesStore)
                         .environment(engineState)
                 }
             }

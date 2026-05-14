@@ -25,6 +25,7 @@ struct FoodEntrySheet: View {
     @Environment(FoodStore.self) private var foodStore
     @Environment(FoodDatabaseService.self) private var foodDatabase
     @Environment(ProfileStore.self) private var profileStore
+    @Environment(FavoritesStore.self) private var favoritesStore
 
     @AppStorage("aiAnalysisConsentGiven") private var aiConsentGiven: Bool = false
 
@@ -165,6 +166,13 @@ struct FoodEntrySheet: View {
         .onAppear { recomputeSearchResults() }
         .onChange(of: filterQuery) { recomputeSearchResults() }
         .onChange(of: selectedTab) { recomputeSearchResults() }
+        // Refresh when the user toggles a favorite OR adds/removes a food
+        // log entry. The favorites strip + per-slot picks both depend on
+        // these stores; without this, hearts and time-of-day suggestions
+        // would stale-out until the user changed tabs or queries.
+        .onChange(of: favoritesStore.sortedIDs.count) { recomputeSearchResults() }
+        .onChange(of: foodStore.entries.count) { recomputeSearchResults() }
+        .onChange(of: time) { recomputeSearchResults() }
     }
 
     // MARK: - Search result recompute
@@ -186,7 +194,9 @@ struct FoodEntrySheet: View {
                 favorites: cachedFavorites,
                 suggestions: cachedSuggestions,
                 onTapItem: { portionItem = $0 },
-                onAddItem: { stageDefaultPortion(of: $0) }
+                onAddItem: { stageDefaultPortion(of: $0) },
+                isFavorite: { favoritesStore.contains($0.id) },
+                onToggleFavorite: { favoritesStore.toggle($0.id) }
             )
         case 1:
             AIView(
@@ -230,7 +240,9 @@ struct FoodEntrySheet: View {
                 mode: $libraryMode,
                 items: cachedLibrary,
                 onTapItem: { portionItem = $0 },
-                onAddItem: { stageDefaultPortion(of: $0) }
+                onAddItem: { stageDefaultPortion(of: $0) },
+                isFavorite: { favoritesStore.contains($0.id) },
+                onToggleFavorite: { favoritesStore.toggle($0.id) }
             )
         default:
             EmptyView()
@@ -410,21 +422,45 @@ struct FoodEntrySheet: View {
     // MARK: - Filtered data (compute functions — call from recomputeSearchResults only)
 
     private func computedFilteredFavorites() -> [FoodDatabaseItem] {
-        // Real favorites aren't tracked yet — surface a small head of the
-        // seed DB so the strip isn't empty. Phase E swaps this for the
-        // user's actually-favorited items.
-        let pool = foodDatabase.search(filterQuery, limit: 8)
-        return Array(pool.prefix(6))
+        // Pull the user's actually-favorited IDs (P14) and resolve them
+        // against the database. When no favorites exist yet, fall back to a
+        // small head of the seed DB so the strip isn't empty for new users.
+        let favIDs = favoritesStore.sortedIDs
+        if favIDs.isEmpty {
+            let pool = foodDatabase.search(filterQuery, limit: 8)
+            return Array(pool.prefix(6))
+        }
+        // Resolve each ID against the seed + USDA + AI-cache via the search
+        // index. We search by ID prefix; the index returns the exact match
+        // first when it exists.
+        var resolved: [FoodDatabaseItem] = []
+        for id in favIDs.prefix(8) {
+            if let item = foodDatabase.search(id, limit: 1).first(where: { $0.id == id }) {
+                resolved.append(item)
+            }
+        }
+        return Array(resolved.prefix(6))
     }
 
     private func computedFilteredSuggestions() -> [FoodDatabaseItem] {
         let trimmed = filterQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty {
-            // Surface a curated default set for the chosen time slot. Until the
-            // engine knows per-slot picks, just pull the verified head of the DB.
-            return Array(foodDatabase.search("", limit: 15))
+        if !trimmed.isEmpty {
+            return foodDatabase.search(trimmed, limit: 15)
         }
-        return foodDatabase.search(trimmed, limit: 15)
+        // No query — pull time-of-day picks from the user's own log history (P14).
+        // SlotPicksService aggregates entries logged within a 4-hour window
+        // around the sheet's header time and ranks by distinct-day count.
+        let picks = SlotPicksService.suggestionsAsDatabaseItems(
+            from: foodStore.entries,
+            for: time,
+            database: foodDatabase
+        )
+        if !picks.isEmpty {
+            return picks
+        }
+        // Cold-start fallback: user has no log history yet, just surface a
+        // curated head of the seed DB so the section isn't empty.
+        return Array(foodDatabase.search("", limit: 15))
     }
 
     private func computedFilteredLibrary() -> [FoodDatabaseItem] {

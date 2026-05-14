@@ -25,6 +25,11 @@ struct FoodSearchRow: View {
     let macroLine: String
     let onTap: () -> Void
     let onAdd: () -> Void
+    /// Optional favorite state. When provided, a heart indicator appears on
+    /// the leading icon and long-press on the row toggles the favorite.
+    /// Default of `nil` keeps existing call sites unchanged.
+    var isFavorite: Bool? = nil
+    var onToggleFavorite: (() -> Void)? = nil
 
     private let iconSize: CGFloat = 36
     private let addButtonSize: CGFloat = 44
@@ -40,6 +45,10 @@ struct FoodSearchRow: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .simultaneousGesture(
+                LongPressGesture(minimumDuration: 0.4)
+                    .onEnded { _ in onToggleFavorite?() }
+            )
 
             addButton
         }
@@ -47,18 +56,35 @@ struct FoodSearchRow: View {
     }
 
     private var leadingIcon: some View {
-        ZStack {
-            Circle()
-                .fill(tint.opacity(0.18))
-                .overlay(
-                    Circle()
-                        .stroke(tint.opacity(0.3), lineWidth: 0.5)
-                )
-                .frame(width: iconSize, height: iconSize)
+        ZStack(alignment: .topTrailing) {
+            ZStack {
+                Circle()
+                    .fill(tint.opacity(0.18))
+                    .overlay(
+                        Circle()
+                            .stroke(tint.opacity(0.3), lineWidth: 0.5)
+                    )
+                    .frame(width: iconSize, height: iconSize)
 
-            Text(emoji)
-                .font(.system(size: 18))
+                Text(emoji)
+                    .font(.system(size: 18))
+            }
+
+            // Tiny heart badge in the top-right of the icon when this row is
+            // favorited. Long-press on the row toggles via `onToggleFavorite`.
+            if isFavorite == true {
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(BulkAITheme.Color.accent)
+                    .padding(2)
+                    .background(
+                        Circle().fill(BulkAITheme.Color.background)
+                    )
+                    .offset(x: 4, y: -2)
+                    .accessibilityHidden(true)
+            }
         }
+        .frame(width: iconSize, height: iconSize, alignment: .topTrailing)
     }
 
     private var textBlock: some View {

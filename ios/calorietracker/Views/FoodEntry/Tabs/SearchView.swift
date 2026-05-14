@@ -24,6 +24,11 @@ struct SearchView: View {
     let suggestions: [FoodDatabaseItem]
     let onTapItem: (FoodDatabaseItem) -> Void
     let onAddItem: (FoodDatabaseItem) -> Void
+    /// Optional favorite-state lookup (called per row). Defaults to nil so
+    /// callers that don't have a FavoritesStore keep working unchanged.
+    var isFavorite: ((FoodDatabaseItem) -> Bool)? = nil
+    /// Optional favorite-toggle handler invoked on long-press.
+    var onToggleFavorite: ((FoodDatabaseItem) -> Void)? = nil
 
     var body: some View {
         ScrollView {
@@ -81,7 +86,9 @@ struct SearchView: View {
                             tint: tint(for: item),
                             macroLine: macroLine(for: item),
                             onTap: { onTapItem(item) },
-                            onAdd: { onAddItem(item) }
+                            onAdd: { onAddItem(item) },
+                            isFavorite: isFavorite?(item),
+                            onToggleFavorite: { onToggleFavorite?(item) }
                         )
                         if index < suggestions.count - 1 {
                             Divider().background(.white.opacity(0.06))

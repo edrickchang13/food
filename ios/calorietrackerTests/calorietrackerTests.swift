@@ -279,3 +279,238 @@ struct FoodDatabaseServiceIndexTests {
         // If there are no AI items in the result (limit reached by seed) that's fine too.
     }
 }
+
+// MARK: - StepReader availability tests
+
+/// Verifies that StepReader returns nil in the unit test host, where
+/// HKHealthStore.isHealthDataAvailable() is false (simulator / macOS host
+/// process without HealthKit entitlement). No mock needed — the guard at the
+/// top of each method covers this case directly.
+struct StepReaderTests {
+
+    @Test("last7Days() returns nil when HealthKit is unavailable")
+    func last7DaysReturnsNilWithoutHealthKit() async {
+        let result = await StepReader.last7Days()
+        #expect(result == nil, "Expected nil when HealthKit is not available in the test host")
+    }
+
+    @Test("today() returns nil when HealthKit is unavailable")
+    func todayReturnsNilWithoutHealthKit() async {
+        let result = await StepReader.today()
+        #expect(result == nil, "Expected nil when HealthKit is not available in the test host")
+    }
+}
+
+// MARK: - SlotPicksService tests
+
+/// Verifies the time-of-day suggestion algorithm added in P14.
+/// Tests cover the six invariants called out in the brief.
+struct SlotPicksServiceTests {
+
+    // MARK: - Helpers
+
+    /// Builds a FoodEntry at a given offset from now with a fixed hour.
+    private func entry(
+        name: String,
+        daysAgo: Int,
+        hour: Int,
+        calories: Int = 300
+    ) -> FoodEntry {
+        let calendar = Calendar.current
+        var comps = calendar.dateComponents([.year, .month, .day], from: Date())
+        comps.hour = hour
+        comps.minute = 0
+        comps.second = 0
+        let base = calendar.date(from: comps) ?? Date()
+        let timestamp = calendar.date(byAdding: .day, value: -daysAgo, to: base) ?? base
+        return FoodEntry(
+            name: name,
+            calories: calories,
+            protein: 20,
+            carbs: 30,
+            fat: 10,
+            timestamp: timestamp,
+            source: .manual
+        )
+    }
+
+    // MARK: - Tests
+
+    @Test("Empty entries returns empty result")
+    func emptyInputReturnsEmpty() {
+        let slotDate = Date()
+        let result = SlotPicksService.suggestions(from: [], for: slotDate)
+        #expect(result.isEmpty)
+    }
+
+    @Test("Entries outside the hour window are excluded")
+    func hourWindowFiltersOutOfBandEntries() {
+        // Slot hour is 9 AM; window is ±2 h → 7–11. Log something at 14:00.
+        var slotComps = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        slotComps.hour = 9
+        let slotDate = Calendar.current.date(from: slotComps) ?? Date()
+
+        let inWindow  = entry(name: "Oatmeal",   daysAgo: 1, hour: 9)
+        let outWindow = entry(name: "Burger",     daysAgo: 1, hour: 14)
+
+        let results = SlotPicksService.suggestions(from: [inWindow, outWindow], for: slotDate, windowHours: 4)
+        let names = results.map { $0.name }
+        #expect(names.contains("Oatmeal"))
+        #expect(!names.contains("Burger"))
+    }
+
+    @Test("Entries older than lookbackDays are excluded")
+    func lookbackCutoffFiltersOldEntries() {
+        var slotComps = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        slotComps.hour = 12
+        let slotDate = Calendar.current.date(from: slotComps) ?? Date()
+
+        let recent = entry(name: "Salad",    daysAgo: 5,  hour: 12)
+        let old    = entry(name: "Old food", daysAgo: 45, hour: 12)
+
+        let results = SlotPicksService.suggestions(from: [recent, old], for: slotDate, lookbackDays: 30)
+        let names = results.map { $0.name }
+        #expect(names.contains("Salad"))
+        #expect(!names.contains("Old food"))
+    }
+
+    @Test("Multiple entries of the same name on the same day count once toward day-count")
+    func sameDaySameNameCountsOnce() {
+        var slotComps = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        slotComps.hour = 8
+        let slotDate = Calendar.current.date(from: slotComps) ?? Date()
+
+        // "Eggs" logged 3 times on day 1 and once on day 2 → 2 distinct days.
+        // "Toast" logged once per day for 3 different days → 3 distinct days.
+        // Toast should rank first.
+        let eggs1a = entry(name: "Eggs",  daysAgo: 1, hour: 8)
+        let eggs1b = entry(name: "Eggs",  daysAgo: 1, hour: 8, calories: 310)
+        let eggs1c = entry(name: "Eggs",  daysAgo: 1, hour: 9, calories: 320)
+        let eggs2  = entry(name: "Eggs",  daysAgo: 2, hour: 8)
+
+        let toast1 = entry(name: "Toast", daysAgo: 1, hour: 8)
+        let toast2 = entry(name: "Toast", daysAgo: 2, hour: 8)
+        let toast3 = entry(name: "Toast", daysAgo: 3, hour: 8)
+
+        let all = [eggs1a, eggs1b, eggs1c, eggs2, toast1, toast2, toast3]
+        let results = SlotPicksService.suggestions(from: all, for: slotDate, windowHours: 4)
+        #expect(results.count >= 2)
+        #expect(results[0].name == "Toast", "Toast (3 distinct days) should rank above Eggs (2 distinct days)")
+        #expect(results[1].name == "Eggs")
+    }
+
+    @Test("Most-frequent name ranks first")
+    func mostFrequentRanksFirst() {
+        var slotComps = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        slotComps.hour = 7
+        let slotDate = Calendar.current.date(from: slotComps) ?? Date()
+
+        // "Protein shake" logged on 5 distinct days; "Coffee" on 2.
+        let shake = (1...5).map { entry(name: "Protein shake", daysAgo: $0, hour: 7) }
+        let coffee = (1...2).map { entry(name: "Coffee",       daysAgo: $0, hour: 7) }
+
+        let results = SlotPicksService.suggestions(from: shake + coffee, for: slotDate, windowHours: 4)
+        #expect(results.first?.name == "Protein shake")
+    }
+
+    @Test("limit parameter caps the result count")
+    func limitIsCapped() {
+        var slotComps = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        slotComps.hour = 12
+        let slotDate = Calendar.current.date(from: slotComps) ?? Date()
+
+        // Create 20 distinct foods, each logged once.
+        let entries = (0..<20).map { i in
+            entry(name: "Food \(i)", daysAgo: i + 1, hour: 12)
+        }
+
+        let results = SlotPicksService.suggestions(from: entries, for: slotDate, limit: 5)
+        #expect(results.count <= 5)
+    }
+}
+
+// MARK: - FavoritesStore tests
+
+struct FavoritesStoreTests {
+
+    // Each test constructs its own isolated UserDefaults suite so tests are
+    // hermetic and don't pollute UserDefaults.standard or one another.
+    private func makeSuite(name: String) -> UserDefaults {
+        // Remove any stale data from a previous run then create a fresh suite.
+        UserDefaults(suiteName: name)!.removePersistentDomain(forName: name)
+        return UserDefaults(suiteName: name)!
+    }
+
+    // 1. add then contains returns true
+    @Test("add then contains returns true")
+    func addThenContains() {
+        let store = FavoritesStore(defaults: makeSuite(name: "fav.test.addContains"))
+        store.add("apple_raw")
+        #expect(store.contains("apple_raw"), "Newly added ID must be contained")
+    }
+
+    // 2. add twice is idempotent
+    @Test("add twice is idempotent")
+    func addIdempotent() {
+        let store = FavoritesStore(defaults: makeSuite(name: "fav.test.addIdempotent"))
+        store.add("banana")
+        store.add("banana")
+        #expect(store.favorites.count == 1, "Duplicate add must not increase count beyond 1")
+        #expect(store.sortedIDs.count == 1, "Ordered list must also remain at 1 after duplicate add")
+    }
+
+    // 3. remove decrements
+    @Test("remove decrements favorites count")
+    func removeDecrements() {
+        let store = FavoritesStore(defaults: makeSuite(name: "fav.test.removeDecrements"))
+        store.add("chicken_breast")
+        store.add("broccoli_raw")
+        store.remove("chicken_breast")
+        #expect(!store.contains("chicken_breast"), "Removed ID must not be contained")
+        #expect(store.favorites.count == 1)
+        #expect(store.sortedIDs.count == 1)
+    }
+
+    // 4. toggle: adds when missing, removes when present
+    @Test("toggle adds when missing and removes when present")
+    func toggleBehavior() {
+        let store = FavoritesStore(defaults: makeSuite(name: "fav.test.toggle"))
+        store.toggle("oats_rolled")
+        #expect(store.contains("oats_rolled"), "toggle on absent ID must add it")
+        store.toggle("oats_rolled")
+        #expect(!store.contains("oats_rolled"), "toggle on present ID must remove it")
+        #expect(store.favorites.isEmpty)
+    }
+
+    // 5. sortedIDs returns most-recent-first
+    @Test("sortedIDs returns most-recent-first (insertion order reversed)")
+    func sortedIDsOrder() {
+        let store = FavoritesStore(defaults: makeSuite(name: "fav.test.sortedOrder"))
+        store.add("first")
+        store.add("second")
+        store.add("third")
+        let ids = store.sortedIDs
+        #expect(ids == ["third", "second", "first"],
+                "sortedIDs must be newest-first: got \(ids)")
+    }
+
+    // 6. persistence: write IDs, init a new store from the same UserDefaults, all entries survive
+    @Test("persistence round-trip: new store instance loads all saved favorites")
+    func persistenceRoundTrip() {
+        let suite = makeSuite(name: "fav.test.persistence")
+        let store1 = FavoritesStore(defaults: suite)
+        store1.add("egg_whole")
+        store1.add("brown_rice_cooked")
+        store1.add("olive_oil")
+
+        // Create a second store pointed at the same suite — simulates app relaunch.
+        let store2 = FavoritesStore(defaults: suite)
+        #expect(store2.contains("egg_whole"), "egg_whole must survive persistence")
+        #expect(store2.contains("brown_rice_cooked"), "brown_rice_cooked must survive persistence")
+        #expect(store2.contains("olive_oil"), "olive_oil must survive persistence")
+        #expect(store2.favorites.count == 3, "All 3 favorites must be loaded from disk")
+        // Insertion order must also survive.
+        #expect(store2.sortedIDs == ["olive_oil", "brown_rice_cooked", "egg_whole"],
+                "Insertion order must be preserved after reload")
+    }
+}

@@ -55,6 +55,8 @@ struct DashboardView: View {
     @State private var cachedFoodLoggingHabitData: [Date: Double] = [:]
     @State private var cachedWeighInsThisWeek: Int = 0
     @State private var cachedFoodLogsThisWeek: Int = 0
+    @State private var cachedStepsHistory: [Int] = []
+    @State private var cachedStepsToday: Int = 0
 
     // Cached formatter — DateFormatter construction allocates ~40 KB of
     // ICU data on iOS; doing it in a computed var runs it on every body call.
@@ -116,8 +118,8 @@ struct DashboardView: View {
                         onTapMacro: { _ in foodEntryRoute = FoodEntryRoute(tabIndex: 3) }
                     )
                     GeneralSection(
-                        stepsHistory: [3200, 2100, 4500, 1800, 2800, 3600, 2400],
-                        stepsValue: "2800 steps",
+                        stepsHistory: cachedStepsHistory,
+                        stepsValue: cachedStepsToday > 0 ? "\(cachedStepsToday) steps" : "—",
                         onStepsTap: {
                             inlineAlert = InlineAlert(
                                 title: "Connect Apple Health",
@@ -216,6 +218,14 @@ struct DashboardView: View {
         .onChange(of: foodStore.entries.count) { recomputeAggregations() }
         .onChange(of: foodStore.entries.last?.id) { recomputeAggregations() }
         .onChange(of: weightStore.entries.count) { recomputeAggregations() }
+        .task {
+            if let history = await StepReader.last7Days() {
+                cachedStepsHistory = history
+            }
+            if let today = await StepReader.today() {
+                cachedStepsToday = today
+            }
+        }
     }
 
     // MARK: - Aggregation recompute
