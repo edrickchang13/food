@@ -30,7 +30,7 @@ private enum EquationTerm: String, Identifiable {
         case .constant:
             return "Energy density of body-weight change. One kilogram of body mass averages about 7700 kcal. The engine uses this to convert weight movement into the kcal surplus or deficit it implies."
         case .windowDays:
-            return "How many days the engine averaged over. Default is 14 — long enough to smooth out daily noise, short enough that your expenditure responds to real changes."
+            return "How many days the engine averaged over. Default is 7 — long enough to smooth out daily noise, short enough that your expenditure responds to real changes."
         }
     }
 }
@@ -97,7 +97,7 @@ struct DynamicTDEEExplainer: View {
         return trend.count >= Expenditure.defaultWindowDays ? Expenditure.defaultWindowDays : max(1, trend.count)
     }
 
-    /// Mean kcal/day over the last 14 logged days (ignores empty days).
+    /// Mean kcal/day over the last windowDays logged days (ignores empty days).
     private var avgIntakeKcal: Int {
         let calendar = Calendar.current
         let cutoff = calendar.date(byAdding: .day, value: -(windowDays - 1), to: calendar.startOfDay(for: .now)) ?? .now
