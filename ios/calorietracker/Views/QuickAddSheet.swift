@@ -74,7 +74,7 @@ struct QuickAddSheet: View {
                 }
                 .padding(20)
             }
-            .background(AppColors.appBackground)
+            .background(BulkAITheme.Color.background)
             .navigationTitle("Add food")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -291,7 +291,7 @@ struct QuickAddSheet: View {
             VStack(spacing: 8) {
                 Image(systemName: icon)
                     .font(.system(size: 24, weight: .semibold))
-                    .foregroundStyle(AppColors.calorie)
+                    .foregroundStyle(BulkAITheme.Color.accent)
                     .frame(height: 28)
                 Text(label)
                     .font(.system(.caption, design: .rounded, weight: .semibold))
@@ -304,7 +304,7 @@ struct QuickAddSheet: View {
             .frame(maxWidth: .infinity, minHeight: 88)
             .padding(.vertical, 12)
             .padding(.horizontal, 8)
-            .background(AppColors.appCard)
+            .background(BulkAITheme.Color.surface)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -320,7 +320,7 @@ struct QuickAddSheet: View {
                 .lineLimit(2, reservesSpace: true)
                 .focused($inputFocused)
                 .padding(14)
-                .background(AppColors.appCard)
+                .background(BulkAITheme.Color.surface)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .autocorrectionDisabled(false)
 
@@ -337,7 +337,7 @@ struct QuickAddSheet: View {
                 .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppColors.calorie)
+            .tint(BulkAITheme.Color.accent)
             .disabled(description.trimmingCharacters(in: .whitespaces).isEmpty || isAnalyzing)
         }
     }
@@ -398,7 +398,7 @@ struct QuickAddSheet: View {
                             }
                         }
                     }
-                    .background(AppColors.appCard)
+                    .background(BulkAITheme.Color.surface)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
             }

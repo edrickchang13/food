@@ -44,13 +44,13 @@ struct CustomTabBar: View {
                     .frame(width: 56, height: 56)
                     .background(
                         Circle()
-                            .fill(AppColors.calorie)
+                            .fill(BulkAITheme.Color.accent)
                     )
                     .overlay(
                         Circle()
-                            .stroke(AppColors.appBackground, lineWidth: 3)
+                            .stroke(BulkAITheme.Color.background, lineWidth: 3)
                     )
-                    .shadow(color: AppColors.calorie.opacity(0.35), radius: 8, y: 3)
+                    .shadow(color: BulkAITheme.Color.accent.opacity(0.35), radius: 8, y: 3)
             }
             .buttonStyle(.plain)
             // Drop the FAB into the tab strip so it sits centered vertically
@@ -80,7 +80,7 @@ struct CustomTabBar: View {
                 Text(label)
                     .font(.system(.caption2, design: .rounded, weight: .medium))
             }
-            .foregroundStyle(selection == tab ? AppColors.calorie : Color.secondary)
+            .foregroundStyle(selection == tab ? BulkAITheme.Color.accent : Color.secondary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)
             .contentShape(Rectangle())

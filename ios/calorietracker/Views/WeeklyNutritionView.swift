@@ -84,7 +84,7 @@ struct WeeklyNutritionView: View {
                 .padding(.top, 2)
         }
         .padding(20)
-        .background(AppColors.appCard)
+        .background(BulkAITheme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 }
@@ -170,7 +170,7 @@ private struct DayLabel: View {
     var body: some View {
         Text(letter)
             .font(.system(.caption2, design: .rounded, weight: isToday ? .bold : .semibold))
-            .foregroundStyle(isToday ? AppColors.calorie : Color.secondary)
+            .foregroundStyle(isToday ? BulkAITheme.Color.accent : Color.secondary)
             .frame(maxWidth: .infinity)
     }
 }

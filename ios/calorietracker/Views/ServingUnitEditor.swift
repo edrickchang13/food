@@ -69,7 +69,7 @@ struct ServingUnitEditor: View {
                         Image(systemName: "chevron.up.chevron.down")
                             .font(.caption.weight(.semibold))
                     }
-                    .foregroundStyle(AppColors.calorie)
+                    .foregroundStyle(BulkAITheme.Color.accent)
                     .frame(width: 90, alignment: .trailing)
                 }
                 .buttonStyle(.plain)

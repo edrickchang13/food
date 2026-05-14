@@ -14,7 +14,7 @@ struct BodyMeasurementsView: View {
                 NavigationLink(value: site) {
                     HStack {
                         Image(systemName: site.icon)
-                            .foregroundStyle(AppColors.calorie)
+                            .foregroundStyle(BulkAITheme.Color.accent)
                             .frame(width: 24)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(site.displayName)

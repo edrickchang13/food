@@ -240,7 +240,7 @@ struct EditFoodEntryView: View {
                                 }
                             }
                         }
-                        .tint(AppColors.calorie)
+                        .tint(BulkAITheme.Color.accent)
                     }
 
                     Section("Meal") {
@@ -251,12 +251,12 @@ struct EditFoodEntryView: View {
                             }
                         }
                         .pickerStyle(.menu)
-                        .tint(AppColors.calorie)
+                        .tint(BulkAITheme.Color.accent)
                     }
 
                 }
                 .scrollContentBackground(.hidden)
-                .background(AppColors.appBackground)
+                .background(BulkAITheme.Color.background)
                 .background(KeyboardDismissTapInstaller())
                 .safeAreaInset(edge: .bottom) {
                     if isQuantityEditing {
@@ -276,7 +276,7 @@ struct EditFoodEntryView: View {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save", action: saveChanges)
                             .font(.system(.body, design: .rounded, weight: .semibold))
-                            .tint(AppColors.calorie)
+                            .tint(BulkAITheme.Color.accent)
                     }
                 }
             }

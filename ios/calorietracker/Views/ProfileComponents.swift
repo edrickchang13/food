@@ -11,13 +11,13 @@ struct ProfileHeaderSection: View {
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: AppColors.calorieGradient,
+                            colors: BulkAITheme.Color.accentGradient,
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                     .frame(width: 80, height: 80)
-                    .shadow(color: AppColors.calorie.opacity(0.3), radius: 8, y: 4)
+                    .shadow(color: BulkAITheme.Color.accent.opacity(0.3), radius: 8, y: 4)
 
                 Text(profile.initials)
                     .font(.system(size: 32, weight: .bold, design: .rounded))
@@ -53,7 +53,7 @@ struct ProfileInfoRow: View {
                     Text(label)
                 } icon: {
                     Image(systemName: icon)
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                 }
                 Spacer()
                 Text(value)
@@ -162,7 +162,7 @@ struct HeightPickerSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(
-                            LinearGradient(colors: AppColors.calorieGradient, startPoint: .leading, endPoint: .trailing)
+                            LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .leading, endPoint: .trailing)
                         )
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -254,7 +254,7 @@ struct WeightPickerSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(
-                            LinearGradient(colors: AppColors.calorieGradient, startPoint: .leading, endPoint: .trailing)
+                            LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .leading, endPoint: .trailing)
                         )
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -321,7 +321,7 @@ struct BodyFatPickerSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(
-                            LinearGradient(colors: AppColors.calorieGradient, startPoint: .leading, endPoint: .trailing)
+                            LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .leading, endPoint: .trailing)
                         )
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -411,7 +411,7 @@ struct GoalBodyFatPickerSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(
-                            LinearGradient(colors: AppColors.calorieGradient, startPoint: .leading, endPoint: .trailing)
+                            LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .leading, endPoint: .trailing)
                         )
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -456,7 +456,7 @@ struct ActivityLevelSelectionView: View {
                     HStack(spacing: 14) {
                         Image(systemName: level.icon)
                             .font(.title2)
-                            .foregroundStyle(AppColors.calorie)
+                            .foregroundStyle(BulkAITheme.Color.accent)
                             .frame(width: 32)
 
                         VStack(alignment: .leading, spacing: 2) {
@@ -472,16 +472,16 @@ struct ActivityLevelSelectionView: View {
 
                         if level == selected {
                             Image(systemName: "checkmark")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                                 .fontWeight(.semibold)
                         }
                     }
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
             }
         }
         .scrollContentBackground(.hidden)
-        .background(AppColors.appBackground)
+        .background(BulkAITheme.Color.background)
         .navigationTitle("Activity Level")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -503,7 +503,7 @@ struct WeightGoalSelectionView: View {
                     HStack(spacing: 14) {
                         Image(systemName: goal.icon)
                             .font(.title2)
-                            .foregroundStyle(AppColors.calorie)
+                            .foregroundStyle(BulkAITheme.Color.accent)
                             .frame(width: 32)
 
                         Text(goal.displayName)
@@ -514,16 +514,16 @@ struct WeightGoalSelectionView: View {
 
                         if goal == selected {
                             Image(systemName: "checkmark")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                                 .fontWeight(.semibold)
                         }
                     }
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
             }
         }
         .scrollContentBackground(.hidden)
-        .background(AppColors.appBackground)
+        .background(BulkAITheme.Color.background)
         .navigationTitle("Weight Goal")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -545,7 +545,7 @@ struct GenderSelectionView: View {
                     HStack(spacing: 14) {
                         Image(systemName: gender.icon)
                             .font(.title2)
-                            .foregroundStyle(AppColors.calorie)
+                            .foregroundStyle(BulkAITheme.Color.accent)
                             .frame(width: 32)
 
                         Text(gender.displayName)
@@ -556,16 +556,16 @@ struct GenderSelectionView: View {
 
                         if gender == selected {
                             Image(systemName: "checkmark")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                                 .fontWeight(.semibold)
                         }
                     }
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
             }
         }
         .scrollContentBackground(.hidden)
-        .background(AppColors.appBackground)
+        .background(BulkAITheme.Color.background)
         .navigationTitle("Gender")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -608,16 +608,16 @@ struct GoalSpeedSelectionView: View {
 
                         if selected == option.value {
                             Image(systemName: "checkmark")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                                 .fontWeight(.semibold)
                         }
                     }
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
             }
         }
         .scrollContentBackground(.hidden)
-        .background(AppColors.appBackground)
+        .background(BulkAITheme.Color.background)
         .navigationTitle("Weekly Change")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -707,7 +707,7 @@ struct NutritionSummaryRow: View {
                 Spacer()
                 Text("\(profile.effectiveCalories) kcal")
                     .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                    .foregroundStyle(AppColors.calorie)
+                    .foregroundStyle(BulkAITheme.Color.accent)
             }
         }
     }
@@ -783,7 +783,7 @@ struct NutritionPickerSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(
-                            LinearGradient(colors: AppColors.calorieGradient, startPoint: .leading, endPoint: .trailing)
+                            LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .leading, endPoint: .trailing)
                         )
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -858,10 +858,10 @@ struct NotificationSettingsView: View {
                         Text("Notifications")
                     } icon: {
                         Image(systemName: "bell.fill")
-                            .foregroundStyle(AppColors.calorie)
+                            .foregroundStyle(BulkAITheme.Color.accent)
                     }
                 }
-                .tint(AppColors.calorie)
+                .tint(BulkAITheme.Color.accent)
                 .onChange(of: notificationsEnabled) { _, enabled in
                     if enabled {
                         Task {
@@ -885,11 +885,11 @@ struct NotificationSettingsView: View {
                     } label: {
                         Text("Notifications are disabled in system settings. Tap to open Settings.")
                             .font(.system(.caption, design: .rounded))
-                            .foregroundStyle(AppColors.calorie)
+                            .foregroundStyle(BulkAITheme.Color.accent)
                     }
                 }
             }
-            .listRowBackground(AppColors.appCard)
+            .listRowBackground(BulkAITheme.Color.surface)
 
             if notificationsEnabled {
                 // Meal Reminders
@@ -927,7 +927,7 @@ struct NotificationSettingsView: View {
                     .onChange(of: dinnerHour) { _, _ in applyMealReminders() }
                     .onChange(of: dinnerMinute) { _, _ in applyMealReminders() }
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
 
                 // Smart Notifications
                 Section {
@@ -968,11 +968,11 @@ struct NotificationSettingsView: View {
                     Text("All four reminders are smart — they skip firing on days you've already logged. Body fat default is off since most users don't measure daily.")
                         .font(.system(.caption, design: .rounded))
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
             }
         }
         .scrollContentBackground(.hidden)
-        .background(AppColors.appBackground)
+        .background(BulkAITheme.Color.background)
         .navigationTitle("Notifications")
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -1018,10 +1018,10 @@ struct NotificationTimeRow: View {
                     Text(label)
                 } icon: {
                     Image(systemName: icon)
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                 }
             }
-            .tint(AppColors.calorie)
+            .tint(BulkAITheme.Color.accent)
 
             if isEnabled {
                 DatePicker(
@@ -1051,15 +1051,15 @@ struct ComingSoonRow: View {
                     Text(label)
                 } icon: {
                     Image(systemName: icon)
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                 }
                 Spacer()
                 Text("Coming Soon")
                     .font(.system(.caption, design: .rounded, weight: .medium))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(AppColors.calorie.opacity(0.12))
-                    .foregroundStyle(AppColors.calorie)
+                    .background(BulkAITheme.Color.accent.opacity(0.12))
+                    .foregroundStyle(BulkAITheme.Color.accent)
                     .clipShape(Capsule())
             }
         }

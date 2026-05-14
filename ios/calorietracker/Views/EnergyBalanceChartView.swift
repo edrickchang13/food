@@ -3,7 +3,7 @@ import BulkAIEngine
 
 /// 30-day Energy Balance card. For each of the last 30 days, plots
 /// `balance = dailyCalories - expenditureKcalPerDay`. Surplus (positive) bars
-/// extend up from the center zero-line tinted with `AppColors.calorie`; deficit
+/// extend up from the center zero-line tinted with `BulkAITheme.Color.accent`; deficit
 /// (negative) bars extend down tinted `.green`. Today is the rightmost bar,
 /// 30 days ago is the leftmost.
 ///
@@ -30,7 +30,7 @@ struct EnergyBalanceChartView: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppColors.appCard)
+        .background(BulkAITheme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
@@ -70,7 +70,7 @@ struct EnergyBalanceChartView: View {
                 .tracking(0.5)
             Text(formatSignedKcal(mean))
                 .font(.system(.footnote, design: .rounded, weight: .semibold))
-                .foregroundStyle(mean >= 0 ? AppColors.calorie : .green)
+                .foregroundStyle(mean >= 0 ? BulkAITheme.Color.accent : .green)
                 .monospacedDigit()
         }
     }
@@ -88,7 +88,7 @@ struct EnergyBalanceChartView: View {
         let delta = recentAvg - priorAvg
         let arrow = delta >= 0 ? "arrow.up" : "arrow.down"
         // Delta > 0 means the recent week skews more toward surplus (or less deficit).
-        let color: Color = delta >= 0 ? AppColors.calorie : .green
+        let color: Color = delta >= 0 ? BulkAITheme.Color.accent : .green
 
         return VStack(alignment: .trailing, spacing: 2) {
             Text("Trend")
@@ -144,7 +144,7 @@ struct EnergyBalanceChartView: View {
         let magnitude = CGFloat(abs(balance) / maxMagnitude)
         let length = max(1, magnitude * halfHeight)
         let isSurplus = balance >= 0
-        let color: Color = isSurplus ? AppColors.calorie : .green
+        let color: Color = isSurplus ? BulkAITheme.Color.accent : .green
 
         return VStack(spacing: 0) {
             // Top half — used by surplus bars

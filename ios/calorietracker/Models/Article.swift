@@ -8,19 +8,19 @@ enum ArticleCategory: String, CaseIterable {
 
     var color: Color {
         switch self {
-        case .nutrition: return AppColors.protein
-        case .science: return AppColors.calorie
-        case .lifestyle: return AppColors.fat
-        case .technology: return AppColors.carbs
+        case .nutrition: return BulkAITheme.Color.macroProtein
+        case .science: return BulkAITheme.Color.accent
+        case .lifestyle: return BulkAITheme.Color.macroFat
+        case .technology: return BulkAITheme.Color.macroCarbs
         }
     }
 
     var gradient: [Color] {
         switch self {
-        case .nutrition: return AppColors.proteinGradient
-        case .science: return AppColors.calorieGradient
-        case .lifestyle: return AppColors.fatGradient
-        case .technology: return AppColors.carbsGradient
+        case .nutrition: return BulkAITheme.Color.accentGradient
+        case .science: return BulkAITheme.Color.accentGradient
+        case .lifestyle: return BulkAITheme.Color.accentGradient
+        case .technology: return BulkAITheme.Color.accentGradient
         }
     }
 }

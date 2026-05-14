@@ -51,10 +51,10 @@ struct VoiceInputView: View {
                 Text(provider.rawValue)
                     .font(.system(.caption2, design: .rounded, weight: .medium))
             }
-            .foregroundStyle(AppColors.calorie)
+            .foregroundStyle(BulkAITheme.Color.accent)
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
-            .background(Capsule().fill(AppColors.calorie.opacity(0.12)))
+            .background(Capsule().fill(BulkAITheme.Color.accent.opacity(0.12)))
 
             // Transcription area
             ZStack(alignment: .topLeading) {
@@ -105,7 +105,7 @@ struct VoiceInputView: View {
                     .frame(width: 72, height: 72)
                     .background(
                         Circle()
-                            .fill(isRecording ? Color.red : AppColors.calorie)
+                            .fill(isRecording ? Color.red : BulkAITheme.Color.accent)
                     )
                     .scaleEffect(pulseScale)
             }
@@ -143,7 +143,7 @@ struct VoiceInputView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppColors.calorie)
+            .tint(BulkAITheme.Color.accent)
             .controlSize(.large)
             .disabled(analyzeButtonDisabled)
 

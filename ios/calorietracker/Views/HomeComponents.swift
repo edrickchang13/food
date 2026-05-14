@@ -92,20 +92,20 @@ struct WeekEnergyStrip: View {
             VStack(spacing: 6) {
                 Text(date.formatted(.dateTime.weekday(.narrow)))
                     .font(.system(.caption2, design: .rounded, weight: .medium))
-                    .foregroundStyle(isSelected ? AppColors.calorie : Color.secondary.opacity(0.6))
+                    .foregroundStyle(isSelected ? BulkAITheme.Color.accent : Color.secondary.opacity(0.6))
 
                 Text(date.formatted(.dateTime.day()))
                     .font(.system(.body, design: .rounded, weight: .semibold))
-                    .foregroundStyle(isSelected ? .white : (isToday ? AppColors.calorie : .primary))
+                    .foregroundStyle(isSelected ? .white : (isToday ? BulkAITheme.Color.accent : .primary))
                     .frame(width: 36, height: 36)
                     .background {
                         if isSelected {
                             Circle()
-                                .fill(LinearGradient(colors: AppColors.calorieGradient, startPoint: .topLeading, endPoint: .bottomTrailing))
-                                .shadow(color: AppColors.calorie.opacity(0.35), radius: 6, y: 3)
+                                .fill(LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .topLeading, endPoint: .bottomTrailing))
+                                .shadow(color: BulkAITheme.Color.accent.opacity(0.35), radius: 6, y: 3)
                         } else if isToday {
                             Circle()
-                                .strokeBorder(AppColors.calorie.opacity(0.35), lineWidth: 1.5)
+                                .strokeBorder(BulkAITheme.Color.accent.opacity(0.35), lineWidth: 1.5)
                         }
                     }
             }
@@ -190,13 +190,13 @@ enum HomeTopNutrient: String, CaseIterable, Identifiable {
     var gradientColors: [Color] {
         switch self {
         case .protein:
-            AppColors.proteinGradient
+            BulkAITheme.Color.accentGradient
         case .carbs:
-            AppColors.carbsGradient
+            BulkAITheme.Color.accentGradient
         case .fat:
-            AppColors.fatGradient
+            BulkAITheme.Color.accentGradient
         default:
-            AppColors.calorieGradient
+            BulkAITheme.Color.accentGradient
         }
     }
 
@@ -273,7 +273,7 @@ struct HomeNutrientPickerSheet: View {
                         }
                     }
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
 
                 Section {
                     ForEach(HomeTopNutrient.allCases) { nutrient in
@@ -286,7 +286,7 @@ struct HomeNutrientPickerSheet: View {
                                 Spacer()
                                 if draftSelection.contains(nutrient) {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(AppColors.calorie)
+                                        .foregroundStyle(BulkAITheme.Color.accent)
                                 }
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -299,10 +299,10 @@ struct HomeNutrientPickerSheet: View {
                 } footer: {
                     Text("Pick exactly three nutrients for the Home summary row.")
                 }
-                .listRowBackground(AppColors.appCard)
+                .listRowBackground(BulkAITheme.Color.surface)
             }
             .scrollContentBackground(.hidden)
-            .background(AppColors.appBackground)
+            .background(BulkAITheme.Color.background)
             .navigationTitle("Home Nutrients")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -314,7 +314,7 @@ struct HomeNutrientPickerSheet: View {
                     Button("Reset") {
                         draftSelection = HomeTopNutrient.defaultSelection
                     }
-                    .tint(AppColors.calorie)
+                    .tint(BulkAITheme.Color.accent)
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
@@ -322,7 +322,7 @@ struct HomeNutrientPickerSheet: View {
                         selectionRawValue = HomeTopNutrient.storageValue(for: draftSelection)
                         dismiss()
                     }
-                    .tint(AppColors.calorie)
+                    .tint(BulkAITheme.Color.accent)
                     .disabled(draftSelection.count != 3)
                 }
             }
