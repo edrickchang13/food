@@ -114,8 +114,8 @@ struct DashboardView: View {
                             target: profile.effectiveCarbs,
                             unit: "g"
                         ),
-                        onSeeAll: { foodEntryRoute = FoodEntryRoute(tabIndex: 3) },
-                        onTapMacro: { _ in foodEntryRoute = FoodEntryRoute(tabIndex: 3) }
+                        onSeeAll: { foodEntryRoute = FoodEntryRoute(tabIndex: 4) },
+                        onTapMacro: { _ in foodEntryRoute = FoodEntryRoute(tabIndex: 4) }
                     )
                     GeneralSection(
                         stepsHistory: cachedStepsHistory,
@@ -154,8 +154,8 @@ struct DashboardView: View {
 
             DashboardSearchBar(
                 query: $searchQuery,
-                onBarcodeTap: { foodEntryRoute = FoodEntryRoute(tabIndex: 2) },
-                onAITap: { foodEntryRoute = FoodEntryRoute(tabIndex: 1) }
+                onBarcodeTap: { foodEntryRoute = FoodEntryRoute(tabIndex: 3) },
+                onAITap: { foodEntryRoute = FoodEntryRoute(tabIndex: 2) }
             )
             .padding(.horizontal, 16)
             .padding(.bottom, 8)

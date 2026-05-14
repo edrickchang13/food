@@ -35,8 +35,8 @@ struct FoodEntrySheet: View {
 
     /// Initial tab. Used by Dashboard search-bar affordances to deep-link the
     /// sheet into Scan (barcode) or AI without making the user pick the tab
-    /// first. Indices match the `tabs` array: 0 Search / 1 AI / 2 Scan /
-    /// 3 Quick Add / 4 Library.
+    /// first. Indices match the `tabs` array: 0 Search / 1 Voice / 2 AI /
+    /// 3 Scan / 4 Quick Add / 5 Library.
     let initialTab: Int
 
     init(initialTime: Date? = nil, initialTab: Int = 0) {
@@ -93,9 +93,10 @@ struct FoodEntrySheet: View {
         var id: String { rawValue }
     }
 
-    private let tabs = ["Search", "AI", "Scan", "Quick Add", "Library"]
+    private let tabs = ["Search", "Voice", "AI", "Scan", "Quick Add", "Library"]
     private let tabIcons = [
         "magnifyingglass",
+        "mic.fill",
         "sparkles",
         "barcode.viewfinder",
         "plus.square",
@@ -199,6 +200,15 @@ struct FoodEntrySheet: View {
                 onToggleFavorite: { favoritesStore.toggle($0.id) }
             )
         case 1:
+            VoiceView(onTranscript: { transcript in
+                runWithConsent {
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(150))
+                        await analyzeText(description: transcript)
+                    }
+                }
+            })
+        case 2:
             AIView(
                 onSnap: { image in
                     runWithConsent {
@@ -210,7 +220,7 @@ struct FoodEntrySheet: View {
                 },
                 onDescribe: { /* AIView owns the buffer; Describe tab is the typed path. */ }
             )
-        case 2:
+        case 3:
             ScanView { image, mode in
                 runWithConsent {
                     Task {
@@ -227,7 +237,7 @@ struct FoodEntrySheet: View {
                     }
                 }
             }
-        case 3:
+        case 4:
             QuickAddView(
                 onQuickAdd: { entry in stage(applyHeader(to: entry)) },
                 onLogFoods: { entry in
@@ -235,7 +245,7 @@ struct FoodEntrySheet: View {
                     commitStaged()
                 }
             )
-        case 4:
+        case 5:
             LibraryView(
                 mode: $libraryMode,
                 items: cachedLibrary,
@@ -333,6 +343,26 @@ struct FoodEntrySheet: View {
             pendingLabelImage = image
             pendingLabelAnalysis = label
             activeFlow = .servingSize
+        } catch {
+            activeFlow = nil
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func analyzeText(description: String) async {
+        errorMessage = nil
+        foodResultImage = nil
+        foodResultEmoji = nil
+        foodResultSource = .textInput
+        activeFlow = .analyzing
+        do {
+            let result = try await GeminiService.analyzeTextInput(
+                description: description,
+                foodDatabase: foodDatabase
+            )
+            foodResult = result
+            foodResultEmoji = result.emoji
+            activeFlow = .foodResult
         } catch {
             activeFlow = nil
             errorMessage = error.localizedDescription
@@ -471,7 +501,7 @@ struct FoodEntrySheet: View {
     private var bottomBarPlaceholder: String {
         switch selectedTab {
         case 0: return "Search foods"
-        case 4: return "Filter library"
+        case 5: return "Filter library"
         default: return "Filter foods"
         }
     }
