@@ -121,7 +121,7 @@ struct ContentView: View {
             // partially-typed forms and scroll positions persist like a real
             // TabView would.
             ZStack {
-                HomeView()
+                DashboardView()
                     .opacity(selectedTab == .home ? 1 : 0)
                     .allowsHitTesting(selectedTab == .home)
                 ProgressTabView()
