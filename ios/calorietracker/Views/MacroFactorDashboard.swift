@@ -192,9 +192,8 @@ struct HabitHeatmap30Day: View {
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.secondary)
                 Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                // No chevron — the card isn't tappable. Adding a destination
+                // (drill into weight log / food history) is on the polish list.
             }
         }
         .padding(14)
@@ -219,9 +218,7 @@ struct EngineInsightsRow: View {
                     .foregroundStyle(.secondary)
                     .tracking(0.8)
                 Spacer()
-                Text("See All")
-                    .font(.system(.caption, design: .rounded, weight: .semibold))
-                    .foregroundStyle(AppColors.calorie)
+                // 'See All' removed — no destination wired yet; visual lie.
             }
             HStack(spacing: 12) {
                 insightPill(

@@ -499,39 +499,18 @@ struct ActivityShareSheet: UIViewControllerRepresentable {
 struct HomeView: View {
     @Environment(FoodStore.self) private var foodStore
     @Environment(FoodDatabaseService.self) private var foodDatabase
-    @State private var showCamera = false
-    @State private var capturedImage: UIImage?
-    @State private var cameraMode: CameraMode = .snapFood
-    @State private var selectedPhotoItem: PhotosPickerItem?
-    @State private var photoPickerMode: CameraMode = .snapFood
-    @State private var showPhotoPicker = false
-    @State private var showError = false
-    @State private var errorMessage = ""
     @State private var selectedDate: Date = .now
-    @State private var showVoicePopover = false
-    @State private var showTextPopover = false
-    @State private var showManualPopover = false
-    @State private var showRecentSheet = false
-    @State private var pendingContextImage: UIImage?
-    @State private var contextDescription: String = ""
-    @State private var showContextSheet = false
 
     enum ActiveSheet: String, Identifiable {
-        case analyzing, foodResult, analyzingText, editFood
+        case editFood
         var id: String { rawValue }
     }
     @State private var activeSheet: ActiveSheet?
     @State private var editingEntry: FoodEntry?
 
-    @State private var currentFoodResult: GeminiService.FoodAnalysis?
-    @State private var currentImage: UIImage?
-    @State private var currentEmoji: String?
-    @State private var showNutritionDetail = false
-    @AppStorage("aiAnalysisConsentGiven") private var aiConsentGiven: Bool = false
     @AppStorage(FoodLogSortOrder.storageKey) private var foodLogSortOrderRaw = FoodLogSortOrder.defaultOrder.rawValue
     @AppStorage(HomeTopNutrient.storageKey) private var homeTopNutrientsRaw = HomeTopNutrient.storageValue(for: HomeTopNutrient.defaultSelection)
     @AppStorage(OptionalNutrientGoals.storageKey) private var optionalNutrientGoalsData = Data()
-    @State private var showAIConsent = false
     @Environment(ProfileStore.self) private var profileStore
 
     /// Force a body re-evaluation whenever profileStore.profile changes by reading it
@@ -578,6 +557,21 @@ struct HomeView: View {
         let _ = profileStore.profile
         return NavigationStack {
             List {
+                // Week-energy date strip — drives `selectedDate`, which the food
+                // log query below reads. Without this strip the user has no way
+                // to navigate to past days (orphaned-state regression caught by
+                // the home-screen audit).
+                Section {
+                    WeekEnergyStrip(
+                        selectedDate: $selectedDate,
+                        caloriesForDate: { foodStore.calories(for: $0) },
+                        calorieGoal: calorieGoal
+                    )
+                }
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+
                 // MacroFactor-style dashboard: header + calorie ring + macro bars
                 // + insights row + habit heatmaps. Replaces the legacy Fud AI
                 // hero (week strip + giant calorie number + nutrient trio cards)
@@ -655,337 +649,13 @@ struct HomeView: View {
             .animation(.snappy, value: selectedDate)
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                            Button(action: {
-
-                                cameraMode = .snapFood
-                                showCamera = true
-                            }) {
-                                Label("Camera", systemImage: "camera.fill")
-                            }
-                            Button(action: {
-
-                                cameraMode = .snapFoodWithContext
-                                showCamera = true
-                            }) {
-                                Label("Camera + Note", systemImage: "camera.badge.ellipsis")
-                            }
-                            Button(action: {
-
-                                cameraMode = .nutritionLabel
-                                showCamera = true
-                            }) {
-                                Label("Nutrition Label", systemImage: "text.viewfinder")
-                            }
-                            Button(action: {
-
-                                cameraMode = .snapFood
-                                photoPickerMode = .snapFood
-                                showPhotoPicker = true
-                            }) {
-                                Label("From Photos", systemImage: "photo.on.rectangle")
-                            }
-                            Button(action: {
-
-                                cameraMode = .snapFoodWithContext
-                                photoPickerMode = .snapFoodWithContext
-                                showPhotoPicker = true
-                            }) {
-                                Label("From Photos + Note", systemImage: "photo.badge.plus")
-                            }
-                            Button(action: {
-
-                                showTextPopover = true
-                            }) {
-                                Label("Text Input", systemImage: "character.cursor.ibeam")
-                            }
-                            Button(action: {
-
-                                showVoicePopover = true
-                            }) {
-                                Label("Voice", systemImage: "mic.fill")
-                            }
-                            Button(action: {
-
-                                showManualPopover = true
-                            }) {
-                                Label("Manual Entry", systemImage: "square.and.pencil")
-                            }
-                            Button(action: {
-
-                                showRecentSheet = true
-                            }) {
-                                Label("Saved Meals", systemImage: "bookmark.fill")
-                            }
-                        } label: {
-                            Image(systemName: "plus")
-                        }
-                        .popover(isPresented: $showTextPopover) {
-                            TextFoodInputView(
-                                onCancel: {
-                                    showTextPopover = false
-                                },
-                                onSubmit: { description in
-                                    showTextPopover = false
-                                    currentImage = nil
-                                    currentEmoji = nil
-                                    guard aiConsentGiven else { showAIConsent = true; return }
-                                    Task {
-                                        try? await Task.sleep(for: .milliseconds(300))
-                                        activeSheet = .analyzingText
-                                        do {
-                                            let result = try await GeminiService.analyzeTextInput(description: description, foodDatabase: foodDatabase)
-
-                                            currentFoodResult = result
-                                            currentEmoji = result.emoji
-                                            activeSheet = .foodResult
-                                        } catch {
-                                            activeSheet = nil
-                                            errorMessage = error.localizedDescription
-                                            showError = true
-                                        }
-                                    }
-                                }
-                            )
-                            .presentationCompactAdaptation(.popover)
-                        }
-                        .popover(isPresented: $showVoicePopover) {
-                            VoiceInputView(
-                                onCancel: {
-                                    showVoicePopover = false
-                                },
-                                onSubmit: { description in
-                                    showVoicePopover = false
-                                    currentImage = nil
-                                    currentEmoji = nil
-                                    guard aiConsentGiven else { showAIConsent = true; return }
-                                    Task {
-                                        try? await Task.sleep(for: .milliseconds(300))
-                                        activeSheet = .analyzingText
-                                        do {
-                                            let result = try await GeminiService.analyzeTextInput(description: description, foodDatabase: foodDatabase)
-
-                                            currentFoodResult = result
-                                            currentEmoji = result.emoji
-                                            activeSheet = .foodResult
-                                        } catch {
-                                            activeSheet = nil
-                                            errorMessage = error.localizedDescription
-                                            showError = true
-                                        }
-                                    }
-                                }
-                            )
-                            .presentationCompactAdaptation(.popover)
-                        }
-                        .popover(isPresented: $showManualPopover) {
-                            ManualEntryView(
-                                logDate: logDateForSelectedDay,
-                                onCancel: { showManualPopover = false },
-                                onSave: { entry in
-                                    showManualPopover = false
-                                    foodStore.addEntry(entry)
-                                }
-                            )
-                            .presentationCompactAdaptation(.popover)
-                        }
-                }
-            }
-            .fullScreenCover(isPresented: $showCamera) {
-                CameraView(image: $capturedImage)
-                    .ignoresSafeArea()
-            }
-            .onChange(of: capturedImage) { oldValue, newValue in
-                guard let image = newValue else { return }
-                capturedImage = nil
-                currentImage = image
-                currentEmoji = nil
-                if cameraMode == .snapFoodWithContext {
-                    pendingContextImage = image
-                    contextDescription = ""
-                    showContextSheet = true
-                } else {
-                    startAnalysis(image: image, mode: cameraMode)
-                }
-            }
-            .sheet(isPresented: $showContextSheet) {
-                ContextDescriptionSheet(
-                    image: pendingContextImage,
-                    description: $contextDescription,
-                    onAnalyze: {
-                        let desc = contextDescription
-                        let image = pendingContextImage
-                        showContextSheet = false
-                        pendingContextImage = nil
-                        if let image {
-                            startAnalysis(image: image, mode: .snapFoodWithContext, description: desc)
-                        }
-                    },
-                    onCancel: {
-                        showContextSheet = false
-                        pendingContextImage = nil
-                        currentImage = nil
-                    }
-                )
-            }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
-                case .analyzing:
-                    AnalyzingView(image: currentImage)
-                case .analyzingText:
-                    AnalyzingView(image: nil, message: "Looking up nutrition...")
-                case .foodResult:
-                    if let result = currentFoodResult {
-                        FoodResultView(
-                            image: currentImage,
-                            emoji: currentEmoji,
-                            source: currentImage == nil ? .textInput : (cameraMode == .nutritionLabel ? .nutritionLabel : .snapFood),
-                            name: result.name,
-                            calories: result.calories,
-                            protein: result.protein,
-                            carbs: result.carbs,
-                            fat: result.fat,
-                            servingSizeGrams: result.servingSizeGrams,
-                            sugar: result.sugar,
-                            addedSugar: result.addedSugar,
-                            fiber: result.fiber,
-                            saturatedFat: result.saturatedFat,
-                            monounsaturatedFat: result.monounsaturatedFat,
-                            polyunsaturatedFat: result.polyunsaturatedFat,
-                            cholesterol: result.cholesterol,
-                            sodium: result.sodium,
-                            potassium: result.potassium,
-                            servingUnitOptions: result.servingUnitOptions,
-                            selectedServingUnit: result.selectedServingUnit,
-                            selectedServingQuantity: result.selectedServingQuantity,
-                            logDate: logDateForSelectedDay,
-                            onLog: { entry in
-                                foodStore.addEntry(entry)
-                            }
-                        )
-                    }
                 case .editFood:
                     if let editingEntry {
                         EditFoodEntryView(entry: editingEntry)
                     }
                 }
-            }
-            .sheet(isPresented: $showRecentSheet, content: {
-                RecentsView(logDate: logDateForSelectedDay, onReview: { entry in
-                    if let imageData = entry.imageData, let image = UIImage(data: imageData) {
-                        currentImage = image
-                    } else {
-                        currentImage = nil
-                    }
-                    currentEmoji = entry.emoji
-                    currentFoodResult = GeminiService.FoodAnalysis(
-                        name: entry.name,
-                        calories: entry.calories,
-                        protein: entry.protein,
-                        carbs: entry.carbs,
-                        fat: entry.fat,
-                        servingSizeGrams: entry.servingSizeGrams ?? 100,
-                        emoji: entry.emoji,
-                        sugar: entry.sugar,
-                        addedSugar: entry.addedSugar,
-                        fiber: entry.fiber,
-                        saturatedFat: entry.saturatedFat,
-                        monounsaturatedFat: entry.monounsaturatedFat,
-                        polyunsaturatedFat: entry.polyunsaturatedFat,
-                        cholesterol: entry.cholesterol,
-                        sodium: entry.sodium,
-                        potassium: entry.potassium,
-                        servingUnitOptions: entry.servingUnitOptions,
-                        selectedServingUnit: entry.selectedServingUnit,
-                        selectedServingQuantity: entry.selectedServingQuantity
-                    )
-                    activeSheet = .foodResult
-                })
-            })
-            .interactiveDismissDisabled(activeSheet == .analyzing || activeSheet == .analyzingText)
-            .photosPicker(isPresented: $showPhotoPicker, selection: $selectedPhotoItem, matching: .images)
-            .onChange(of: selectedPhotoItem) { oldValue, newValue in
-                guard let item = newValue else { return }
-                selectedPhotoItem = nil
-                guard aiConsentGiven else { showAIConsent = true; return }
-                Task {
-                    if let data = try? await item.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
-                        currentImage = image
-                        currentEmoji = nil
-                        if photoPickerMode == .snapFoodWithContext {
-                            pendingContextImage = image
-                            contextDescription = ""
-                            showContextSheet = true
-                            return
-                        }
-
-                        activeSheet = .analyzing
-                        do {
-                            let result = try await GeminiService.autoAnalyze(image: image)
-
-                            currentFoodResult = result
-                            activeSheet = .foodResult
-                        } catch {
-                            activeSheet = nil
-                            errorMessage = error.localizedDescription
-                            showError = true
-                        }
-                    }
-                }
-            }
-            .alert("Error", isPresented: $showError) {
-                Button("OK") { }
-            } message: {
-                Text(errorMessage)
-            }
-            .sheet(isPresented: $showNutritionDetail) {
-                NutritionDetailView(date: selectedDate, homeTopNutrientsRaw: $homeTopNutrientsRaw)
-            }
-            .sheet(isPresented: $showAIConsent) {
-                AIConsentSheetView(
-                    onAllow: {
-                        aiConsentGiven = true
-                        showAIConsent = false
-                    },
-                    onCancel: {
-                        showAIConsent = false
-                    }
-                )
-            }
-        }
-    }
-
-
-    private func startAnalysis(image: UIImage, mode: CameraMode, description: String? = nil) {
-        guard aiConsentGiven else { showAIConsent = true; return }
-        activeSheet = .analyzing
-
-        Task {
-            do {
-                switch mode {
-                case .snapFood:
-                    let result = try await GeminiService.analyzeFood(image: image)
-                    currentFoodResult = result
-                    activeSheet = .foodResult
-
-                case .snapFoodWithContext:
-                    let result = try await GeminiService.analyzeFood(image: image, description: description)
-                    currentFoodResult = result
-                    activeSheet = .foodResult
-
-                case .nutritionLabel:
-                    let label = try await GeminiService.analyzeNutritionLabel(image: image)
-                    let servingGrams = label.servingSizeGrams ?? 100
-                    currentFoodResult = label.scaled(to: servingGrams)
-                    activeSheet = .foodResult
-                }
-            } catch {
-                activeSheet = nil
-                errorMessage = error.localizedDescription
-                showError = true
             }
         }
     }
