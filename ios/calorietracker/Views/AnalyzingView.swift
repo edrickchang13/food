@@ -18,17 +18,17 @@ struct AnalyzingView: View {
             } else {
                 Image(systemName: "text.magnifyingglass")
                     .font(.system(size: 64))
-                    .foregroundStyle(AppColors.calorie)
+                    .foregroundStyle(BulkAITheme.Color.accent)
                     .frame(maxWidth: 250, maxHeight: 250)
             }
 
             ProgressView()
                 .controlSize(.large)
-                .tint(AppColors.calorie)
+                .tint(BulkAITheme.Color.accent)
 
             Text(message)
                 .font(.headline)
-                .foregroundStyle(AppColors.calorie)
+                .foregroundStyle(BulkAITheme.Color.accent)
 
             Spacer()
         }

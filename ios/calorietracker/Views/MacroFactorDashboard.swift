@@ -21,13 +21,13 @@ struct CalorieRingHero: View {
             ZStack {
                 HalfRingShape()
                     .stroke(
-                        AppColors.calorie.opacity(0.14),
+                        BulkAITheme.Color.accent.opacity(0.14),
                         style: StrokeStyle(lineWidth: 14, lineCap: .round)
                     )
                 HalfRingShape()
                     .trim(from: 0, to: progress * 0.5)
                     .stroke(
-                        AppColors.calorie,
+                        BulkAITheme.Color.accent,
                         style: StrokeStyle(lineWidth: 14, lineCap: .round)
                     )
                     .animation(.spring(response: 0.7, dampingFraction: 0.8), value: progress)
@@ -198,7 +198,7 @@ struct HabitHeatmap30Day: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppColors.appCard)
+        .background(BulkAITheme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
@@ -226,7 +226,7 @@ struct EngineInsightsRow: View {
                     value: expenditure.map { "\(Int($0.kcalPerDay)) kcal" } ?? "—",
                     subtitle: "Last 14 days",
                     icon: "flame.fill",
-                    color: AppColors.calorie
+                    color: BulkAITheme.Color.accent
                 )
                 insightPill(
                     title: "Weight Trend",
@@ -259,7 +259,7 @@ struct EngineInsightsRow: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .background(AppColors.appCard)
+        .background(BulkAITheme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
@@ -327,7 +327,7 @@ struct MacroFactorDashboard: View {
             )
         }
         .padding(20)
-        .background(AppColors.appCard)
+        .background(BulkAITheme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 

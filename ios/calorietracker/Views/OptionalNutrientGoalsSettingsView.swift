@@ -18,7 +18,7 @@ struct OptionalNutrientGoalsSettingsView: View {
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "sparkles")
-                            .foregroundStyle(AppColors.calorie)
+                            .foregroundStyle(BulkAITheme.Color.accent)
                             .frame(width: 22)
                         Text(isSuggesting ? "Analyzing" : "Suggest with AI")
                             .foregroundStyle(.primary)
@@ -38,14 +38,14 @@ struct OptionalNutrientGoalsSettingsView: View {
                         Text("Reset Defaults")
                     } icon: {
                         Image(systemName: "arrow.counterclockwise")
-                            .foregroundStyle(AppColors.calorie)
+                            .foregroundStyle(BulkAITheme.Color.accent)
                     }
                 }
                 .buttonStyle(.plain)
             } footer: {
                 Text("Separate from calorie, protein, carb, and fat goals.")
             }
-            .listRowBackground(AppColors.appCard)
+            .listRowBackground(BulkAITheme.Color.surface)
 
             Section("Other Nutrients") {
                 ForEach(OptionalNutrient.allCases) { nutrient in
@@ -54,7 +54,7 @@ struct OptionalNutrientGoalsSettingsView: View {
                     } label: {
                         HStack(spacing: 12) {
                             Image(systemName: nutrient.iconName)
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                                 .frame(width: 22)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(nutrient.displayName)
@@ -74,10 +74,10 @@ struct OptionalNutrientGoalsSettingsView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .listRowBackground(AppColors.appCard)
+            .listRowBackground(BulkAITheme.Color.surface)
         }
         .scrollContentBackground(.hidden)
-        .background(AppColors.appBackground)
+        .background(BulkAITheme.Color.background)
         .navigationTitle("Other Nutrients")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {

@@ -135,7 +135,7 @@ struct FoodDatabaseView: View {
                 .font(.system(.caption, design: .rounded, weight: .semibold))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
-                .background(isSelected ? AppColors.calorie : AppColors.appCard)
+                .background(isSelected ? BulkAITheme.Color.accent : BulkAITheme.Color.surface)
                 .foregroundStyle(isSelected ? .white : .primary)
                 .clipShape(Capsule())
         }

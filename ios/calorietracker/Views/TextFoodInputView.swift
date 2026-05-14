@@ -59,7 +59,7 @@ struct TextFoodInputView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppColors.calorie)
+            .tint(BulkAITheme.Color.accent)
             .controlSize(.large)
             .disabled(foodDescription.trimmingCharacters(in: .whitespaces).isEmpty)
 

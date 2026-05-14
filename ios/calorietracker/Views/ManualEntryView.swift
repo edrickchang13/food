@@ -54,7 +54,7 @@ struct ManualEntryView: View {
                         }
                     }
                     .pickerStyle(.menu)
-                    .tint(AppColors.calorie)
+                    .tint(BulkAITheme.Color.accent)
                     .labelsHidden()
                 }
                 .padding(10)
@@ -79,7 +79,7 @@ struct ManualEntryView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppColors.calorie)
+            .tint(BulkAITheme.Color.accent)
             .controlSize(.large)
             .disabled(!canSave)
 
@@ -88,7 +88,7 @@ struct ManualEntryView: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(AppColors.appBackground.ignoresSafeArea())
+        .background(BulkAITheme.Color.background.ignoresSafeArea())
         .onAppear { focused = .name }
     }
 

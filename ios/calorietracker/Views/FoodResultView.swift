@@ -220,7 +220,7 @@ struct FoodResultView: View {
                             OptionalNutritionDisplayRow(label: "Sodium", value: scaledSodium, unit: "mg")
                             OptionalNutritionDisplayRow(label: "Potassium", value: scaledPotassium, unit: "mg")
                         }
-                        .tint(AppColors.calorie)
+                        .tint(BulkAITheme.Color.accent)
                     }
 
                     Section("Meal") {
@@ -231,12 +231,12 @@ struct FoodResultView: View {
                             }
                         }
                         .pickerStyle(.menu)
-                        .tint(AppColors.calorie)
+                        .tint(BulkAITheme.Color.accent)
                     }
 
                 }
                 .scrollContentBackground(.hidden)
-                .background(AppColors.appBackground)
+                .background(BulkAITheme.Color.background)
                 .background(KeyboardDismissTapInstaller())
                 .safeAreaInset(edge: .bottom) {
                     if isQuantityEditing {
@@ -256,7 +256,7 @@ struct FoodResultView: View {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Log", action: logFood)
                             .font(.system(.body, design: .rounded, weight: .semibold))
-                            .tint(AppColors.calorie)
+                            .tint(BulkAITheme.Color.accent)
                     }
                 }
             }

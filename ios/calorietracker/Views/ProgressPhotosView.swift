@@ -45,7 +45,7 @@ struct ProgressPhotosView: View {
             }
             .padding(16)
         }
-        .background(AppColors.appBackground)
+        .background(BulkAITheme.Color.background)
         .navigationTitle("Progress photos")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -85,7 +85,7 @@ struct ProgressPhotosView: View {
                 .font(.system(.caption, design: .rounded, weight: .semibold))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
-                .background(isSelected ? AppColors.calorie : AppColors.appCard)
+                .background(isSelected ? BulkAITheme.Color.accent : BulkAITheme.Color.surface)
                 .foregroundStyle(isSelected ? .white : .primary)
                 .clipShape(Capsule())
         }
@@ -112,7 +112,7 @@ struct ProgressPhotosView: View {
             }
         } else {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(AppColors.appCard)
+                .fill(BulkAITheme.Color.surface)
                 .frame(height: 120)
                 .overlay(Image(systemName: "photo").foregroundStyle(.secondary))
         }

@@ -70,7 +70,7 @@ struct RecentsView: View {
                         Section {
                             ForEach(recentItems) { entry in
                                 SavedMealRow(entry: entry, isFavorite: foodStore.isFavorite(entry))
-                                    .listRowBackground(AppColors.appCard)
+                                    .listRowBackground(BulkAITheme.Color.surface)
                                     .contentShape(Rectangle())
                                     .onTapGesture { logEntry(entry) }
                                     .swipeActions(edge: .trailing) {
@@ -79,7 +79,7 @@ struct RecentsView: View {
                                         } label: {
                                             Label(foodStore.isFavorite(entry) ? "Unfavorite" : "Favorite", systemImage: foodStore.isFavorite(entry) ? "heart.slash.fill" : "heart.fill")
                                         }
-                                        .tint(AppColors.calorie)
+                                        .tint(BulkAITheme.Color.accent)
                                     }
                             }
                         }
@@ -95,7 +95,7 @@ struct RecentsView: View {
                         Section {
                             ForEach(frequentItems) { group in
                                 SavedMealRow(entry: group.template, isFavorite: foodStore.isFavorite(group.template), subtitle: "\(group.count)× logged")
-                                    .listRowBackground(AppColors.appCard)
+                                    .listRowBackground(BulkAITheme.Color.surface)
                                     .contentShape(Rectangle())
                                     .onTapGesture { logEntry(group.template) }
                                     .swipeActions(edge: .trailing) {
@@ -104,7 +104,7 @@ struct RecentsView: View {
                                         } label: {
                                             Label(foodStore.isFavorite(group.template) ? "Unfavorite" : "Favorite", systemImage: foodStore.isFavorite(group.template) ? "heart.slash.fill" : "heart.fill")
                                         }
-                                        .tint(AppColors.calorie)
+                                        .tint(BulkAITheme.Color.accent)
                                     }
                             }
                         }
@@ -120,7 +120,7 @@ struct RecentsView: View {
                         Section {
                             ForEach(favoriteItems) { entry in
                                 SavedMealRow(entry: entry, isFavorite: true)
-                                    .listRowBackground(AppColors.appCard)
+                                    .listRowBackground(BulkAITheme.Color.surface)
                                     .contentShape(Rectangle())
                                     .onTapGesture { logEntry(entry) }
                                     .swipeActions(edge: .trailing) {
@@ -143,7 +143,7 @@ struct RecentsView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(AppColors.appBackground)
+            .background(BulkAITheme.Color.background)
             .navigationTitle("Saved Meals")
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: Text("Search saved foods"))
@@ -190,7 +190,7 @@ struct RecentsView: View {
             VStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 32))
-                    .foregroundStyle(AppColors.calorie.opacity(0.4))
+                    .foregroundStyle(BulkAITheme.Color.accent.opacity(0.4))
                 Text(message)
                     .font(.system(.subheadline, design: .rounded))
                     .foregroundStyle(.secondary)
@@ -198,7 +198,7 @@ struct RecentsView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 24)
-            .listRowBackground(AppColors.appCard)
+            .listRowBackground(BulkAITheme.Color.surface)
         }
     }
 }
@@ -221,7 +221,7 @@ private struct SavedMealRow: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .strokeBorder(AppColors.calorie.opacity(0.15), lineWidth: 1)
+                            .strokeBorder(BulkAITheme.Color.accent.opacity(0.15), lineWidth: 1)
                     )
             } else if let emoji = entry.emoji {
                 Text(emoji)
@@ -231,7 +231,7 @@ private struct SavedMealRow: View {
             } else {
                 Image(systemName: "fork.knife")
                     .font(.title3)
-                    .foregroundStyle(AppColors.calorie)
+                    .foregroundStyle(BulkAITheme.Color.accent)
                     .frame(width: 56, height: 56)
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
@@ -245,14 +245,14 @@ private struct SavedMealRow: View {
                     if isFavorite {
                         Image(systemName: "heart.fill")
                             .font(.caption2)
-                            .foregroundStyle(AppColors.calorie)
+                            .foregroundStyle(BulkAITheme.Color.accent)
                     }
                 }
 
                 HStack(spacing: 6) {
                     Text("\(entry.calories) kcal")
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
 
                     if let subtitle {
                         Text("·")
@@ -275,7 +275,7 @@ private struct SavedMealRow: View {
             // Log button
             Image(systemName: "plus.circle.fill")
                 .font(.title3)
-                .foregroundStyle(AppColors.calorie)
+                .foregroundStyle(BulkAITheme.Color.accent)
         }
         .padding(.vertical, 4)
     }
@@ -293,6 +293,6 @@ private struct MacroTag: View {
             .foregroundStyle(.secondary)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
-            .background(AppColors.calorie.opacity(0.08), in: Capsule())
+            .background(BulkAITheme.Color.accent.opacity(0.08), in: Capsule())
     }
 }

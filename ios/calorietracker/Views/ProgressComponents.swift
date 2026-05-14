@@ -54,7 +54,7 @@ struct WeightChartSection: View {
                 Button(action: onLogWeight) {
                     Label("Log Weight", systemImage: "plus.circle.fill")
                         .font(.system(.subheadline, design: .rounded, weight: .medium))
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                 }
             }
 
@@ -77,7 +77,7 @@ struct WeightChartSection: View {
                             x: .value("Date", entry.date, unit: .day),
                             y: .value("Weight", displayWeight(entry.weightKg))
                         )
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                         .interpolationMethod(.catmullRom)
                         .lineStyle(StrokeStyle(lineWidth: 2))
 
@@ -85,7 +85,7 @@ struct WeightChartSection: View {
                             x: .value("Date", entry.date, unit: .day),
                             y: .value("Weight", displayWeight(entry.weightKg))
                         )
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                         .symbolSize(30)
                     }
 
@@ -108,7 +108,7 @@ struct WeightChartSection: View {
             }
         }
         .padding()
-        .background(AppColors.appCard)
+        .background(BulkAITheme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
@@ -160,13 +160,13 @@ struct CalorieChartSection: View {
                             y: .value("Calories", item.calories)
                         )
                         .foregroundStyle(
-                            LinearGradient(colors: AppColors.calorieGradient, startPoint: .bottom, endPoint: .top)
+                            LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .bottom, endPoint: .top)
                         )
                         .cornerRadius(4)
                     }
 
                     RuleMark(y: .value("Goal", calorieGoal))
-                        .foregroundStyle(AppColors.calorie.opacity(0.6))
+                        .foregroundStyle(BulkAITheme.Color.accent.opacity(0.6))
                         .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
                 }
                 .chartXAxis {
@@ -179,7 +179,7 @@ struct CalorieChartSection: View {
             }
         }
         .padding()
-        .background(AppColors.appCard)
+        .background(BulkAITheme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
@@ -208,12 +208,12 @@ struct MacroAveragesSection: View {
             Text("Macro Averages")
                 .font(.system(.headline, design: .rounded, weight: .semibold))
 
-            MacroProgressRow(label: "Protein", current: avgProtein, goal: proteinGoal, color: AppColors.protein, gradientColors: AppColors.proteinGradient)
-            MacroProgressRow(label: "Carbs", current: avgCarbs, goal: carbsGoal, color: AppColors.carbs, gradientColors: AppColors.carbsGradient)
-            MacroProgressRow(label: "Fat", current: avgFat, goal: fatGoal, color: AppColors.fat, gradientColors: AppColors.fatGradient)
+            MacroProgressRow(label: "Protein", current: avgProtein, goal: proteinGoal, color: BulkAITheme.Color.macroProtein, gradientColors: [BulkAITheme.Color.macroProtein])
+            MacroProgressRow(label: "Carbs", current: avgCarbs, goal: carbsGoal, color: BulkAITheme.Color.macroCarbs, gradientColors: [BulkAITheme.Color.macroCarbs])
+            MacroProgressRow(label: "Fat", current: avgFat, goal: fatGoal, color: BulkAITheme.Color.macroFat, gradientColors: [BulkAITheme.Color.macroFat])
         }
         .padding()
-        .background(AppColors.appCard)
+        .background(BulkAITheme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }
@@ -270,14 +270,14 @@ struct StatsSection: View {
                 .font(.system(.headline, design: .rounded, weight: .semibold))
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                StatTile(icon: "flame.fill", label: "Current Streak", value: "\(streak) days", color: AppColors.calorie)
-                StatTile(icon: "trophy.fill", label: "Best Streak", value: "\(bestStreak) days", color: AppColors.carbs)
-                StatTile(icon: "target", label: "Days on Target", value: "\(daysOnTarget)", color: AppColors.protein)
-                StatTile(icon: "fork.knife", label: "Total Entries", value: "\(totalEntries)", color: AppColors.fat)
+                StatTile(icon: "flame.fill", label: "Current Streak", value: "\(streak) days", color: BulkAITheme.Color.accent)
+                StatTile(icon: "trophy.fill", label: "Best Streak", value: "\(bestStreak) days", color: BulkAITheme.Color.macroCarbs)
+                StatTile(icon: "target", label: "Days on Target", value: "\(daysOnTarget)", color: BulkAITheme.Color.macroProtein)
+                StatTile(icon: "fork.knife", label: "Total Entries", value: "\(totalEntries)", color: BulkAITheme.Color.macroFat)
             }
         }
         .padding()
-        .background(AppColors.appCard)
+        .background(BulkAITheme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }
@@ -405,7 +405,7 @@ struct LogWeightSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(
-                            LinearGradient(colors: AppColors.calorieGradient, startPoint: .leading, endPoint: .trailing)
+                            LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .leading, endPoint: .trailing)
                         )
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -436,7 +436,7 @@ struct WeightHistoryLink: View {
             HStack(spacing: 12) {
                 Image(systemName: "list.bullet.rectangle")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(AppColors.calorie)
+                    .foregroundStyle(BulkAITheme.Color.accent)
                     .frame(width: 28, height: 28)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Weight History")
@@ -453,7 +453,7 @@ struct WeightHistoryLink: View {
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 14)
-            .background(AppColors.appCard, in: RoundedRectangle(cornerRadius: 14))
+            .background(BulkAITheme.Color.surface, in: RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
     }
@@ -650,7 +650,7 @@ struct BodyFatChartSection: View {
                 Button(action: onLogBodyFat) {
                     Label("Log Body Fat", systemImage: "plus.circle.fill")
                         .font(.system(.subheadline, design: .rounded, weight: .medium))
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                 }
             }
 
@@ -672,7 +672,7 @@ struct BodyFatChartSection: View {
                             x: .value("Date", entry.date, unit: .day),
                             y: .value("Body Fat", displayPercent(entry.bodyFatFraction))
                         )
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                         .interpolationMethod(.catmullRom)
                         .lineStyle(StrokeStyle(lineWidth: 2))
 
@@ -680,7 +680,7 @@ struct BodyFatChartSection: View {
                             x: .value("Date", entry.date, unit: .day),
                             y: .value("Body Fat", displayPercent(entry.bodyFatFraction))
                         )
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                         .symbolSize(30)
                     }
 
@@ -702,7 +702,7 @@ struct BodyFatChartSection: View {
             }
         }
         .padding()
-        .background(AppColors.appCard)
+        .background(BulkAITheme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
@@ -774,7 +774,7 @@ struct LogBodyFatSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(
-                            LinearGradient(colors: AppColors.calorieGradient, startPoint: .leading, endPoint: .trailing)
+                            LinearGradient(colors: BulkAITheme.Color.accentGradient, startPoint: .leading, endPoint: .trailing)
                         )
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 14))

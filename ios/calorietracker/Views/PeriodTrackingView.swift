@@ -43,7 +43,7 @@ struct PeriodTrackingView: View {
                                     } else {
                                         Text("in progress")
                                             .font(.system(.caption, design: .rounded))
-                                            .foregroundStyle(AppColors.calorie)
+                                            .foregroundStyle(BulkAITheme.Color.accent)
                                     }
                                 }
                                 Spacer()

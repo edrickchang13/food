@@ -80,7 +80,7 @@ struct CalculationMethodsView: View {
                 .padding(.top, 8)
                 .padding(.bottom, 24)
             }
-            .background(AppColors.appBackground)
+            .background(BulkAITheme.Color.background)
             .navigationTitle("Calculation Methods")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -163,14 +163,14 @@ struct CalculationMethodsView: View {
                             Text("Open source")
                                 .font(.system(.caption, design: .rounded, weight: .medium))
                         }
-                        .foregroundStyle(AppColors.calorie)
+                        .foregroundStyle(BulkAITheme.Color.accent)
                     }
                 }
             }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppColors.appCard, in: RoundedRectangle(cornerRadius: 12))
+        .background(BulkAITheme.Color.surface, in: RoundedRectangle(cornerRadius: 12))
     }
 }
 

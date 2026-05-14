@@ -35,7 +35,7 @@ struct RecipesView: View {
                             }
                         } label: {
                             Image(systemName: "ellipsis.circle")
-                                .foregroundStyle(AppColors.calorie)
+                                .foregroundStyle(BulkAITheme.Color.accent)
                         }
                     }
                 }

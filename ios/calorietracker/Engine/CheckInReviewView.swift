@@ -30,7 +30,7 @@ struct CheckInReviewView: View {
                 }
                 .padding(20)
             }
-            .background(AppColors.appBackground)
+            .background(BulkAITheme.Color.background)
             .navigationTitle("Weekly Check-In")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -55,7 +55,7 @@ struct CheckInReviewView: View {
         VStack(spacing: 6) {
             Image(systemName: "calendar.badge.checkmark")
                 .font(.system(size: 36))
-                .foregroundStyle(AppColors.calorie)
+                .foregroundStyle(BulkAITheme.Color.accent)
             Text("It's been a week. Let's recalibrate.")
                 .font(.system(.title3, design: .rounded, weight: .bold))
                 .multilineTextAlignment(.center)
@@ -168,7 +168,7 @@ struct CheckInReviewView: View {
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppColors.calorie)
+            .tint(BulkAITheme.Color.accent)
             .disabled(snapshot.dailyPlan == nil)
 
             Button("Adjust before applying") {
@@ -192,7 +192,7 @@ struct CheckInReviewView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(AppColors.appCard)
+        .background(BulkAITheme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
