@@ -241,7 +241,19 @@ struct FoodEntrySheet: View {
                         }
                     }
                 },
-                onDescribe: { /* AIView owns the buffer; Describe tab is the typed path. */ }
+                onDescribe: { description in
+                    // Mirrors the Voice tab path: gate the network call on
+                    // AI consent, then run analyzeText. analyzeText sets
+                    // activeFlow = .analyzing immediately, which presents
+                    // AnalyzingView as a sheet — that is the loading UI
+                    // the user sees while Gemini is processing.
+                    runWithConsent {
+                        Task {
+                            try? await Task.sleep(for: .milliseconds(150))
+                            await analyzeText(description: description)
+                        }
+                    }
+                }
             )
         case 3:
             ScanView(scanMode: $scanMode) { result in

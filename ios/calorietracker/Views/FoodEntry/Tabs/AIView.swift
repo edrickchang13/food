@@ -25,7 +25,12 @@ struct AIView: View {
     /// The parent reads `description` via a separate path; here the callback
     /// is intentionally argument-less to keep `AIView` decoupled from the
     /// parent's Gemini parsing pipeline.
-    let onDescribe: () -> Void
+    /// Called with the trimmed description string when the user taps
+    /// "Send to AI". Parent runs the Gemini analysis; the analyzing sheet
+    /// it presents (`AnalyzingView`) is the loading state visible to the
+    /// user. AIView intentionally stays out of the analysis path so the
+    /// loading UX matches the camera + voice + scan flows exactly.
+    let onDescribe: (String) -> Void
 
     @State private var mode: AIMode = .snap
     @State private var description: String = ""
@@ -205,7 +210,9 @@ struct AIView: View {
                 Spacer()
                 Button {
                     descriptionFocused = false
-                    onDescribe()
+                    let trimmed = description.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !trimmed.isEmpty else { return }
+                    onDescribe(trimmed)
                 } label: {
                     HStack(spacing: BulkAITheme.Spacing.xs) {
                         Image(systemName: "sparkles")
@@ -236,7 +243,7 @@ struct AIView: View {
 #Preview("AIView") {
     AIView(
         onSnap: { _ in },
-        onDescribe: { }
+        onDescribe: { _ in }
     )
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(BulkAITheme.Color.background)
