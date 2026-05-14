@@ -6,12 +6,20 @@
 //
 
 import SwiftUI
+import SwiftData
 import HealthKit
 import WidgetKit
 import BulkAIEngine
 
 @main
 struct calorietrackerApp: App {
+    // SwiftData container, CloudKit-ready. Built once at launch and threaded
+    // into the view tree via `.modelContainer(...)`. Views opt into SwiftData
+    // by declaring `@Query` against any of the models in `BulkAISchemaV1`;
+    // the existing UserDefaults stores keep working unchanged so this PR
+    // ships strictly additively. P22 will cut views over to `@Query`.
+    private let modelContainer: ModelContainer = SwiftDataContainer.makeContainer()
+
     @State private var foodStore: FoodStore
     @State private var weightStore: WeightStore
     @State private var bodyFatStore = BodyFatStore()
@@ -69,6 +77,18 @@ struct calorietrackerApp: App {
         _foodStore = State(wrappedValue: food)
         _weightStore = State(wrappedValue: weight)
         _engineState = State(wrappedValue: EngineState(weightStore: weight, foodStore: food))
+
+        // One-shot migration of legacy UserDefaults+JSON rows into the new
+        // SwiftData store. Idempotent — flips a UserDefaults flag the first
+        // time it runs, then no-ops on every subsequent launch. The legacy
+        // stores keep working unchanged through this release cycle; P22 will
+        // cut views over to `@Query` and remove the UserDefaults backing.
+        let migrationResult = MainActor.assumeIsolated {
+            SwiftDataMigration.runIfNeeded(into: modelContainer)
+        }
+        #if DEBUG
+        print(migrationResult.summary)
+        #endif
     }
 
     var body: some Scene {
@@ -134,6 +154,11 @@ struct calorietrackerApp: App {
                     .environment(foodStore)
             }
         }
+        // Threads the SwiftData container through the whole view tree. Any
+        // view that wants to opt in can declare `@Query` against models in
+        // BulkAISchemaV1; the existing UserDefaults stores keep working in
+        // parallel until P22 cuts the views over.
+        .modelContainer(modelContainer)
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 Task {
