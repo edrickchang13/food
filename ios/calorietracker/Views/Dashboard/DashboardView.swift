@@ -27,6 +27,7 @@ struct DashboardView: View {
     @State private var showLogBodyFat: Bool = false
     @State private var showAllWeights: Bool = false
     @State private var showBodyMeasurements: Bool = false
+    @State private var showBodyFatDetail: Bool = false
     @State private var showFoodDatabase: Bool = false
     @State private var foodEntryRoute: FoodEntryRoute?
     @State private var inlineAlert: InlineAlert?
@@ -199,6 +200,12 @@ struct DashboardView: View {
         .sheet(isPresented: $showBodyMeasurements) {
             NavigationStack { BodyMeasurementsView() }
         }
+        // BodyFatDetailView: sparkline + history list + log-new CTA, the
+        // body-fat sibling of WeightDetailView. Reached from the body-fat
+        // tile tap on the Body Metrics card.
+        .sheet(isPresented: $showBodyFatDetail) {
+            BodyFatDetailView()
+        }
         .sheet(isPresented: $showFoodDatabase) {
             NavigationStack { FoodDatabaseView() }
         }
@@ -369,7 +376,11 @@ struct DashboardView: View {
             .reversed()
         let currentFraction = bodyFatStore.latestEntry?.bodyFatFraction ?? profile.bodyFatPercentage ?? 0
         let current = String(format: "%.1f %%", currentFraction * 100)
-        return (history: Array(recent), current: current, onTap: { showLogBodyFat = true })
+        // Route to the new BodyFatDetailView (sparkline + history + log CTA)
+        // instead of jumping straight to the log sheet. The detail view's
+        // own toolbar + bottom pill expose the log-new flow without losing
+        // the trend context.
+        return (history: Array(recent), current: current, onTap: { showBodyFatDetail = true })
     }
 
     // MARK: - Habit data

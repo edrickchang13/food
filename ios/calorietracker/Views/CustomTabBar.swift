@@ -59,6 +59,12 @@ struct CustomTabBar: View {
             // aligns with the rest of the tab labels' baseline.
             .offset(y: 8)
             .accessibilityLabel("Add food")
+            .coachMark(
+                seenKey: "coachmark.tabbar.fab.v1",
+                title: "Log food in seconds",
+                message: "Tap the plus to snap a photo, talk it out, or search the database.",
+                alignment: .top
+            )
         }
     }
 

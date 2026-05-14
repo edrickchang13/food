@@ -130,6 +130,18 @@ struct DynamicTDEEExplainer: View {
         return Int(kcal.rounded())
     }
 
+    private var currentEstimateKcal: Int {
+        Int((engineState.snapshot.expenditure?.kcalPerDay ?? 0).rounded())
+    }
+
+    private var priorEstimateKcal: Int {
+        Int((engineState.snapshot.expenditure?.priorKcalPerDay ?? 0).rounded())
+    }
+
+    private var maxBarKcal: Int {
+        max(currentEstimateKcal, priorEstimateKcal, 1)
+    }
+
     // MARK: - Formatted display values
 
     private var expenditureDisplay: String {
@@ -157,6 +169,9 @@ struct DynamicTDEEExplainer: View {
                         holdingCard(estimate: exp)
                     }
                     equationCard
+                    if engineState.snapshot.expenditure != nil {
+                        priorVsNewSection
+                    }
                     footerSection
                 }
                 .padding(.horizontal, BulkAITheme.Spacing.lg)
@@ -308,6 +323,81 @@ struct DynamicTDEEExplainer: View {
                 .foregroundStyle(.white.opacity(0.65))
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    // MARK: - Before vs Now section
+
+    private var priorVsNewSection: some View {
+        VStack(alignment: .leading, spacing: BulkAITheme.Spacing.sm) {
+            Text("BEFORE vs NOW")
+                .font(BulkAITheme.Typography.caption2)
+                .tracking(1.2)
+                .foregroundStyle(.white.opacity(0.5))
+
+            HStack(alignment: .bottom, spacing: BulkAITheme.Spacing.lg) {
+                estimateBar(label: "Prior",
+                            kcal: priorEstimateKcal,
+                            accent: .white.opacity(0.55),
+                            maxKcal: maxBarKcal)
+
+                estimateBar(label: "Now",
+                            kcal: currentEstimateKcal,
+                            accent: BulkAITheme.Color.accent,
+                            maxKcal: maxBarKcal)
+
+                Spacer(minLength: 0)
+
+                deltaPill
+            }
+            .padding(BulkAITheme.Spacing.lg)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: BulkAITheme.Radius.lg, style: .continuous)
+                    .fill(BulkAITheme.Color.surface)
+            )
+        }
+    }
+
+    private func estimateBar(label: String, kcal: Int, accent: Color, maxKcal: Int) -> some View {
+        let ratio = maxKcal > 0 ? Double(kcal) / Double(maxKcal) : 0
+        let height = max(12, 96 * ratio)
+        return VStack(spacing: BulkAITheme.Spacing.xs) {
+            Text("\(kcal)")
+                .font(BulkAITheme.Typography.title3)
+                .foregroundStyle(.white)
+                .monospacedDigit()
+            RoundedRectangle(cornerRadius: 6)
+                .fill(accent)
+                .frame(width: 36, height: height)
+            Text(label.uppercased())
+                .font(BulkAITheme.Typography.caption)
+                .tracking(1.0)
+                .foregroundStyle(.white.opacity(0.55))
+        }
+        .frame(width: 56)
+    }
+
+    private var deltaPill: some View {
+        let delta = currentEstimateKcal - priorEstimateKcal
+        let isUp = delta > 0
+        let isFlat = delta == 0
+        let symbol = isFlat ? "minus" : (isUp ? "arrow.up" : "arrow.down")
+        let tint: Color = isFlat ? .white.opacity(0.45) : (isUp ? BulkAITheme.Color.macroCarbs : BulkAITheme.Color.accent)
+        let signed = "\(isUp ? "+" : "")\(delta) kcal"
+        return HStack(spacing: BulkAITheme.Spacing.xxs) {
+            Image(systemName: symbol)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(tint)
+            Text(isFlat ? "no change" : signed)
+                .font(BulkAITheme.Typography.caption)
+                .foregroundStyle(tint)
+                .monospacedDigit()
+        }
+        .padding(.horizontal, BulkAITheme.Spacing.sm)
+        .padding(.vertical, BulkAITheme.Spacing.xs)
+        .background(
+            Capsule(style: .continuous).fill(tint.opacity(0.15))
+        )
     }
 
     // MARK: - Sub-view helpers

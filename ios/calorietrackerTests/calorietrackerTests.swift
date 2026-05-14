@@ -7,6 +7,7 @@
 
 import Testing
 import Foundation
+import SwiftData
 @testable import calorietracker
 
 struct calorietrackerTests {
@@ -25,9 +26,13 @@ struct EngineStateDebounceTests {
 
     /// After N rapid addEntry calls, pendingRefresh should be non-nil (debounce armed)
     /// and the same Task object should survive (all but the last got cancelled and replaced).
-    @Test func pendingRefreshArmedAfterRapidEntries() async throws {
-        let weightStore = WeightStore()
-        let foodStore = FoodStore()
+    @Test
+    @MainActor
+    func pendingRefreshArmedAfterRapidEntries() async throws {
+        // FoodStore + WeightStore are @MainActor post-P21 (SwiftData
+        // ModelContext is main-actor-isolated). The test method matches.
+        let weightStore = WeightStore(container: SwiftDataContainer.makePreviewContainer())
+        let foodStore = FoodStore(container: SwiftDataContainer.makePreviewContainer())
         let engine = EngineState(weightStore: weightStore, foodStore: foodStore)
 
         // Fire 20 callbacks synchronously — each cancels the previous debounce task.
@@ -41,9 +46,11 @@ struct EngineStateDebounceTests {
 
     /// After waiting longer than the debounce window, pendingRefresh becomes nil
     /// (the task completed and there is no new pending work).
-    @Test func pendingRefreshClearsAfterDebounceWindow() async throws {
-        let weightStore = WeightStore()
-        let foodStore = FoodStore()
+    @Test
+    @MainActor
+    func pendingRefreshClearsAfterDebounceWindow() async throws {
+        let weightStore = WeightStore(container: SwiftDataContainer.makePreviewContainer())
+        let foodStore = FoodStore(container: SwiftDataContainer.makePreviewContainer())
         let engine = EngineState(weightStore: weightStore, foodStore: foodStore)
 
         // Trigger a single debounce cycle.
@@ -442,28 +449,28 @@ struct SlotPicksServiceTests {
 
 // MARK: - FavoritesStore tests
 
+/// Each test injects a fresh in-memory `ModelContainer` via
+/// `SwiftDataContainer.makePreviewContainer()` so `FavoriteModel` rows from one
+/// test can never leak into another. The persistence test shares a single
+/// container between two store instances to verify that the second store sees
+/// data written by the first — exactly what a shared in-memory container
+/// provides without any on-disk side-effects.
 struct FavoritesStoreTests {
-
-    // Each test constructs its own isolated UserDefaults suite so tests are
-    // hermetic and don't pollute UserDefaults.standard or one another.
-    private func makeSuite(name: String) -> UserDefaults {
-        // Remove any stale data from a previous run then create a fresh suite.
-        UserDefaults(suiteName: name)!.removePersistentDomain(forName: name)
-        return UserDefaults(suiteName: name)!
-    }
 
     // 1. add then contains returns true
     @Test("add then contains returns true")
+    @MainActor
     func addThenContains() {
-        let store = FavoritesStore(defaults: makeSuite(name: "fav.test.addContains"))
+        let store = FavoritesStore(container: SwiftDataContainer.makePreviewContainer())
         store.add("apple_raw")
         #expect(store.contains("apple_raw"), "Newly added ID must be contained")
     }
 
     // 2. add twice is idempotent
     @Test("add twice is idempotent")
+    @MainActor
     func addIdempotent() {
-        let store = FavoritesStore(defaults: makeSuite(name: "fav.test.addIdempotent"))
+        let store = FavoritesStore(container: SwiftDataContainer.makePreviewContainer())
         store.add("banana")
         store.add("banana")
         #expect(store.favorites.count == 1, "Duplicate add must not increase count beyond 1")
@@ -472,8 +479,9 @@ struct FavoritesStoreTests {
 
     // 3. remove decrements
     @Test("remove decrements favorites count")
+    @MainActor
     func removeDecrements() {
-        let store = FavoritesStore(defaults: makeSuite(name: "fav.test.removeDecrements"))
+        let store = FavoritesStore(container: SwiftDataContainer.makePreviewContainer())
         store.add("chicken_breast")
         store.add("broccoli_raw")
         store.remove("chicken_breast")
@@ -484,8 +492,9 @@ struct FavoritesStoreTests {
 
     // 4. toggle: adds when missing, removes when present
     @Test("toggle adds when missing and removes when present")
+    @MainActor
     func toggleBehavior() {
-        let store = FavoritesStore(defaults: makeSuite(name: "fav.test.toggle"))
+        let store = FavoritesStore(container: SwiftDataContainer.makePreviewContainer())
         store.toggle("oats_rolled")
         #expect(store.contains("oats_rolled"), "toggle on absent ID must add it")
         store.toggle("oats_rolled")
@@ -495,8 +504,9 @@ struct FavoritesStoreTests {
 
     // 5. sortedIDs returns most-recent-first
     @Test("sortedIDs returns most-recent-first (insertion order reversed)")
+    @MainActor
     func sortedIDsOrder() {
-        let store = FavoritesStore(defaults: makeSuite(name: "fav.test.sortedOrder"))
+        let store = FavoritesStore(container: SwiftDataContainer.makePreviewContainer())
         store.add("first")
         store.add("second")
         store.add("third")
@@ -505,17 +515,20 @@ struct FavoritesStoreTests {
                 "sortedIDs must be newest-first: got \(ids)")
     }
 
-    // 6. persistence: write IDs, init a new store from the same UserDefaults, all entries survive
+    // 6. persistence: two stores sharing the same in-memory container both see the same rows.
+    // This verifies that `rebuild()` loads whatever the first store wrote — identical semantics
+    // to a real relaunch except the backing store is in-memory and discarded after the test.
     @Test("persistence round-trip: new store instance loads all saved favorites")
+    @MainActor
     func persistenceRoundTrip() {
-        let suite = makeSuite(name: "fav.test.persistence")
-        let store1 = FavoritesStore(defaults: suite)
+        let container = SwiftDataContainer.makePreviewContainer()
+        let store1 = FavoritesStore(container: container)
         store1.add("egg_whole")
         store1.add("brown_rice_cooked")
         store1.add("olive_oil")
 
-        // Create a second store pointed at the same suite — simulates app relaunch.
-        let store2 = FavoritesStore(defaults: suite)
+        // Create a second store backed by the same container — simulates app relaunch.
+        let store2 = FavoritesStore(container: container)
         #expect(store2.contains("egg_whole"), "egg_whole must survive persistence")
         #expect(store2.contains("brown_rice_cooked"), "brown_rice_cooked must survive persistence")
         #expect(store2.contains("olive_oil"), "olive_oil must survive persistence")

@@ -266,6 +266,7 @@ struct CheckInReviewView: View {
             if let exp = snapshot.expenditure {
                 engineState.commitAcceptedCheckIn(newExpenditureKcalPerDay: exp.kcalPerDay, on: today)
             }
+            Haptics.success()
         case .skipped:
             engineState.commitSkippedCheckIn(on: today)
         }

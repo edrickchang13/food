@@ -47,7 +47,10 @@ struct FoodSearchRow: View {
             .buttonStyle(.plain)
             .simultaneousGesture(
                 LongPressGesture(minimumDuration: 0.4)
-                    .onEnded { _ in onToggleFavorite?() }
+                    .onEnded { _ in
+                        Haptics.light()
+                        onToggleFavorite?()
+                    }
             )
 
             addButton

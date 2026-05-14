@@ -79,6 +79,12 @@ struct HeaderPillRow: View {
         ) {
             mealTypeDialogButtons
         }
+        .coachMark(
+            seenKey: "coachmark.foodentry.headerpills.v1",
+            title: "Set time, meal, and totals at a glance",
+            message: "These pills control what slot your foods land in. Tap the time or meal pill to change them.",
+            alignment: .bottom
+        )
     }
 
     // MARK: Pills

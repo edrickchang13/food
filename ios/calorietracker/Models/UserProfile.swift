@@ -313,6 +313,7 @@ struct UserProfile: Codable, Equatable {
         return profile
     }
 
+    @available(*, deprecated, message: "Call ProfileStore.save(_:) instead.")
     func save() {
         if let data = try? JSONEncoder().encode(self) {
             UserDefaults.standard.set(data, forKey: "userProfile")

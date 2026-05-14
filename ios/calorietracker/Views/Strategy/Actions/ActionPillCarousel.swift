@@ -46,6 +46,12 @@ struct ActionPillCarousel: View {
             }
             .padding(.horizontal, BulkAITheme.Spacing.md)
         }
+        .coachMark(
+            seenKey: "coachmark.strategy.actioncarousel.v1",
+            title: "Swipe for more actions",
+            message: "Edit your goal, set a new program, or change check-in day. Scroll right to see them all.",
+            alignment: .bottom
+        )
     }
 
     // MARK: Pill

@@ -146,9 +146,14 @@ struct EditGoalFlow: View {
     }
 
     private func commitAndDismiss() {
-        profileStore.profile.goalWeightKg = draftGoalWeightKg
-        profileStore.profile.weeklyChangeKg = draftWeeklyChangeKg
-        profileStore.profile.save()
+        // ProfileStore exposes `profile` as private(set) post-P22 — direct
+        // field mutation on the store-owned value is no longer permitted.
+        // Take a local mutable copy, apply the wizard's two draft fields,
+        // round-trip through the new save(_:) API.
+        var draft = profileStore.profile
+        draft.goalWeightKg = draftGoalWeightKg
+        draft.weeklyChangeKg = draftWeeklyChangeKg
+        profileStore.save(draft)
         dismiss()
     }
 

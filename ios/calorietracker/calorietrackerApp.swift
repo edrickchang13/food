@@ -228,7 +228,7 @@ struct calorietrackerApp: App {
             runBodyMeasurementBackfills()
         }
 
-        healthKitManager.onBodyMeasurementsChanged = { [weightStore, bodyFatStore] weightKg, weightDate, weightFudaiID, heightCm, bodyFat, bodyFatDate, bodyFatFudaiID, dob, sex in
+        healthKitManager.onBodyMeasurementsChanged = { [weightStore, bodyFatStore, profileStore] weightKg, weightDate, weightFudaiID, heightCm, bodyFat, bodyFatDate, bodyFatFudaiID, dob, sex in
             guard var profile = UserProfile.load() else { return }
             var changed = false
 
@@ -318,7 +318,7 @@ struct calorietrackerApp: App {
                     changed = true
                 }
             }
-            if changed { profile.save() }
+            if changed { profileStore.save(profile) }
         }
 
         healthKitManager.startBodyMeasurementObserver()
