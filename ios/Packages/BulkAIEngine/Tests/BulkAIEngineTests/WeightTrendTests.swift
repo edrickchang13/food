@@ -33,7 +33,7 @@ final class WeightTrendTests: XCTestCase {
     }
 
     func testGapBetweenLogs_interpolatesLinearly_thenAppliesEWMA() {
-        // PRD example: Monday 150, Wednesday 148 → Tuesday imputed as 149.
+        // PRD example: Monday 150, Wednesday 148 -> Tuesday imputed as 149.
         let logs = [
             WeightLog(day: day(0), kg: 150),
             WeightLog(day: day(2), kg: 148)
@@ -75,7 +75,7 @@ final class WeightTrendTests: XCTestCase {
         // After enough days the trend should be strictly between the latest raw and the start.
         XCTAssertLessThan(trend.last!.kg, 90)
         XCTAssertGreaterThan(trend.last!.kg, 71)
-        // And monotonically decreasing — EWMA preserves monotonicity for monotonic input.
+        // And monotonically decreasing -- EWMA preserves monotonicity for monotonic input.
         for i in 1..<trend.count {
             XCTAssertLessThanOrEqual(trend[i].kg, trend[i - 1].kg + 1e-9)
         }
@@ -100,5 +100,72 @@ final class WeightTrendTests: XCTestCase {
         let trend = WeightTrend.compute(logs: logs, alpha: 1.0)
         XCTAssertEqual(trend.map { $0.day }, [day(0), day(1), day(2)])
         XCTAssertEqual(trend.map { $0.kg }, [80, 79, 78])
+    }
+
+    // MARK: - slope(trend:minPoints:) tests
+
+    private func trendPoints(from kgs: [Double]) -> [TrendPoint] {
+        kgs.enumerated().map { i, kg in
+            TrendPoint(day: day(i), kg: kg, rawKg: kg)
+        }
+    }
+
+    func testSlope_insufficientData_returnsNil() {
+        // 5 points is below the default minPoints of 7
+        let trend = trendPoints(from: [75, 75, 75, 75, 75])
+        XCTAssertNil(WeightTrend.slope(trend: trend))
+    }
+
+    func testSlope_perfectlyFlat_slopeAndSEAreZero() {
+        let trend = trendPoints(from: Array(repeating: 75.0, count: 10))
+        guard let result = WeightTrend.slope(trend: trend) else {
+            return XCTFail("Expected non-nil slope for 10 flat points")
+        }
+        XCTAssertEqual(result.kgPerWeek, 0.0, accuracy: 1e-9)
+        // SST = 0 when all ys are identical; rSquared is defined as 0 in that branch.
+        XCTAssertEqual(result.rSquared, 0.0, accuracy: 1e-9)
+        XCTAssertEqual(result.standardError, 0.0, accuracy: 1e-9)
+        XCTAssertEqual(result.sampleSize, 10)
+    }
+
+    func testSlope_linearRampUp_slopeAndRSquaredNearPerfect() {
+        // +0.1 kg/day for 10 days => slope ~0.7 kg/week, R^2 ~1
+        let kgs = (0..<10).map { 75.0 + 0.1 * Double($0) }
+        let trend = trendPoints(from: kgs)
+        guard let result = WeightTrend.slope(trend: trend) else {
+            return XCTFail("Expected non-nil slope")
+        }
+        XCTAssertEqual(result.kgPerWeek, 0.7, accuracy: 0.01)
+        XCTAssertEqual(result.rSquared, 1.0, accuracy: 1e-6)
+        XCTAssertLessThan(result.standardError, 1e-6)
+        XCTAssertEqual(result.sampleSize, 10)
+    }
+
+    func testSlope_linearRampDown_negativeSlope() {
+        // -0.05 kg/day for 10 days => slope ~-0.35 kg/week
+        let kgs = (0..<10).map { 80.0 - 0.05 * Double($0) }
+        let trend = trendPoints(from: kgs)
+        guard let result = WeightTrend.slope(trend: trend) else {
+            return XCTFail("Expected non-nil slope")
+        }
+        XCTAssertEqual(result.kgPerWeek, -0.35, accuracy: 0.01)
+        XCTAssertEqual(result.rSquared, 1.0, accuracy: 1e-6)
+        XCTAssertLessThan(result.standardError, 1e-6)
+    }
+
+    func testSlope_noisyRamp_slopeWithinToleranceAndRSquaredInRange() {
+        // Underlying +0.05 kg/day trend over 14 days with repeating small noise.
+        let noise: [Double] = [0.1, -0.1, 0.05, -0.05, 0.08, -0.08, 0.03]
+        let kgs = (0..<14).map { i in 70.0 + 0.05 * Double(i) + noise[i % noise.count] }
+        let trend = trendPoints(from: kgs)
+        guard let result = WeightTrend.slope(trend: trend) else {
+            return XCTFail("Expected non-nil slope")
+        }
+        // Generous tolerance given the noise
+        XCTAssertEqual(result.kgPerWeek, 0.35, accuracy: 0.15)
+        XCTAssertGreaterThan(result.rSquared, 0.3)
+        XCTAssertLessThan(result.rSquared, 1.0)
+        XCTAssertGreaterThan(result.standardError, 0.0)
+        XCTAssertEqual(result.sampleSize, 14)
     }
 }
