@@ -23,6 +23,8 @@ struct CountdownRing: View {
         max(6, size * 0.045)
     }
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         ZStack {
             Circle()
@@ -38,7 +40,7 @@ struct CountdownRing: View {
                     style: StrokeStyle(lineWidth: strokeWidth, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
-                .animation(.easeInOut(duration: 0.3), value: clampedProgress)
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: clampedProgress)
 
             centerLabel
                 .padding(.horizontal, strokeWidth * 2)

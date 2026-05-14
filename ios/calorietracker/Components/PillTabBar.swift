@@ -18,6 +18,7 @@ struct PillTabBar: View {
     let tabIcons: [String]?
 
     @Namespace private var pillNamespace
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(
         tabs: [String],
@@ -45,8 +46,12 @@ struct PillTabBar: View {
                 Capsule().fill(BulkAITheme.Color.surface)
             )
             .onChange(of: selection) { _, newValue in
-                withAnimation(.snappy) {
+                if reduceMotion {
                     proxy.scrollTo(newValue, anchor: .center)
+                } else {
+                    withAnimation(.snappy) {
+                        proxy.scrollTo(newValue, anchor: .center)
+                    }
                 }
             }
         }
@@ -55,8 +60,12 @@ struct PillTabBar: View {
     private func tabButton(index: Int, title: String) -> some View {
         let isSelected = index == selection
         return Button {
-            withAnimation(.snappy) {
+            if reduceMotion {
                 selection = index
+            } else {
+                withAnimation(.snappy) {
+                    selection = index
+                }
             }
         } label: {
             HStack(spacing: BulkAITheme.Spacing.xxs) {

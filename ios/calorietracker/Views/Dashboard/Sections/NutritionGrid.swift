@@ -66,6 +66,7 @@ struct NutritionGrid: View {
             Text("Nutrition")
                 .font(BulkAITheme.Typography.title3)
                 .foregroundStyle(.white)
+                .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 0)
             Button(action: onSeeAll) {
                 Text("See All")

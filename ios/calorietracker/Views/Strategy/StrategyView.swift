@@ -22,6 +22,13 @@ struct StrategyView: View {
     @State private var scrollOffset: CGFloat = 0
     @State private var pendingAction: StrategyAction?
 
+    // Cached formatter — DateFormatter construction is expensive; reuse across calls.
+    private static let weekdayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEEE"
+        return f
+    }()
+
     /// Pixels of upward scroll before the big header collapses to the compact strip.
     private static let collapseThreshold: CGFloat = 56
 
@@ -99,6 +106,7 @@ struct StrategyView: View {
                 .font(BulkAITheme.Typography.caption2)
                 .tracking(1.2)
                 .foregroundStyle(.white.opacity(0.5))
+                .accessibilityAddTraits(.isHeader)
 
             CoachedProgramCard(
                 plan: engineState.snapshot.dailyPlan,
@@ -144,9 +152,7 @@ struct StrategyView: View {
         }
         let calendar = Calendar.current
         let day = calendar.date(byAdding: .day, value: engineState.daysUntilCheckIn, to: .now) ?? .now
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE"
-        return formatter.string(from: day)
+        return Self.weekdayFormatter.string(from: day)
     }
 
     private func formattedRate(_ value: Double) -> String {

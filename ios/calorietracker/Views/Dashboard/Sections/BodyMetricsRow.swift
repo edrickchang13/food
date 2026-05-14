@@ -16,6 +16,7 @@ struct BodyMetricsRow: View {
                 Text("Body Metrics")
                     .font(BulkAITheme.Typography.title3)
                     .foregroundStyle(.white)
+                    .accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 0)
                 Button(action: onSeeAll) {
                     Text("See All")

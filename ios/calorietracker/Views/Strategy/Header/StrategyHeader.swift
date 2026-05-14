@@ -17,21 +17,27 @@ struct StrategyHeader: View {
     /// `ScrollView`.
     let isCollapsed: Bool
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
     var body: some View {
         ZStack(alignment: .topLeading) {
             // Big wordmark — fades out as the parent collapses the header.
             bigTitle
                 .opacity(isCollapsed ? 0 : 1)
-                .scaleEffect(isCollapsed ? 0.92 : 1, anchor: .topLeading)
-                .animation(.easeInOut(duration: 0.18), value: isCollapsed)
+                .scaleEffect(
+                    reduceMotion ? 1 : (isCollapsed ? 0.92 : 1),
+                    anchor: .topLeading
+                )
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: isCollapsed)
                 .accessibilityHidden(isCollapsed)
 
             // Compact strip — slides in from the top once the user scrolls
             // enough to push the big title off the visible area.
             compactStrip
                 .opacity(isCollapsed ? 1 : 0)
-                .offset(y: isCollapsed ? 0 : -12)
-                .animation(.easeInOut(duration: 0.18), value: isCollapsed)
+                .offset(y: reduceMotion ? 0 : (isCollapsed ? 0 : -12))
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: isCollapsed)
                 .accessibilityHidden(!isCollapsed)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -60,7 +66,13 @@ struct StrategyHeader: View {
         }
         .padding(.horizontal, BulkAITheme.Spacing.md)
         .padding(.vertical, BulkAITheme.Spacing.sm)
-        .background(.ultraThinMaterial)
+        .background(
+            // Fall back to an opaque surface when Reduce Transparency is on so
+            // the "Strategy" label keeps adequate contrast against the strip.
+            reduceTransparency
+                ? AnyShapeStyle(BulkAITheme.Color.surface)
+                : AnyShapeStyle(.ultraThinMaterial)
+        )
         .overlay(alignment: .bottom) {
             Rectangle()
                 .fill(Color.white.opacity(0.06))

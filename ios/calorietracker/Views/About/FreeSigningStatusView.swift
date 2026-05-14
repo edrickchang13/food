@@ -47,6 +47,7 @@ struct FreeSigningStatusView: View {
             Image(systemName: "checkmark.shield.fill")
                 .font(.system(size: 56))
                 .foregroundStyle(BulkAITheme.Color.macroCarbs)
+                .accessibilityHidden(true)
 
             Text("Free, signed by you.")
                 .font(BulkAITheme.Typography.title)

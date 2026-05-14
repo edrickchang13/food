@@ -130,6 +130,17 @@ final class FoodDatabaseService {
         record(item)
     }
 
+    /// Compiled once; reused across every `quickLookup` call. NSRegularExpression
+    /// initialization allocates a full ICU regex engine — re-compiling per call
+    /// adds ~0.5 ms each time the user types a character in the AI/Quick-Add tab.
+    private static let gramsPattern: NSRegularExpression = {
+        // swiftlint:disable:next force_try — pattern is a compile-time constant.
+        try! NSRegularExpression(
+            pattern: #"^\s*(\d+(?:\.\d+)?)\s*g(?:rams?)?\s+(.+)$"#,
+            options: [.caseInsensitive]
+        )
+    }()
+
     /// Try to short-circuit a free-text input by parsing a "<grams>g <name>"
     /// pattern and matching the name against the local database. Returns nil
     /// when the input is too complex (multiple items, no explicit grams, no
@@ -138,11 +149,7 @@ final class FoodDatabaseService {
         let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !trimmed.contains(" and "), !trimmed.contains(",") else { return nil }
 
-        // Match leading "<number>g <name>" or "<number> g <name>".
-        guard let regex = try? NSRegularExpression(
-            pattern: #"^\s*(\d+(?:\.\d+)?)\s*g(?:rams?)?\s+(.+)$"#,
-            options: [.caseInsensitive]
-        ) else { return nil }
+        let regex = Self.gramsPattern
         let range = NSRange(trimmed.startIndex..<trimmed.endIndex, in: trimmed)
         guard let match = regex.firstMatch(in: trimmed, options: [], range: range),
               match.numberOfRanges == 3,

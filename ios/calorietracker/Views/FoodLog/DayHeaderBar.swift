@@ -45,7 +45,8 @@ struct DayHeaderBar: View {
             Image(systemName: "line.3.horizontal")
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(.white)
-                .frame(width: 32, height: 32, alignment: .leading)
+                .accessibilityHidden(true)
+                .frame(minWidth: 44, minHeight: 44, alignment: .leading)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -77,7 +78,8 @@ struct DayHeaderBar: View {
             Image(systemName: systemName)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.85))
-                .frame(width: 28, height: 28)
+                .accessibilityHidden(true)
+                .frame(minWidth: 44, minHeight: 44)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

@@ -48,6 +48,7 @@ struct InsightCard: View {
                             // Tiny dotted markers along the line, matching MacroFactor's look.
                             SparklineDots(points: sparkline, color: accent)
                         }
+                        .accessibilityHidden(true)
                 } else {
                     // Reserve roughly the same vertical space so cards line up in a grid.
                     Color.clear.frame(height: 36)
@@ -59,6 +60,7 @@ struct InsightCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(title)\(subtitle.map { ", \($0)" } ?? ""), \(valueText)")
         .surfaceCard()
     }
 
@@ -68,6 +70,7 @@ struct InsightCard: View {
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(accent)
                 .frame(width: 18, height: 18)
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)

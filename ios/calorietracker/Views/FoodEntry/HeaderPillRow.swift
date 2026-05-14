@@ -30,8 +30,8 @@ struct HeaderPillRow: View {
 
     // MARK: Layout constants
 
-    private static let pillHeight: CGFloat = 36
-    private static let circleSize: CGFloat = 36
+    private static let pillHeight: CGFloat = 44
+    private static let circleSize: CGFloat = 44
 
     // MARK: Body
 
@@ -64,6 +64,7 @@ struct HeaderPillRow: View {
             Image(systemName: "xmark")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
+                .accessibilityHidden(true)
                 .frame(width: Self.circleSize, height: Self.circleSize)
                 .background(
                     Circle().fill(BulkAITheme.Color.surface)
@@ -116,6 +117,7 @@ struct HeaderPillRow: View {
             Image(systemName: mealType?.icon ?? "fork.knife")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(mealType == nil ? .white : BulkAITheme.Color.accent)
+                .accessibilityHidden(true)
                 .padding(.horizontal, BulkAITheme.Spacing.md)
                 .frame(height: Self.pillHeight)
                 .background(
@@ -131,6 +133,7 @@ struct HeaderPillRow: View {
             Image(systemName: "chevron.down")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
+                .accessibilityHidden(true)
                 .frame(width: Self.circleSize, height: Self.circleSize)
                 .background(
                     Circle().fill(BulkAITheme.Color.surface)

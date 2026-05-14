@@ -84,6 +84,7 @@ struct CheckInCountdownRing: View {
                 .font(BulkAITheme.Typography.headline)
                 .foregroundStyle(.white)
         }
+        .accessibilityElement(children: .combine)
     }
 }
 

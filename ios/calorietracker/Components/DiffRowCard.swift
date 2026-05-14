@@ -68,10 +68,15 @@ struct DiffRowCard: View {
                 Text(">>")
                     .font(.system(size: 15, weight: .bold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.6))
+                    // Suppress the raw ">>" characters; the containing VStack
+                    // already carries a combined label via .accessibilityElement.
+                    .accessibilityHidden(true)
                 Text(newValue)
                     .font(BulkAITheme.Typography.headline)
                     .foregroundStyle(.white)
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(currentValue), changed to \(newValue)")
         } else {
             Text("No Change")
                 .font(BulkAITheme.Typography.body)

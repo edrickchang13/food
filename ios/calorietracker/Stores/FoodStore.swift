@@ -89,35 +89,29 @@ class FoodStore {
     }
 
     var todayEntries: [FoodEntry] {
-        let calendar = Calendar.current
-        return entries
-            .filter { calendar.isDateInToday($0.timestamp) }
-            .sorted { $0.timestamp > $1.timestamp }
+        // Route through the O(1) day index instead of scanning the full array.
+        entries(for: .now)
     }
 
     var todayEntriesByMeal: [FoodLogMealGroup] {
-        let calendar = Calendar.current
-        let today = entries
-            .filter { calendar.isDateInToday($0.timestamp) }
-            .sorted { $0.timestamp > $1.timestamp }
-
-        return groupedEntries(today, order: .standard)
+        groupedEntries(todayEntries, order: .standard)
     }
 
     var todayCalories: Int {
-        todayEntries.reduce(0) { $0 + $1.calories }
+        // Use the index-keyed path so we pay one dict lookup, not a full filter.
+        calories(for: .now)
     }
 
     var todayProtein: Int {
-        todayEntries.reduce(0) { $0 + $1.protein }
+        protein(for: .now)
     }
 
     var todayCarbs: Int {
-        todayEntries.reduce(0) { $0 + $1.carbs }
+        carbs(for: .now)
     }
 
     var todayFat: Int {
-        todayEntries.reduce(0) { $0 + $1.fat }
+        fat(for: .now)
     }
 
     // MARK: - Date-parameterized queries
@@ -180,53 +174,65 @@ class FoodStore {
     }
 
     func protein(for date: Date) -> Int {
-        entries(for: date).reduce(0) { $0 + $1.protein }
+        let key = dayKey(for: date)
+        return (dayIndexEnsured()[key] ?? []).reduce(0) { $0 + $1.protein }
     }
 
     func carbs(for date: Date) -> Int {
-        entries(for: date).reduce(0) { $0 + $1.carbs }
+        let key = dayKey(for: date)
+        return (dayIndexEnsured()[key] ?? []).reduce(0) { $0 + $1.carbs }
     }
 
     func fat(for date: Date) -> Int {
-        entries(for: date).reduce(0) { $0 + $1.fat }
+        let key = dayKey(for: date)
+        return (dayIndexEnsured()[key] ?? []).reduce(0) { $0 + $1.fat }
     }
 
     // MARK: - Micronutrient aggregation
 
     func sugar(for date: Date) -> Double {
-        entries(for: date).reduce(0) { $0 + ($1.sugar ?? 0) }
+        let key = dayKey(for: date)
+        return (dayIndexEnsured()[key] ?? []).reduce(0) { $0 + ($1.sugar ?? 0) }
     }
 
     func addedSugar(for date: Date) -> Double {
-        entries(for: date).reduce(0) { $0 + ($1.addedSugar ?? 0) }
+        let key = dayKey(for: date)
+        return (dayIndexEnsured()[key] ?? []).reduce(0) { $0 + ($1.addedSugar ?? 0) }
     }
 
     func fiber(for date: Date) -> Double {
-        entries(for: date).reduce(0) { $0 + ($1.fiber ?? 0) }
+        let key = dayKey(for: date)
+        return (dayIndexEnsured()[key] ?? []).reduce(0) { $0 + ($1.fiber ?? 0) }
     }
 
     func saturatedFat(for date: Date) -> Double {
-        entries(for: date).reduce(0) { $0 + ($1.saturatedFat ?? 0) }
+        let key = dayKey(for: date)
+        return (dayIndexEnsured()[key] ?? []).reduce(0) { $0 + ($1.saturatedFat ?? 0) }
     }
 
     func monounsaturatedFat(for date: Date) -> Double {
-        entries(for: date).reduce(0) { $0 + ($1.monounsaturatedFat ?? 0) }
+        let key = dayKey(for: date)
+        return (dayIndexEnsured()[key] ?? []).reduce(0) { $0 + ($1.monounsaturatedFat ?? 0) }
     }
 
     func polyunsaturatedFat(for date: Date) -> Double {
-        entries(for: date).reduce(0) { $0 + ($1.polyunsaturatedFat ?? 0) }
+        let key = dayKey(for: date)
+        return (dayIndexEnsured()[key] ?? []).reduce(0) { $0 + ($1.polyunsaturatedFat ?? 0) }
     }
 
     func cholesterol(for date: Date) -> Double {
-        entries(for: date).reduce(0) { $0 + ($1.cholesterol ?? 0) }
+        let key = dayKey(for: date)
+        return (dayIndexEnsured()[key] ?? []).reduce(0) { $0 + ($1.cholesterol ?? 0) }
     }
 
     func sodium(for date: Date) -> Double {
-        entries(for: date).reduce(0) { $0 + ($1.sodium ?? 0) }
+        let key = dayKey(for: date)
+        return (dayIndexEnsured()[key] ?? []).reduce(0) { $0 + ($1.sodium ?? 0) }
     }
 
     func potassium(for date: Date) -> Double {
-        entries(for: date).reduce(0) { $0 + ($1.potassium ?? 0) }
+        let key = dayKey(for: date)
+        return (dayIndexEnsured()[key] ?? []).reduce(0) { $0 + ($1.potassium ?? 0) }
     }
 
     // MARK: - Recents / Frequent
