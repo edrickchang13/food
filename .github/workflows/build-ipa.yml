@@ -158,7 +158,27 @@ jobs:
           git add docs/source.json
           if git diff --cached --quiet; then
             echo "No source.json change to commit"
-          else
-            git commit -m "ci: bump source.json to v${{ steps.version.outputs.version }} [skip ci]"
-            git push
+            exit 0
           fi
+          git commit -m "ci: bump source.json to v${{ steps.version.outputs.version }} [skip ci]"
+          # Retry-with-rebase loop. If two pushes to main race, the second
+          # workflow's source.json bump can get rejected because main moved
+          # while we were building. Fetch + rebase + push tries to land the
+          # bump cleanly. Up to 5 attempts.
+          for attempt in 1 2 3 4 5; do
+            if git push 2>&1 | tee /tmp/push.log; then
+              echo "Pushed source.json bump (attempt $attempt)"
+              exit 0
+            fi
+            if grep -q "rejected" /tmp/push.log; then
+              echo "Push rejected on attempt $attempt; rebasing on origin/main"
+              git fetch origin main
+              git rebase origin/main || git rebase --abort
+              sleep $((attempt * 2))
+            else
+              echo "Push failed for a non-race reason; aborting"
+              exit 1
+            fi
+          done
+          echo "::error::source.json push still rejected after 5 retries"
+          exit 1
