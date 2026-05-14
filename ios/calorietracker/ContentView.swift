@@ -1299,6 +1299,8 @@ struct ProfileView: View {
     @State private var showCalculationMethods = false
     @State private var showEngineDebug = false
     @State private var showManualCheckIn = false
+    @State private var showTDEEExplainer = false
+    @State private var showFreeSigningStatus = false
     @State private var showCSVImporter = false
     @State private var pendingImport: [FoodEntry] = []
     @State private var showImportConfirm = false
@@ -1605,6 +1607,18 @@ struct ProfileView: View {
                     }
                     .tint(.primary)
 
+                    Button {
+                        showTDEEExplainer = true
+                    } label: {
+                        Label {
+                            Text("Energy balance")
+                        } icon: {
+                            Image(systemName: "function")
+                                .foregroundStyle(AppColors.calorie)
+                        }
+                    }
+                    .tint(.primary)
+
                     Picker(selection: Binding(
                         get: { engineState.programMode },
                         set: { engineState.programMode = $0 }
@@ -1779,6 +1793,18 @@ struct ProfileView: View {
                                 .foregroundStyle(AppColors.calorie)
                         }
                     }
+
+                    Button {
+                        showFreeSigningStatus = true
+                    } label: {
+                        Label {
+                            Text("Free Signing")
+                        } icon: {
+                            Image(systemName: "checkmark.shield.fill")
+                                .foregroundStyle(AppColors.calorie)
+                        }
+                    }
+                    .tint(.primary)
                 }
                 .listRowBackground(AppColors.appCard)
 
@@ -2276,6 +2302,12 @@ struct ProfileView: View {
             .sheet(isPresented: $showManualCheckIn) {
                 CheckInReviewView()
             }
+            .sheet(isPresented: $showTDEEExplainer) {
+                DynamicTDEEExplainer()
+            }
+            .sheet(isPresented: $showFreeSigningStatus) {
+                FreeSigningStatusView()
+            }
             .fileImporter(
                 isPresented: $showCSVImporter,
                 allowedContentTypes: [.commaSeparatedText, .plainText, .data]
@@ -2546,7 +2578,7 @@ struct AIConsentSheetView: View {
     let onCancel: () -> Void
 
     private var providerName: String {
-        AIAccessSettings.isUsingFudAIPlus ? "Fud AI Plus (Google Gemini)" : AIProviderSettings.selectedProvider.rawValue
+        AIAccessSettings.isUsingFudAIPlus ? "Bulk AI Plus (Google Gemini)" : AIProviderSettings.selectedProvider.rawValue
     }
 
     var body: some View {
@@ -2569,7 +2601,7 @@ struct AIConsentSheetView: View {
                         Text("AI Analysis Notice")
                             .font(.system(size: 24, weight: .bold, design: .rounded))
                             .multilineTextAlignment(.center)
-                        Text("Before Fud AI sends data to a third-party AI provider, we need your permission.")
+                        Text("Before Bulk AI sends data to a third-party AI provider, we need your permission.")
                             .font(.system(.callout, design: .rounded))
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -2580,7 +2612,7 @@ struct AIConsentSheetView: View {
                         consentRow(icon: "photo.fill", title: "What is sent",
                                    text: "When you log a meal, the photo, voice transcript, or text description is sent to your selected AI provider. Profile data (age, weight, goals) is sent only for Coach chat.")
                         consentRow(icon: "network", title: "Who receives it",
-                                   text: "Your current AI access: \(providerName). You can change this anytime in Settings → AI Access. BYOK requests go directly to your provider; Plus requests go through Fud AI's Gemini proxy.")
+                                   text: "Your current AI access: \(providerName). You can change this anytime in Settings → AI Access. BYOK requests go directly to your provider; Plus requests go through Bulk AI's Gemini proxy.")
                         consentRow(icon: "lock.shield.fill", title: "What stays local",
                                    text: AIAccessSettings.isUsingFudAIPlus ? "Your saved food log, weight history, and body fat history stay on this device. Only the active AI request is sent for processing." : "Your API key, weight history, body fat history, and food log all stay on this device. Requests go directly from your device to the provider.")
                     }

@@ -110,7 +110,7 @@ struct CheckInReviewView: View {
                 statRow(label: "Fat", value: "\(Int(plan.macros.fatG)) g")
                 statRow(label: "Carbs", value: "\(Int(plan.macros.carbsG)) g")
                 if plan.floorApplied {
-                    Text("Your chosen rate would have pushed calories below the protein + fat floor. The engine raised the target to honor those floors.")
+                    Text("The chosen rate would have placed calories below the protein + fat floor. The engine raised the target to honor those floors.")
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.secondary)
                         .padding(.top, 4)

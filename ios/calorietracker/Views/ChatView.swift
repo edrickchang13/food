@@ -93,7 +93,7 @@ struct ChatView: View {
             }
             Text("Ask your Coach")
                 .font(.system(.title2, design: .rounded, weight: .semibold))
-            Text("Your coach can see your weight history, calorie log, and goals. Ask about expected weight, what to eat, or how to hit your target.")
+            Text("Your coach can see your weight history, calorie log, and goals. Ask about expected weight, what to eat, or how to trend toward your target.")
                 .font(.system(.subheadline, design: .rounded))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

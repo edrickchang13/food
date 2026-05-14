@@ -440,7 +440,7 @@ struct GeminiService {
 
         let prompt = """
         You are a nutrition coach analyzing a user's weight trend. Write 3–4 short sentences (plain English, no bullets, no markdown, no bold) that:
-        1. State the predicted weight in \(unit) 30 days out and whether they're on track for their goal.
+        1. State the predicted weight in \(unit) 30 days out and whether the trend is moving toward their goal.
         2. Give one or two specific, actionable suggestions (e.g. calorie target, protein amount, activity change) grounded in the numbers below.
         3. If predicted and observed trends disagree, mention possible under-logging briefly.
         Be direct, factual, and encouraging. Do not exceed 100 words.
