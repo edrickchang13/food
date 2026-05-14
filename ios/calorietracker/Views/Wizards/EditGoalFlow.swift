@@ -1,5 +1,40 @@
 import SwiftUI
 
+// MARK: - StandardRateTier
+
+/// Named percent-of-bodyweight weekly-rate tiers for the goal-rate picker.
+///
+/// Standard 0.45 %/wk maps to roughly +0.86 lb/wk at 190 lb (86 kg),
+/// matching the MacroFactor reference. Slower and Faster bracket it at
+/// 0.25 %/wk and 0.65 %/wk respectively.
+enum StandardRateTier: String, CaseIterable, Identifiable {
+    case slower, standard, faster
+
+    var id: String { rawValue }
+
+    /// Fraction of bodyweight gained or lost per week (e.g. 0.0045 = 0.45 %).
+    var fractionPerWeek: Double {
+        switch self {
+        case .slower:   return 0.0025
+        case .standard: return 0.0045
+        case .faster:   return 0.0065
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .slower:   return "Slower"
+        case .standard: return "Standard"
+        case .faster:   return "Faster"
+        }
+    }
+
+    /// Absolute rate in kg/wk for a given bodyweight.
+    func weeklyRateKg(forBodyweightKg weightKg: Double) -> Double {
+        weightKg * fractionPerWeek
+    }
+}
+
 // MARK: - EditGoalFlow
 
 /// Top-level orchestrator for the two-step Edit Goal wizard.
@@ -8,8 +43,11 @@ import SwiftUI
 /// Step 1: `EditGoal_Review` — confirmation diff cards.
 ///
 /// The wizard reads initial values from `ProfileStore` and writes the final
-/// draft back on "Done". A `WizardProgressUnderline` underpin the nav bar
+/// draft back on "Done". A `WizardProgressUnderline` underpins the nav bar
 /// for continuous animated step feedback.
+///
+/// Rate selection is now percent-of-bodyweight: Standard = 0.45 %/wk,
+/// Slower = 0.25 %/wk, Faster = 0.65 %/wk. Custom retains a free Slider.
 struct EditGoalFlow: View {
 
     @Environment(\.dismiss) var dismiss
@@ -20,12 +58,11 @@ struct EditGoalFlow: View {
     @State var draftGoalWeightKg: Double = 0
     @State var draftWeeklyChangeKg: Double = 0.5
     @State var draftIsCustomRate: Bool = false
+    @State var draftStandardTier: StandardRateTier = .standard
 
     // MARK: - Helpers
 
     private var useImperial: Bool { !useMetric }
-
-    private var standardRates: [Double] { [0.25, 0.5, 0.75] }
 
     // MARK: - Body
 
@@ -63,6 +100,7 @@ struct EditGoalFlow: View {
                 targetWeightKg: $draftGoalWeightKg,
                 weeklyChangeKg: $draftWeeklyChangeKg,
                 isCustomRate: $draftIsCustomRate,
+                standardTier: $draftStandardTier,
                 currentWeightKg: profileStore.profile.weightKg,
                 useImperial: useImperial
             )
@@ -116,12 +154,30 @@ struct EditGoalFlow: View {
 
     // MARK: - Initialise draft from store
 
+    /// Detects whether a saved kg/wk rate matches a named tier for the user's
+    /// current bodyweight, using a ±0.05 kg/wk tolerance to survive floating-
+    /// point round-trips. Returns nil if no tier matches (=> Custom).
+    private func tierFor(rateKg: Double, weightKg: Double) -> StandardRateTier? {
+        let tolerance: Double = 0.05
+        for tier in StandardRateTier.allCases {
+            let tierKg = tier.weeklyRateKg(forBodyweightKg: weightKg)
+            if abs(tierKg - rateKg) < tolerance { return tier }
+        }
+        return nil
+    }
+
     private func loadDraftFromStore() {
         let profile = profileStore.profile
         draftGoalWeightKg = profile.goalWeightKg ?? profile.weightKg
-        let savedRate = profile.weeklyChangeKg ?? 0.5
+        let savedRate = profile.weeklyChangeKg ?? StandardRateTier.standard.weeklyRateKg(forBodyweightKg: profile.weightKg)
         draftWeeklyChangeKg = savedRate
-        draftIsCustomRate = !standardRates.contains(savedRate)
+        if let matched = tierFor(rateKg: savedRate, weightKg: profile.weightKg) {
+            draftIsCustomRate = false
+            draftStandardTier = matched
+        } else {
+            draftIsCustomRate = true
+            draftStandardTier = .standard
+        }
     }
 }
 

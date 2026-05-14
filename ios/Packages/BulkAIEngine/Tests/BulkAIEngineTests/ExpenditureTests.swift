@@ -20,10 +20,11 @@ final class ExpenditureTests: XCTestCase {
     }
 
     func testBelowFoodLogThreshold_returnsPriorWithLowConfidence() {
+        // Spec threshold is `minFoodLogs = 3`. Fewer than 3 days must hold the
+        // prior estimate. Two intake days satisfies "below threshold."
         let intake = [
             DailyIntake(day: day(0), kcal: 2500),
-            DailyIntake(day: day(1), kcal: 2500),
-            DailyIntake(day: day(2), kcal: 2500)
+            DailyIntake(day: day(1), kcal: 2500)
         ]
         let trend = linearTrend(startKg: 80, endKg: 79)
         let est = Expenditure.estimate(
@@ -31,6 +32,7 @@ final class ExpenditureTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 2700,
             bmrKcalPerDay: 1600,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertEqual(est.kcalPerDay, 2700)
@@ -38,17 +40,22 @@ final class ExpenditureTests: XCTestCase {
     }
 
     func testBelowWeightLogThreshold_returnsPriorWithLowConfidence() {
-        // 10 food logs but only 2 raw weight days (the rest interpolated).
+        // Spec threshold is `minWeightLogs = 1`. Zero RAW weigh-ins (only
+        // interpolated trend points) puts us below the threshold even when
+        // food intake is amply logged.
         let intake = (0..<10).map { DailyIntake(day: day($0), kcal: 2500) }
         let trend = [
-            TrendPoint(day: day(0), kg: 80, rawKg: 80),
-            TrendPoint(day: day(13), kg: 79, rawKg: 79)
+            // `isInterpolated` is computed from `rawKg == nil`; passing
+            // `rawKg: nil` is sufficient to mark these as interpolated.
+            TrendPoint(day: day(0), kg: 80, rawKg: nil),
+            TrendPoint(day: day(13), kg: 79, rawKg: nil)
         ]
         let est = Expenditure.estimate(
             intakeLogs: intake,
             trend: trend,
             priorKcalPerDay: 2700,
             bmrKcalPerDay: 1600,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertEqual(est.confidence, .low)
@@ -63,6 +70,7 @@ final class ExpenditureTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 2500,
             bmrKcalPerDay: 1600,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertEqual(est.kcalPerDay, 2500, accuracy: 1)
@@ -78,6 +86,7 @@ final class ExpenditureTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 3000,  // close to expected, no clamp
             bmrKcalPerDay: 1600,
+            windowDays: 14,
             referenceDay: day(13)
         )
         // Trend spans 13 days (day 0 to day 13), not 14. trendChange = -1, span = 13.
@@ -96,6 +105,7 @@ final class ExpenditureTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 2500,
             bmrKcalPerDay: 1600,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertEqual(est.kcalPerDay, 2407.7, accuracy: 1)
@@ -110,6 +120,7 @@ final class ExpenditureTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 2000,
             bmrKcalPerDay: 1600,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertEqual(est.kcalPerDay, 2300, accuracy: 0.5)  // 2000 * 1.15
@@ -125,6 +136,7 @@ final class ExpenditureTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 3000,
             bmrKcalPerDay: 1600,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertEqual(est.kcalPerDay, 2550, accuracy: 0.5)  // 3000 * 0.85
@@ -140,6 +152,7 @@ final class ExpenditureTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 1500,
             bmrKcalPerDay: 1500,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertGreaterThanOrEqual(est.kcalPerDay, 1500 * 1.1)
@@ -155,6 +168,7 @@ final class ExpenditureTests: XCTestCase {
             trend: trend,
             priorKcalPerDay: 5000,
             bmrKcalPerDay: 1600,
+            windowDays: 14,
             referenceDay: day(13)
         )
         XCTAssertLessThanOrEqual(est.kcalPerDay, 1600 * 2.5)

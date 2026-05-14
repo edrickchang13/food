@@ -22,7 +22,11 @@ enum BulkAITheme {
         static let macroFat = SwiftUI.Color(hex: "E8C547")        // mustard yellow
         static let macroCarbs = SwiftUI.Color(hex: "5BC98B")      // mint green
 
-        static let expenditure = SwiftUI.Color(hex: "8C6B4F")     // brown sparkline
+        // Pink/rose accent for expenditure visuals — matches the MacroFactor
+        // semantic palette where Expenditure (TDEE) is rose, distinct from
+        // calorie blue, weight purple, and the macro family. Replaces the
+        // earlier brown sparkline that read too close to the macro yellow.
+        static let expenditure = SwiftUI.Color(hex: "EC4899")     // pink/rose
         static let weightTrend = SwiftUI.Color(hex: "9D7BD8")     // purple
         static let bodyMetrics = SwiftUI.Color(hex: "5BC98B")     // green
         static let activity = SwiftUI.Color(hex: "F4A07A")        // coral steps
