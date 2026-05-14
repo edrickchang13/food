@@ -52,8 +52,16 @@ struct HourTimeline: View {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
 
+        // Visible range = the configured base hours UNIONED with any hour
+        // that actually has an entry. Without this union, an early-AM
+        // snack (logged at e.g. 2 AM) gets silently dropped from the
+        // timeline even though it counts toward the daily totals — the
+        // user sees the kcal in the header but no row in the body and
+        // can't tell where the calories came from.
+        let visibleHours = Self.unionRange(base: hours, populated: grouped.keys)
+
         VStack(alignment: .leading, spacing: BulkAITheme.Spacing.sm) {
-            ForEach(Array(hours), id: \.self) { hour in
+            ForEach(visibleHours, id: \.self) { hour in
                 hourRow(
                     hour: hour,
                     entries: grouped[hour] ?? [],
@@ -63,6 +71,17 @@ struct HourTimeline: View {
         }
         .padding(.horizontal, BulkAITheme.Spacing.md)
         .padding(.vertical, BulkAITheme.Spacing.sm)
+    }
+
+    /// Build a contiguous sorted list of hours covering both the configured
+    /// base range AND every hour that has at least one entry. Returned as a
+    /// plain `[Int]` so SwiftUI's `ForEach` can iterate it stably.
+    private static func unionRange(base: ClosedRange<Int>, populated: some Sequence<Int>) -> [Int] {
+        let allHours = Set(base).union(populated)
+        guard let lo = allHours.min(), let hi = allHours.max() else {
+            return Array(base)
+        }
+        return Array(lo...hi)
     }
 
     @ViewBuilder
