@@ -25,6 +25,12 @@ struct FoodSearchRow: View {
     let macroLine: String
     let onTap: () -> Void
     let onAdd: () -> Void
+    /// When non-nil and non-empty, the matching substring inside `name` is
+    /// rendered in coral with a semibold weight and an accent-colored underline
+    /// so the user can instantly see why this row surfaced. Passing `nil`
+    /// (the default) leaves the name as plain white text and keeps all
+    /// existing call sites source-compatible without any changes.
+    var highlight: String? = nil
     /// Optional favorite state. When provided, a heart indicator appears on
     /// the leading icon and long-press on the row toggles the favorite.
     /// Default of `nil` keeps existing call sites unchanged.
@@ -90,9 +96,11 @@ struct FoodSearchRow: View {
         .frame(width: iconSize, height: iconSize, alignment: .topTrailing)
     }
 
+    // MARK: - Text block
+
     private var textBlock: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(name)
+            Text(highlightedName)
                 .font(BulkAITheme.Typography.body)
                 .fontWeight(.semibold)
                 .foregroundStyle(.white)
@@ -104,6 +112,43 @@ struct FoodSearchRow: View {
                 .foregroundStyle(.white.opacity(0.55))
                 .lineLimit(1)
         }
+    }
+
+    /// Builds an `AttributedString` from `name` where every case-insensitive
+    /// occurrence of `highlight` is styled with the coral accent color, a
+    /// semibold SF Rounded font (size 15, matching the row's base weight), and
+    /// a single coral underline. Non-matching characters inherit the view-level
+    /// `.foregroundStyle(.white)` / `.fontWeight(.semibold)` modifiers and
+    /// render as plain white. Returns a plain `AttributedString(name)` when
+    /// `highlight` is nil or blank so the modifier chain has no effect.
+    private var highlightedName: AttributedString {
+        var attributed = AttributedString(name)
+        guard
+            let highlight,
+            !highlight.trimmingCharacters(in: .whitespaces).isEmpty
+        else {
+            return attributed
+        }
+        let lowerName = name.lowercased()
+        let lowerHighlight = highlight.lowercased()
+        var searchStart = lowerName.startIndex
+        while
+            searchStart < lowerName.endIndex,
+            let range = lowerName.range(of: lowerHighlight, range: searchStart..<lowerName.endIndex)
+        {
+            let nsRange = NSRange(range, in: name)
+            if let attrRange = Range(nsRange, in: attributed) {
+                attributed[attrRange].foregroundColor = BulkAITheme.Color.accent
+                attributed[attrRange].font = .system(size: 15, weight: .semibold, design: .rounded)
+                attributed[attrRange].underlineStyle = .single
+                // `underlineColor` isn't directly settable on AttributedString
+                // without a typed AttributeScope; the underline inherits the
+                // foregroundColor we just set (coral accent), which is what we
+                // want anyway.
+            }
+            searchStart = range.upperBound
+        }
+        return attributed
     }
 
     private var addButton: some View {
@@ -170,4 +215,41 @@ private struct FoodSearchRowPreviewHarness: View {
 
 #Preview("FoodSearchRow") {
     FoodSearchRowPreviewHarness()
+}
+
+#Preview("FoodSearchRow — highlight") {
+    VStack(spacing: 0) {
+        FoodSearchRow(
+            name: "Chicken Breast Grilled",
+            emoji: "🍗",
+            tint: BulkAITheme.Color.macroProtein,
+            macroLine: "165 Cal · 31P 4F 0C • 100 g",
+            onTap: {},
+            onAdd: {},
+            highlight: "chic"
+        )
+        Divider().background(.white.opacity(0.06))
+        FoodSearchRow(
+            name: "Chipotle Chicken Bowl",
+            emoji: "🌯",
+            tint: BulkAITheme.Color.macroCalories,
+            macroLine: "560 Cal · 40P 20F 52C • 1 bowl",
+            onTap: {},
+            onAdd: {},
+            highlight: "chic"
+        )
+        Divider().background(.white.opacity(0.06))
+        FoodSearchRow(
+            name: "Grilled Salmon Fillet",
+            emoji: "🐟",
+            tint: BulkAITheme.Color.macroFat,
+            macroLine: "208 Cal · 20P 13F 0C • 100 g",
+            onTap: {},
+            onAdd: {},
+            highlight: "chic"
+        )
+    }
+    .padding(BulkAITheme.Spacing.md)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    .background(BulkAITheme.Color.background)
 }

@@ -29,6 +29,11 @@ struct SearchView: View {
     var isFavorite: ((FoodDatabaseItem) -> Bool)? = nil
     /// Optional favorite-toggle handler invoked on long-press.
     var onToggleFavorite: ((FoodDatabaseItem) -> Void)? = nil
+    /// Optional search substring. When non-empty, the matched substring in
+    /// each result row's name highlights in coral with a semibold weight +
+    /// underline. Defaults to nil so call sites without a live search query
+    /// continue to render plain names.
+    var highlight: String? = nil
 
     var body: some View {
         ScrollView {
@@ -87,6 +92,7 @@ struct SearchView: View {
                             macroLine: macroLine(for: item),
                             onTap: { onTapItem(item) },
                             onAdd: { onAddItem(item) },
+                            highlight: highlight,
                             isFavorite: isFavorite?(item),
                             onToggleFavorite: { onToggleFavorite?(item) }
                         )

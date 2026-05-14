@@ -461,7 +461,10 @@ struct FavoritesStoreTests {
     @Test("add then contains returns true")
     @MainActor
     func addThenContains() {
-        let store = FavoritesStore(container: SwiftDataContainer.makePreviewContainer())
+        let store = FavoritesStore(
+            container: SwiftDataContainer.makePreviewContainer(),
+            skipMigration: true
+        )
         store.add("apple_raw")
         #expect(store.contains("apple_raw"), "Newly added ID must be contained")
     }
@@ -470,7 +473,10 @@ struct FavoritesStoreTests {
     @Test("add twice is idempotent")
     @MainActor
     func addIdempotent() {
-        let store = FavoritesStore(container: SwiftDataContainer.makePreviewContainer())
+        let store = FavoritesStore(
+            container: SwiftDataContainer.makePreviewContainer(),
+            skipMigration: true
+        )
         store.add("banana")
         store.add("banana")
         #expect(store.favorites.count == 1, "Duplicate add must not increase count beyond 1")
@@ -481,7 +487,10 @@ struct FavoritesStoreTests {
     @Test("remove decrements favorites count")
     @MainActor
     func removeDecrements() {
-        let store = FavoritesStore(container: SwiftDataContainer.makePreviewContainer())
+        let store = FavoritesStore(
+            container: SwiftDataContainer.makePreviewContainer(),
+            skipMigration: true
+        )
         store.add("chicken_breast")
         store.add("broccoli_raw")
         store.remove("chicken_breast")
@@ -494,7 +503,10 @@ struct FavoritesStoreTests {
     @Test("toggle adds when missing and removes when present")
     @MainActor
     func toggleBehavior() {
-        let store = FavoritesStore(container: SwiftDataContainer.makePreviewContainer())
+        let store = FavoritesStore(
+            container: SwiftDataContainer.makePreviewContainer(),
+            skipMigration: true
+        )
         store.toggle("oats_rolled")
         #expect(store.contains("oats_rolled"), "toggle on absent ID must add it")
         store.toggle("oats_rolled")
@@ -506,7 +518,10 @@ struct FavoritesStoreTests {
     @Test("sortedIDs returns most-recent-first (insertion order reversed)")
     @MainActor
     func sortedIDsOrder() {
-        let store = FavoritesStore(container: SwiftDataContainer.makePreviewContainer())
+        let store = FavoritesStore(
+            container: SwiftDataContainer.makePreviewContainer(),
+            skipMigration: true
+        )
         store.add("first")
         store.add("second")
         store.add("third")
@@ -522,13 +537,19 @@ struct FavoritesStoreTests {
     @MainActor
     func persistenceRoundTrip() {
         let container = SwiftDataContainer.makePreviewContainer()
-        let store1 = FavoritesStore(container: container)
+        let store1 = FavoritesStore(
+            container: container,
+            skipMigration: true
+        )
         store1.add("egg_whole")
         store1.add("brown_rice_cooked")
         store1.add("olive_oil")
 
         // Create a second store backed by the same container — simulates app relaunch.
-        let store2 = FavoritesStore(container: container)
+        let store2 = FavoritesStore(
+            container: container,
+            skipMigration: true
+        )
         #expect(store2.contains("egg_whole"), "egg_whole must survive persistence")
         #expect(store2.contains("brown_rice_cooked"), "brown_rice_cooked must survive persistence")
         #expect(store2.contains("olive_oil"), "olive_oil must survive persistence")
