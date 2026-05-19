@@ -18,6 +18,19 @@ struct HourTimeline: View {
     let entries: [FoodEntry]
     let onAdd: (Date) -> Void
     let onTapEntry: (FoodEntry) -> Void
+    /// Long-press → Edit. Skips the Nutrition Facts Label preview and
+    /// opens the full editor directly. Optional; if omitted the parent
+    /// gets no long-press context menu items at all (preserves existing
+    /// callers that pre-date this API).
+    let onLongPressEdit: ((FoodEntry) -> Void)?
+    /// Long-press → Duplicate. Caller is expected to call
+    /// `FoodEntry.duplicatedForLogging(at: .now, mealType:)` and push the
+    /// result into `FoodStore`.
+    let onLongPressDuplicate: ((FoodEntry) -> Void)?
+    /// Long-press → Delete (destructive). No confirmation prompt — matches
+    /// MacroFactor's UX where the iOS context-menu animation is enough
+    /// feedback. Caller can re-add the entry on shake/undo if desired.
+    let onLongPressDelete: ((FoodEntry) -> Void)?
     let hours: ClosedRange<Int>
 
     init(
@@ -25,12 +38,18 @@ struct HourTimeline: View {
         entries: [FoodEntry],
         onAdd: @escaping (Date) -> Void,
         onTapEntry: @escaping (FoodEntry) -> Void,
+        onLongPressEdit: ((FoodEntry) -> Void)? = nil,
+        onLongPressDuplicate: ((FoodEntry) -> Void)? = nil,
+        onLongPressDelete: ((FoodEntry) -> Void)? = nil,
         hours: ClosedRange<Int> = 7...23
     ) {
         self.date = date
         self.entries = entries
         self.onAdd = onAdd
         self.onTapEntry = onTapEntry
+        self.onLongPressEdit = onLongPressEdit
+        self.onLongPressDuplicate = onLongPressDuplicate
+        self.onLongPressDelete = onLongPressDelete
         self.hours = hours
     }
 
@@ -197,6 +216,35 @@ struct HourTimeline: View {
             )
         }
         .buttonStyle(.plain)
+        // Long-press context menu mirrors MacroFactor: hold a row to get
+        // Edit / Duplicate / Delete without going through the Nutrition
+        // Facts Label preview that the tap path opens. `.contextMenu`
+        // handles the hold gesture, haptic, and lift animation for free.
+        // The whole menu is gated on at least one callback being set so
+        // older callers (no callbacks passed) don't show an empty menu.
+        .contextMenu {
+            if let onLongPressEdit {
+                Button {
+                    onLongPressEdit(entry)
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+            }
+            if let onLongPressDuplicate {
+                Button {
+                    onLongPressDuplicate(entry)
+                } label: {
+                    Label("Duplicate", systemImage: "doc.on.doc")
+                }
+            }
+            if let onLongPressDelete {
+                Button(role: .destructive) {
+                    onLongPressDelete(entry)
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+        }
     }
 
     private func formatted(hour: Int) -> String {
