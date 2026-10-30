@@ -2115,6 +2115,12 @@ struct ProfileView: View {
                     }
                     .buttonStyle(.plain)
 
+                    NavigationLink {
+                        BackupExportScreen()
+                    } label: {
+                        Label("Export Backup", systemImage: "externaldrive")
+                    }
+
                     // Delete All Data — always visible
                     Button(role: .destructive) {
                         showDeleteConfirmation = true
